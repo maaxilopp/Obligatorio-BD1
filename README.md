@@ -32,4 +32,4 @@ _En construcción._
 ## Modelo de datos
 
 <img width="100%" alt="Diagrama del modelo de datos" src="https://github.com/user-attachments/assets/60049a2a-6ca9-4851-af26-f14d53c2cfda" />
-> El archivo editable está en `docs/diagrama_bd1.drawio` (se abre en [app.diagrams.net]([https://app.diagrams.net](https://app.diagrams.net/#G1oWAX_MG5A6Cyrv0w5yZankZ7aZ37S2-x#%7B%22pageId%22%3A%22modelo%22%7D))).
+> 📐 [Abrir el diagrama editable en draw.io](https://app.diagrams.net/#G1oWAX_MG5A6Cyrv0w5yZankZ7aZ37S2-x)
