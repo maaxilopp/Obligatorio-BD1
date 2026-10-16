@@ -2,7 +2,7 @@
 
 Sistema de gestión del Torneo Interfacultades de Fútbol 5 de la Universidad Católica del Uruguay.
 
-Trabajo obligatorio de Base de Datos I – Segundo semestre 2026.
+Trabajo obligatorio de Base de Datos I - Segundo semestre de 2026.
 
 ## Integrantes
 
