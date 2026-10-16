@@ -214,7 +214,7 @@ CREATE TABLE sancion_jugador (
     -- Si se corrige el resultado y se borra la tarjeta, la sanción se borra automáticamente.
     id_tarjeta          INT          NULL UNIQUE,
     descripcion         VARCHAR(255) NULL,
-    --No se le puede poner una tarjeta a alguien que no jugó ese partido.
+    -- No se le puede poner una tarjeta a alguien que no jugó ese partido.
     CONSTRAINT fk_sancion_inscripto FOREIGN KEY (ci_jugador, id_torneo)
         REFERENCES equipo_jugador_torneo(ci_jugador, id_torneo),
     CONSTRAINT fk_sancion_tarjeta FOREIGN KEY (id_tarjeta)
