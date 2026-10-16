@@ -24,7 +24,7 @@ Trabajo obligatorio de Base de Datos I - Segundo semestre de 2026.
 | `db/` | Scripts SQL: esquema, triggers, usuarios, datos de prueba y reportes |
 | `backend/` | API en FastAPI |
 | `frontend/` | Aplicación en React |
-| `docs/` | Informe y bitácora |
+| `docs/` | Bitácora, Diagrama e Informe  |
 
 ## Cómo correrlo localmente
 _En construcción._
