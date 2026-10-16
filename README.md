@@ -37,5 +37,4 @@ _En construcción._
 ## Modelo de datos
 
 <img width="100%" alt="Diagrama del modelo de datos" src="https://github.com/user-attachments/assets/60049a2a-6ca9-4851-af26-f14d53c2cfda" />
-Abrir el diagrama editable en draw.io: (https://app.diagrams.net/#G1oWAX_MG5A6Cyrv0w5yZankZ7aZ37S2-x)
-
+[![Diagrama editable en draw.io](https://img.shields.io/badge/draw.io-Diagrama_editable-FFD1B3?logo=diagramsdotnet&logoColor=black)](https://app.diagrams.net/#G1oWAX_MG5A6Cyrv0w5yZankZ7aZ37S2-x)
