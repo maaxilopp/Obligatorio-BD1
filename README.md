@@ -11,12 +11,14 @@ Trabajo obligatorio de Base de Datos I – Segundo semestre 2026.
 [![Paulina Silveira](https://img.shields.io/badge/GitHub-Paulina_Silveira-FFC1DC?logo=github&logoColor=black)](https://github.com/paulinasilveira)
 
 ## Tecnologías
-- **Base de datos:** MySQL 8
-- **Backend:** Python + FastAPI (consultas SQL parametrizadas, sin ORM)
-- **Frontend:** React + Vite
-- **Despliegue:** Docker Compose
+-![MySQL](https://img.shields.io/badge/MySQL_8-4479A1?logo=mysql&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?logo=docker&logoColor=white)
 
-- ## ## Estructura del repositorio
+- ## Estructura del repositorio
 | Carpeta | Contenido |
 |---|---|
 | `db/` | Scripts SQL: esquema, triggers, usuarios, datos de prueba y reportes |
@@ -29,4 +31,5 @@ _En construcción._
 
 ## Modelo de datos
 
-<img width="2462" height="1577" alt="diagrama bd1 drawio" src="https://github.com/user-attachments/assets/60049a2a-6ca9-4851-af26-f14d53c2cfda" />
+<img width="100%" alt="Diagrama del modelo de datos" src="https://github.com/user-attachments/assets/60049a2a-6ca9-4851-af26-f14d53c2cfda" />
+> El archivo editable está en `docs/diagrama_bd1.drawio` (se abre en [app.diagrams.net](https://app.diagrams.net)).
