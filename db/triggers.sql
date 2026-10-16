@@ -7,7 +7,6 @@
 --  IMPORTANTE: las reglas de horario usan NOW(). El servidor MySQL debe
 --  estar en hora de Uruguay (en Docker: variable de entorno
 --  TZ=America/Montevideo en el servicio de la base).
-===
 
 SET NAMES utf8mb4;   -- los mensajes de error tienen tildes
 USE torneo_futbol5;
