@@ -29,11 +29,13 @@ Trabajo obligatorio de Base de Datos I – Segundo semestre 2026.
 ## Cómo correrlo localmente
 _En construcción._
 
+## Organización 
+
+[![Tablero en Trello](https://img.shields.io/badge/Trello-Tablero_del_proyecto-C1F0D0?logo=trello&logoColor=black)](https://trello.com/b/xCyPoRcR)
+
+
 ## Modelo de datos
 
 <img width="100%" alt="Diagrama del modelo de datos" src="https://github.com/user-attachments/assets/60049a2a-6ca9-4851-af26-f14d53c2cfda" />
 > [Abrir el diagrama editable en draw.io: ](https://app.diagrams.net/#G1oWAX_MG5A6Cyrv0w5yZankZ7aZ37S2-x)
 
-## Organización 
-
-[![Tablero en Trello](https://img.shields.io/badge/Trello-Tablero_del_proyecto-C1F0D0?logo=trello&logoColor=black)](https://trello.com/b/xCyPoRcR)
