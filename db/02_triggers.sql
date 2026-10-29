@@ -35,6 +35,37 @@ BEGIN
     END IF;
 END //
 
+-- Al borrar una amarilla (corrección), el jugador puede quedar con menos
+-- amarillas de las que justifican sus sanciones por acumulación. Ejemplo:
+-- tenía 2, se le cargan 2 más por error (la 3ra genera sanción) y se borra la
+-- equivocada: queda con 3... o con 2 si se borra otra. Debe tener exactamente
+-- FLOOR(amarillas / 3) sanciones por acumulación; si sobran, se borran las
+-- más recientes. (Si se borra justo la tarjeta que originó la sanción, el
+-- ON DELETE CASCADE ya la borró y acá no sobra nada.)
+CREATE PROCEDURE recalcular_sanciones_amarillas(IN p_ci VARCHAR(8), IN p_id_partido INT)
+BEGIN
+    DECLARE v_torneo    INT;
+    DECLARE v_amarillas INT;
+    DECLARE v_sobrantes INT;
+
+    SELECT id_torneo INTO v_torneo FROM partido WHERE id_partido = p_id_partido;
+
+    SELECT COUNT(*) INTO v_amarillas
+    FROM tarjeta t JOIN partido p ON p.id_partido = t.id_partido
+    WHERE t.ci_jugador = p_ci AND t.color = 'amarilla' AND p.id_torneo = v_torneo;
+
+    SELECT COUNT(*) - FLOOR(v_amarillas / 3) INTO v_sobrantes
+    FROM sancion_jugador
+    WHERE ci_jugador = p_ci AND id_torneo = v_torneo AND motivo = 'acumulacion de amarillas';
+
+    IF v_sobrantes > 0 THEN
+        DELETE FROM sancion_jugador
+        WHERE ci_jugador = p_ci AND id_torneo = v_torneo AND motivo = 'acumulacion de amarillas'
+        ORDER BY id_sancion DESC
+        LIMIT v_sobrantes;
+    END IF;
+END //
+
 -- Los planteles solo se modifican mientras el torneo está en inscripción
 CREATE PROCEDURE validar_plantel_editable(IN p_id_torneo INT)
 BEGIN
@@ -170,6 +201,17 @@ BEGIN
     IF p_estado = 'jugado' AND fin_partido(p_dia, p_id_turno) > NOW() THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Un partido solo puede marcarse como jugado después de su día y turno';
+    END IF;
+
+    -- Sin planilla, el partido quedaría 0 a 0 en la tabla de posiciones sin
+    -- que nadie lo haya cargado.
+    IF p_estado = 'jugado'
+       AND (NOT EXISTS (SELECT 1 FROM planilla_partido
+                        WHERE id_partido = p_id_partido AND id_equipo = p_local)
+            OR NOT EXISTS (SELECT 1 FROM planilla_partido
+                           WHERE id_partido = p_id_partido AND id_equipo = p_visitante)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Antes de marcar el partido como jugado hay que cargar la planilla de ambos equipos';
     END IF;
 END //
 
@@ -308,6 +350,15 @@ END//
 CREATE TRIGGER trg_tarjeta_bu BEFORE UPDATE ON tarjeta
 FOR EACH ROW
 BEGIN
+    -- Las sanciones automáticas se calculan al insertar la tarjeta. Si se
+    -- cambiara el color o el jugador con un UPDATE, la sanción quedaría mal
+    -- (ej: una amarilla corregida a roja no generaba suspensión). Por eso solo
+    -- se puede corregir el minuto; lo demás se corrige borrando y recargando.
+    IF NOT (NEW.color <=> OLD.color AND NEW.ci_jugador <=> OLD.ci_jugador
+            AND NEW.id_partido <=> OLD.id_partido) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Para cambiar el jugador o el color de una tarjeta, eliminala y cargala de nuevo';
+    END IF;
     CALL validar_carga_planilla(OLD.id_partido);
     CALL validar_carga_planilla(NEW.id_partido);
 END //
@@ -366,11 +417,37 @@ END //
 CREATE TRIGGER trg_torneo_bu BEFORE UPDATE ON torneo
 FOR EACH ROW
 BEGIN
+    DECLARE v_incompleto VARCHAR(50);
+    DECLARE v_msg        VARCHAR(200);
+
     IF NEW.estado <> OLD.estado
        AND NOT ((OLD.estado = 'inscripcion' AND NEW.estado = 'en curso')
              OR (OLD.estado = 'en curso'    AND NEW.estado = 'finalizado')) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El estado del torneo solo avanza: inscripción, en curso, finalizado';
+    END IF;
+
+    -- Al cerrar la inscripción los planteles quedan fijos, así que tienen que
+    -- estar completos: al menos 2 equipos, cada uno con capitán y con 5 a 10
+    -- jugadores (el máximo ya lo controla el trigger del plantel).
+    IF OLD.estado = 'inscripcion' AND NEW.estado = 'en curso' THEN
+        IF (SELECT COUNT(*) FROM equipo WHERE id_torneo = NEW.id_torneo) < 2 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Para iniciar el torneo se necesitan al menos 2 equipos';
+        END IF;
+
+        SET v_incompleto = (
+            SELECT e.nombre FROM equipo e
+            WHERE e.id_torneo = NEW.id_torneo
+              AND (e.ci_capitan IS NULL
+                   OR (SELECT COUNT(*) FROM equipo_jugador_torneo ejt
+                       WHERE ejt.id_equipo = e.id_equipo) < 5)
+            ORDER BY e.nombre LIMIT 1);
+        IF v_incompleto IS NOT NULL THEN
+            SET v_msg = CONCAT('El equipo "', v_incompleto,
+                              '" necesita capitán y al menos 5 jugadores para iniciar el torneo');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_msg;
+        END IF;
     END IF;
 END //
 
@@ -404,8 +481,13 @@ FOR EACH ROW
 
 CREATE TRIGGER trg_tarjeta_ad AFTER DELETE ON tarjeta
 FOR EACH ROW
+BEGIN
+    IF OLD.color = 'amarilla' THEN
+        CALL recalcular_sanciones_amarillas(OLD.ci_jugador, OLD.id_partido);
+    END IF;
     CALL registrar_auditoria(OLD.id_partido, 'tarjeta', 'baja',
-        CONCAT('Se eliminó tarjeta ', OLD.color, ' de CI ', OLD.ci_jugador)) //
+        CONCAT('Se eliminó tarjeta ', OLD.color, ' de CI ', OLD.ci_jugador));
+END //
 
 CREATE TRIGGER trg_planilla_ai AFTER INSERT ON planilla_partido
 FOR EACH ROW

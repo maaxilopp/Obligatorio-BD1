@@ -53,3 +53,38 @@ def test_torneo_finalizado_no_admite_partidos_nuevos(cur):
     falla(cur, "INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
                "id_turno, id_complejo, nombre_cancha) VALUES (%s, 1, %s, %s, '2031-04-10', 1, 1, 'Cancha 1')",
           (t, a, b), mensaje="finalizado")
+
+
+def test_borrar_una_amarilla_recalcula_la_acumulacion(cur):
+    # Mateo Rodríguez tiene 2 amarillas (una en el partido 8, de ayer).
+    # Se le carga una 3ra por error -> sanción. Se borra la del minuto 9:
+    # vuelve a tener 2 amarillas y la sanción tiene que desaparecer.
+    ci = ci_de(cur, "Mateo", "Rodríguez")
+    cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 50, 'amarilla')", (ci,))
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 1
+    cur.execute("DELETE FROM tarjeta WHERE id_partido = 8 AND ci_jugador = %s AND minuto = 9", (ci,))
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 0
+
+
+def test_no_se_cambia_el_color_de_una_tarjeta_con_update(cur):
+    ci = ci_de(cur, "Sebastián", "Correa")
+    falla(cur, "UPDATE tarjeta SET color = 'roja' WHERE id_partido = 8 AND ci_jugador = %s", (ci,),
+          mensaje="eliminala y cargala de nuevo")
+    # el minuto sí se puede corregir
+    cur.execute("UPDATE tarjeta SET minuto = 40 WHERE id_partido = 8 AND ci_jugador = %s", (ci,))
+
+
+def test_torneo_no_arranca_con_equipos_incompletos(cur):
+    t, (a, b) = nuevo_torneo(cur, equipos=2, jugadores=5)
+    cur.execute("UPDATE equipo SET ci_capitan = NULL WHERE id_equipo = %s", (b,))
+    falla(cur, "UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,), mensaje="necesita capitán")
+
+
+def test_torneo_no_arranca_con_menos_de_5_jugadores(cur):
+    t, _ = nuevo_torneo(cur, equipos=2, jugadores=4)
+    falla(cur, "UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,), mensaje="al menos 5 jugadores")
+
+
+def test_torneo_no_arranca_con_un_solo_equipo(cur):
+    t, _ = nuevo_torneo(cur, equipos=1, jugadores=5)
+    falla(cur, "UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,), mensaje="al menos 2 equipos")

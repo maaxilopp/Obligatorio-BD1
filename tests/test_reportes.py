@@ -51,9 +51,11 @@ def test_tabla_de_posiciones_con_desempates(r):
 
 
 def test_goleadores_sin_autogoles(r):
-    assert len(r["goleadores"]) == 10
-    assert r["goleadores"][0] == ("Valentín Cabrera", "Derecho al Gol", 4)
-    assert all(f[0] != "Federico López" for f in r["goleadores"])
+    # con empates en el puesto 8 entran todos los de 1 gol: 15 jugadores
+    assert len(r["goleadores"]) == 15
+    assert r["goleadores"][0] == (1, "Valentín Cabrera", "Derecho al Gol", 4)
+    assert [f[0] for f in r["goleadores"][1:4]] == [2, 2, 2]
+    assert all(f[1] != "Federico López" for f in r["goleadores"])
 
 
 def test_fair_play(r):
