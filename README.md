@@ -61,7 +61,7 @@ python db/setup_db.py --password <contraseña de root>
 
 > Los datos de prueba usan fechas relativas al día en que se cargan: la fecha 3 se jugó "ayer" (todavía se puede corregir, ventana de 48 h) y la fecha 4 queda a futuro. Si pasan más de dos días, se pueden volver a cargar.
 
-> Las reglas de horario usan `NOW()`: toda conexión tiene que ejecutar `SET time_zone = '-03:00';` (los scripts ya lo hacen).
+> Las reglas de horario usan `NOW()`: toda conexión tiene que ejecutar `SET time_zone = '-03:00';`.
 
 ### 2. Usuarios
 
