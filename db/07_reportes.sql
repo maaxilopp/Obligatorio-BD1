@@ -17,16 +17,14 @@ ORDER BY posicion, equipo;
 
 
 -- 2. TABLA DE GOLEADORES (top 10, sin autogoles)
---    Con RANK() los empatados comparten posición: si hay empate en el
+--    Con DENSE_RANK() los empatados comparten posición: si hay empate en el
 --    puesto 10, entran todos los empatados (puede devolver más de 10 filas).
-SELECT posicion, jugador, equipo, goles
-FROM (SELECT RANK() OVER (ORDER BY goles DESC) AS posicion,
-             jugador, equipo, goles
-      FROM v_goleadores
-      WHERE id_torneo = @torneo) g
-WHERE posicion <= 10
-ORDER BY posicion, jugador;
-
+   SELECT DENSE_RANK() OVER (ORDER BY goles DESC) AS posicion, jugador, equipo, goles
+   FROM (SELECT RANK() OVER (ORDER BY goles DESC) AS corte, jugador, equipo, goles
+         FROM v_goleadores
+         WHERE id_torneo = @torneo) g
+   WHERE corte <= 10
+   ORDER BY posicion, jugador;
 
 -- 3. FAIR PLAY POR EQUIPO (amarilla = 1, roja = 3; el mejor es el de menor puntaje)
 SELECT DENSE_RANK() OVER (ORDER BY puntaje) AS posicion,

@@ -1,0 +1,56 @@
+# Levanta la base de datos y la API con un solo comando:
+#   docker compose up --build
+# API: http://localhost:8000/docs     MySQL: localhost:3307 (root / root)
+#
+# La base se crea SOLO la primera vez,
+# corriendo los scripts 01 a 06 de db/ en orden. Para recrearla desde cero :
+#   docker compose down -v
+#   docker compose up --build
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: America/Montevideo
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_0900_ai_ci",
+      ]
+    ports:
+      - "3307:3306" # 3307 para no chocar con un MySQL instalado en la compu
+    volumes:
+      - datos_mysql:/var/lib/mysql
+      # Solo los scripts de creación (07_reportes.sql y setup_db.py no)
+      - ./db/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/02_triggers.sql:/docker-entrypoint-initdb.d/02_triggers.sql:ro
+      - ./db/03_procedimientos.sql:/docker-entrypoint-initdb.d/03_procedimientos.sql:ro
+      - ./db/04_vistas.sql:/docker-entrypoint-initdb.d/04_vistas.sql:ro
+      - ./db/05_usuarios.sql:/docker-entrypoint-initdb.d/05_usuarios.sql:ro
+      - ./db/06_datos.sql:/docker-entrypoint-initdb.d/06_datos.sql:ro
+    healthcheck:
+      # Por TCP: mientras corren los scripts iniciales MySQL no escucha en
+      # la red, así que la API recién arranca cuando la base está completa.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: torneo_futbol5
+      SECRET_KEY: clave-de-desarrollo-docker
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos_mysql:

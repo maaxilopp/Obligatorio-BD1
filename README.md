@@ -11,6 +11,7 @@ Trabajo obligatorio de Base de Datos I - Segundo semestre de 2026.
 [![Paulina Silveira](https://img.shields.io/badge/GitHub-Paulina_Silveira-FFC1DC?logo=github&logoColor=black)](https://github.com/paulinasilveira)
 
 ## Tecnologías
+
 ![MySQL](https://img.shields.io/badge/MySQL_8-B7E3FF?logo=mysql&logoColor=black)
 ![Python](https://img.shields.io/badge/Python-FFD966?logo=python&logoColor=black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-C1F0D0?logo=fastapi&logoColor=black)
@@ -39,7 +40,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 ### Reportes
 
 1. Tabla de posiciones, con partidos jugados, ganados, empatados y perdidos, goles a favor y en contra, diferencia de goles y puntos.
-2. Tabla de goleadores (los 10 primeros, incluyendo a los empatados en el último puesto).
+2. Tabla de goleadores los 10 primeros, incluyendo a los empatados.
 3. Clasificación de fair play por equipo.
 4. Promedio de goles por fecha y para toda la edición.
 5. Utilización de canchas y turnos.
@@ -51,32 +52,32 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 
 ### Implementación
 
-**Base de datos (MySQL 8).** Las reglas de negocio viven en la base, así se cumplen sin importar desde dónde se accede:
+**Base de datos (MySQL).** Las reglas de negocio viven en la base, así se cumplen sin importar desde dónde se accede:
 
-- Tablas con claves primarias, foráneas (incluso compuestas) y restricciones `CHECK` y `UNIQUE`.
+- Tablas con claves primarias, foráneas, algunas compuestas, y restricciones`.
 - Triggers para las reglas que no entran en una constraint y para las sanciones automáticas.
 - Procedimientos almacenados para generar el fixture y para cerrar un partido.
 - Vistas que centralizan los cálculos de los reportes.
 - Usuarios de MySQL con permisos diferenciados por rol.
 - Auditoría de las correcciones de resultados.
 
-**Backend (FastAPI, sin ORM).** Valida los datos de entrada, autentica a los usuarios y se conecta a MySQL con el usuario que corresponde al rol de quien inició sesión. Los errores de la base (por ejemplo, el mensaje de un trigger) se devuelven al usuario en español.
+**Backend.** Valida los datos de entrada, autentica a los usuarios y se conecta a MySQL con el usuario que corresponde al rol de quien inició sesión. Los errores de la base (por ejemplo, el mensaje de un trigger) se devuelven al usuario en español.
 
 **Validación en las tres capas:** el frontend valida los formularios, el backend valida cada campo con Pydantic y la base vuelve a controlar todo con constraints y triggers.
 
 ## Estructura del repositorio
 
-| Carpeta | Contenido |
-|---|---|
-| `db/` | Scripts SQL numerados (esquema, triggers, procedimientos, vistas, usuarios, datos de prueba, reportes) y `setup_db.py` |
-| `backend/` | API en FastAPI: conexión por rol, login, traducción de errores y un archivo por grupo de endpoints en `routers/` |
-| `frontend/` | Aplicación en React (en desarrollo) |
-| `tests/` | Tests automáticos (pytest) de las reglas de negocio, permisos, reportes y API, contra MySQL real |
-| `docs/` | Diagrama, informe y bitácora |
+| Carpeta     | Contenido                                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `db/`       | Scripts SQL numerados (esquema, triggers, procedimientos, vistas, usuarios, datos de prueba, reportes) y `setup_db.py` |
+| `backend/`  | API en FastAPI: conexión por rol, login, traducción de errores y un archivo por grupo de endpoints en `routers/`       |
+| `frontend/` | Aplicación en React (en desarrollo)                                                                                    |
+| `tests/`    | Tests automáticos (pytest) de las reglas de negocio, permisos, reportes y API, contra MySQL real                       |
+| `docs/`     | Diagrama, informe y bitácora                                                                                           |
 
 ## Cómo correrlo
 
-Hay dos formas: con Docker (un solo comando) o instalando todo en la compu.
+Hay dos formas: con Docker o instalando todo en una computadora.
 
 ### Opción 1: con Docker
 
@@ -104,23 +105,25 @@ Requisitos: MySQL 8.0 o superior, Python 3.10 o superior y, opcionalmente, DataG
 
 Los scripts de `db/` se ejecutan **en orden**:
 
-| Script | Qué hace |
-|---|---|
-| `01_schema.sql` | Crea la base `torneo_futbol5` (la borra si existe), las tablas y los turnos |
-| `02_triggers.sql` | Reglas de negocio que no entran en constraints, sanciones automáticas y auditoría |
-| `03_procedimientos.sql` | `marcar_jugado` y `generar_fixture` |
-| `04_vistas.sql` | Resultado de cada partido, tabla de posiciones, goleadores, fair play, sanciones |
-| `05_usuarios.sql` | Usuarios de MySQL con permisos diferenciados |
-| `06_datos.sql` | Datos de prueba (6 equipos, 3 fechas jugadas, fecha 4 a futuro) |
-| `07_reportes.sql` | Las consultas de los reportes (no modifica nada) |
+| Script                  | Qué hace                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `01_schema.sql`         | Crea la base `torneo_futbol5` (la borra si existe), las tablas y los turnos       |
+| `02_triggers.sql`       | Reglas de negocio que no entran en constraints, sanciones automáticas y auditoría |
+| `03_procedimientos.sql` | `marcar_jugado` y `generar_fixture`                                               |
+| `04_vistas.sql`         | Resultado de cada partido, tabla de posiciones, goleadores, fair play, sanciones  |
+| `05_usuarios.sql`       | Usuarios con permisos diferenciados                                               |
+| `06_datos.sql`          | Datos de prueba (6 equipos, 3 fechas jugadas, fecha 4 a futuro)                   |
+| `07_reportes.sql`       | Las consultas de los reportes (no modifica nada)                                  |
 
 **Con DataGrip**
+
 1. Crear una conexión MySQL como `root`.
-2. Clic derecho en la conexión → *SQL Scripts* → *Run SQL Script...* y ejecutar los scripts `01` a `06`, uno por uno y en orden.
+2. Clic derecho en la conexión → _SQL Scripts_ → _Run SQL Script..._ y ejecutar los scripts `01` a `06`, uno por uno y en orden.
 3. Marcar el schema `torneo_futbol5` para que aparezca en el explorador.
 4. Abrir `07_reportes.sql`, ejecutar `SET @torneo = 1;` y después cualquier consulta con Ctrl+Enter.
 
 **Con un comando**
+
 ```bash
 pip install -r requirements-dev.txt
 python db/setup_db.py --password <contraseña de root>
@@ -140,20 +143,18 @@ cp .env.example .env        # en Windows: copy .env.example .env
 uvicorn backend.main:app --reload
 ```
 
-La documentación interactiva queda en http://localhost:8000/docs. Los valores de `.env.example` ya coinciden con los usuarios que crea `05_usuarios.sql`.
-
 ## Usuarios
 
-| Aplicación | Contraseña | Rol |
-|---|---|---|
-| `admin@ucu.edu.uy` | `admin123` | administrador |
-| `planillero@ucu.edu.uy` | `planillero123` | planillero |
+| Aplicación              | Contraseña      | Rol           |
+| ----------------------- | --------------- | ------------- |
+| `admin@ucu.edu.uy`      | `admin123`      | administrador |
+| `planillero@ucu.edu.uy` | `planillero123` | planillero    |
 
-| Usuario MySQL | Contraseña | Uso |
-|---|---|---|
-| `torneo_admin` | `Admin.Torneo2026` | conexión del backend para administradores |
-| `torneo_planillero` | `Planillero.Torneo2026` | conexión del backend para planilleros |
-| `torneo_auth` | `Auth.Torneo2026` | solo lee `login` para validar el inicio de sesión |
+| Usuario MySQL       | Contraseña              | Uso                                               |
+| ------------------- | ----------------------- | ------------------------------------------------- |
+| `torneo_admin`      | `Admin.Torneo2026`      | conexión del backend para administradores         |
+| `torneo_planillero` | `Planillero.Torneo2026` | conexión del backend para planilleros             |
+| `torneo_auth`       | `Auth.Torneo2026`       | solo lee `login` para validar el inicio de sesión |
 
 ## Cómo usar la API
 
@@ -161,11 +162,11 @@ La documentación interactiva queda en http://localhost:8000/docs. Los valores d
 2. Ese token va en cada pedido, en el header `Authorization: Bearer <token>`. En `/docs`, se pega con el botón **Authorize**.
 3. Según el rol del token, el backend se conecta a MySQL con `torneo_admin` o con `torneo_planillero`. Así, aunque el backend tuviera un error, la base igual impide que un planillero haga algo que no le corresponde.
 
-| Endpoints | Administrador | Planillero |
-|---|---|---|
-| `/jugadores` (ABM) | ✓ | ✗ |
-| `/partidos`: ver partidos, cargar goles, marcar jugado | ✓ | ✓ |
-| `/torneos/{id}/...` (reportes) | ✓ | ✗ |
+| Endpoints                                              | Administrador | Planillero |
+| ------------------------------------------------------ | ------------- | ---------- |
+| `/jugadores` (ABM)                                     | puede         | no puede   |
+| `/partidos`: ver partidos, cargar goles, marcar jugado | puede         | puede      |
+| `/torneos/{id}/...` (reportes)                         | puede         | no puede   |
 
 Cuando la base rechaza una operación, la API responde con el motivo en español. Por ejemplo, con `400` y "Pasaron más de 48 horas desde el partido: su resultado ya no puede corregirse", o con `409` y "La cancha ya tiene un partido en ese día y turno".
 
