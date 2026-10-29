@@ -61,6 +61,61 @@ python db/setup_db.py --password <contraseña de root>
 Los datos de prueba usan fechas relativas al día en que se cargan: la fecha 3 se jugó "ayer" (todavía se puede corregir, ventana de 48 h) y la fecha 4 queda a futuro. Si pasan más de dos días, se pueden volver a cargar.
 
 > Las reglas de horario usan `NOW()`: toda conexión tiene que ejecutar `SET time_zone = '-03:00';`.
+## Descripción del proyecto
+
+El proyecto consiste en el diseño e implementación de un sistema de información para la gestión del Torneo Interfacultades de Fútbol 5.
+
+El objetivo es centralizar la información del torneo y asegurar la integridad de los datos, automatizando las reglas de negocio relacionadas con la inscripción de equipos, la programación de partidos, el registro de resultados y las sanciones disciplinarias.
+
+### Funcionalidades
+
+El sistema contempla las siguientes funcionalidades:
+
+- **Gestión de torneos:** administración de las ediciones semestrales y sus estados: inscripción, en curso y finalizado.
+- **Gestión de jugadores y equipos:** registro de jugadores, facultades, capitanes y planteles, con validaciones sobre la cantidad y el tipo de integrantes.
+- **Gestión de complejos y canchas:** administración de las instalaciones deportivas y sus características.
+- **Organización del fixture:** generación y administración de partidos, con controles para evitar enfrentamientos duplicados, equipos asignados a más de un partido en una misma fecha y superposición de partidos en una cancha.
+- **Registro de planillas:** inscripción de los jugadores participantes, goles y tarjetas de cada partido.
+- **Gestión de sanciones:** aplicación automática de suspensiones por tarjetas rojas o acumulación de amarillas, además de sanciones disciplinarias.
+- **Control de resultados:** cálculo del marcador a partir de los goles registrados, validación del momento en que se puede marcar un partido como jugado y restricciones para corregir resultados.
+- **Control de acceso:** diferenciación de permisos entre administradores y planilleros.
+
+### Reportes
+
+La base de datos permite consultar información para el seguimiento del torneo y la toma de decisiones:
+
+1. Tabla de posiciones, con partidos jugados, ganados, empatados y perdidos, goles a favor y en contra, diferencia de goles y puntos.
+2. Tabla de goleadores.
+3. Clasificación de fair play por equipo.
+4. Promedio de goles por fecha y para toda la edición.
+5. Utilización de canchas y turnos.
+6. Cantidad de jugadores por facultad y tipo.
+7. Jugadores inscriptos que nunca participaron en una planilla.
+8. Cantidad de sanciones por equipo y motivo.
+9. Porcentaje de partidos jugados, postergados y cancelados.
+10. Consultas adicionales sobre remontadas, distribución temporal de los goles y rachas recientes de los equipos.
+
+### Implementación de la base de datos
+
+La solución utiliza MySQL 8 y SQL para modelar la información y aplicar las reglas de negocio directamente en la base de datos.
+
+La implementación incluye:
+
+- Tablas relacionales con claves primarias, claves foráneas y restricciones de integridad.
+- Triggers para validar operaciones y automatizar reglas de negocio.
+- Procedimientos almacenados para operaciones como la generación del fixture y el registro de partidos jugados.
+- Vistas para centralizar cálculos y simplificar la generación de reportes.
+- Usuarios de base de datos con permisos diferenciados según su función.
+- Auditoría de las correcciones de resultados.
+- Datos de prueba para verificar el funcionamiento de las consultas y las restricciones.
+
+### Pruebas automatizadas
+
+Se incorporaron tests automatizados con `pytest` para verificar las reglas de negocio, los permisos y los reportes de la base de datos. Las pruebas utilizan una instancia real de MySQL y comprueban tanto las operaciones válidas como los casos que deben rechazarse.
+
+**Última ejecución:** 40 tests aprobados (`40 passed`).
+
+Para repetir las pruebas, consultar las instrucciones de la sección [Cómo correrlo localmente](#3-tests).
 
 ### 2. Usuarios
 
