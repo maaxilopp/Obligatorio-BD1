@@ -1,4 +1,5 @@
-# Para crear la base (db/setup_db.py) y correr los tests (tests/)
+ TXT
 PyMySQL==1.1.1
-cryptography>=42      
+cryptography>=42     
 pytest==8.3.3
+httpx>=0.27           
