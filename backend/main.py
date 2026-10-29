@@ -4,7 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.auth import router as auth_router
-from backend.routers import jugadores, planillas, reportes
+from backend.routers import (
+    complejos,
+    equipos,
+    facultades,
+    jugadores,
+    planillas,
+    reportes,
+    torneos,
+)
 
 app = FastAPI(
     title="Torneo Interfacultades de Fútbol 5",
@@ -12,7 +20,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# El front esta habilitado a llamar a la API
+# Permite que el frontend local se comunique con la API.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -20,8 +28,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Autenticación
 app.include_router(auth_router)
+
+# Routers de la API
 app.include_router(jugadores.router)
+app.include_router(facultades.router)
+app.include_router(equipos.router)
+app.include_router(complejos.router)
+app.include_router(torneos.router)
 app.include_router(planillas.router)
 app.include_router(reportes.router)
 
@@ -49,15 +64,24 @@ async def errores_de_validacion(request: Request, exc: RequestValidationError):
         if error["type"] == "value_error":
             mensaje = str(error["msg"]).removeprefix("Value error, ")
         else:
-            mensaje = MENSAJES.get(error["type"], error["msg"]).format(**error.get("ctx", {}))
+            mensaje = MENSAJES.get(error["type"], error["msg"]).format(
+                **error.get("ctx", {})
+            )
         errores.append({"campo": campo, "mensaje": mensaje})
-    return JSONResponse(status_code=422, content={"detail": "Hay datos inválidos", "errores": errores})
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": "Hay datos inválidos", "errores": errores},
+    )
 
 
 @app.get("/", tags=["General"])
 def inicio():
-    return {"mensaje": "API del Torneo Interfacultades de Fútbol 5", "estado": "funcionando",
-            "documentacion": "/docs"}
+    return {
+        "mensaje": "API del Torneo Interfacultades de Fútbol 5",
+        "estado": "funcionando",
+        "documentacion": "/docs",
+    }
 
 
 @app.get("/health", tags=["General"])
