@@ -20,7 +20,7 @@ ORDER BY posicion, equipo;
 --    Con RANK() los empatados comparten posición: si hay empate en el
 --    puesto 10, entran todos los empatados (puede devolver más de 10 filas).
 SELECT posicion, jugador, equipo, goles
-FROM (SELECT RANK() OVER (ORDER BY goles DESC) AS posicion,
+FROM (SELECT DENSE_RANK() OVER (ORDER BY goles DESC) AS posicion,
              jugador, equipo, goles
       FROM v_goleadores
       WHERE id_torneo = @torneo) g
