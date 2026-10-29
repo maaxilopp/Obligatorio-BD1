@@ -125,8 +125,9 @@ def nuevo_torneo(cur, equipos=3, jugadores=5, anio=2031):
                     (f"Equipo test {e + 1}", id_torneo))
         id_equipo = cur.lastrowid
         ids.append(id_equipo)
-        for k in range(jugadores):
-            agregar_jugador(cur, id_torneo, id_equipo, k + 1)
+        cis = [agregar_jugador(cur, id_torneo, id_equipo, k + 1) for k in range(jugadores)]
+        if cis:
+            cur.execute("UPDATE equipo SET ci_capitan = %s WHERE id_equipo = %s", (cis[0], id_equipo))
     return id_torneo, ids
 
 
