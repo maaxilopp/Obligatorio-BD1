@@ -289,7 +289,21 @@ CREATE TRIGGER trg_gol_bd BEFORE DELETE ON gol
 FOR EACH ROW CALL validar_carga_planilla(OLD.id_partido) //
 
 CREATE TRIGGER trg_tarjeta_bi BEFORE INSERT ON tarjeta
-FOR EACH ROW CALL validar_carga_planilla(NEW.id_partido) //
+FOR EACH ROW
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM planilla_partido
+        WHERE id_partido = NEW.id_partido
+          AND ci_jugador = NEW.ci_jugador
+    ) THEN
+        SIGNAL SQLSTATE '23000'
+            SET MYSQL_ERRNO = 1452,
+                MESSAGE_TEXT = 'El jugador no figura en la planilla del partido';
+    END IF;
+
+    CALL validar_carga_planilla(NEW.id_partido);
+END//
 
 CREATE TRIGGER trg_tarjeta_bu BEFORE UPDATE ON tarjeta
 FOR EACH ROW
