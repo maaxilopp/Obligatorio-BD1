@@ -63,7 +63,7 @@ BEGIN
             SET MESSAGE_TEXT = 'El torneo ya tiene partidos: el fixture solo se genera sobre un torneo vacío';
     END IF;
 
-    --NULL representa "fecha libre".
+    -- NULL representa "fecha libre".
     DROP TEMPORARY TABLE IF EXISTS tmp_fixture;
     CREATE TEMPORARY TABLE tmp_fixture (pos INT PRIMARY KEY, id_equipo INT NULL);
 

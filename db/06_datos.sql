@@ -1,5 +1,5 @@
 -- DATOS DE PRUEBA DEL OBLIGATORIO
--
+--
 --   * 6 facultades, 6 equipos de 7 jugadores, 3 jugadores sin equipo
 --   * docentes, funcionarios y posgrado (máx. 2 docentes/funcionarios por equipo)
 --   * 3 fechas disputadas (9 partidos jugados), fecha 4 programada a futuro
