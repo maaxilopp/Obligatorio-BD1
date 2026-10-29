@@ -4,9 +4,11 @@
 --  Todos los errores se lanzan con SIGNAL SQLSTATE '45000' y un mensaje
 --  en español, para que el backend lo muestre tal cual al usuario.
 --
---  IMPORTANTE: las reglas de horario usan NOW(). El servidor MySQL debe
---  estar en hora de Uruguay (en Docker: variable de entorno
---  TZ=America/Montevideo en el servicio de la base).
+--  IMPORTANTE: las reglas de horario usan NOW(), que depende de la zona
+--  horaria de la SESIÓN. Toda conexión (backend, DataGrip, tests) debe hacer
+--      SET time_zone = '-03:00';
+--  Uruguay no tiene horario de verano, así que el offset fijo alcanza y no
+--  hace falta cargar las tablas de zonas horarias en MySQL.
 
 SET NAMES utf8mb4;   -- los mensajes de error tienen tildes
 USE torneo_futbol5;
@@ -20,6 +22,17 @@ RETURNS DATETIME
 READS SQL DATA
 BEGIN
     RETURN (SELECT TIMESTAMP(p_dia, hora_fin) FROM turno WHERE id_turno = p_id_turno);
+END //
+
+-- Registra una corrección en auditoria_resultado, solo si el partido ya
+-- está marcado como jugado (ver sección AUDITORÍA al final).
+CREATE PROCEDURE registrar_auditoria(
+    IN p_id_partido INT, IN p_tabla VARCHAR(20), IN p_accion VARCHAR(20), IN p_detalle VARCHAR(255))
+BEGIN
+    IF (SELECT estado FROM partido WHERE id_partido = p_id_partido) = 'jugado' THEN
+        INSERT INTO auditoria_resultado (id_partido, tabla, accion, detalle, usuario)
+        VALUES (p_id_partido, p_tabla, p_accion, p_detalle, COALESCE(@usuario_app, USER()));
+    END IF;
 END //
 
 -- Los planteles solo se modifican mientras el torneo está en inscripción
@@ -118,6 +131,23 @@ CREATE PROCEDURE validar_partido(
     IN p_local INT, IN p_visitante INT,
     IN p_dia DATE, IN p_id_turno TINYINT, IN p_estado VARCHAR(20))
 BEGIN
+    DECLARE v_estado_torneo VARCHAR(20);
+    DECLARE v_inicio DATE;
+    DECLARE v_fin    DATE;
+
+    SELECT estado, fecha_inicio, fecha_fin INTO v_estado_torneo, v_inicio, v_fin
+    FROM torneo WHERE id_torneo = p_id_torneo;
+
+    IF v_estado_torneo = 'finalizado' AND p_estado IN ('programado', 'postergado') THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El torneo está finalizado: no se pueden programar partidos';
+    END IF;
+
+    IF p_dia NOT BETWEEN v_inicio AND v_fin THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El día del partido debe estar dentro de las fechas del torneo';
+    END IF;
+
     IF p_estado <> 'cancelado' THEN
         IF (SELECT COUNT(*) FROM equipo_jugador_torneo WHERE id_equipo = p_local) < 5
            OR (SELECT COUNT(*) FROM equipo_jugador_torneo WHERE id_equipo = p_visitante) < 5 THEN
@@ -157,6 +187,21 @@ BEGIN
     IF OLD.estado = 'jugado' AND NEW.estado <> 'jugado' THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Un partido jugado no puede cambiar de estado';
+    END IF;
+
+    -- Un partido jugado tampoco se "mueve": sin esto se podía cambiar
+    -- el día, el turno, la cancha o hasta los equipos de un partido ya disputado.
+    IF OLD.estado = 'jugado' AND NOT (
+           NEW.id_torneo           <=> OLD.id_torneo
+       AND NEW.numero_fecha        <=> OLD.numero_fecha
+       AND NEW.id_equipo_local     <=> OLD.id_equipo_local
+       AND NEW.id_equipo_visitante <=> OLD.id_equipo_visitante
+       AND NEW.dia                 <=> OLD.dia
+       AND NEW.id_turno            <=> OLD.id_turno
+       AND NEW.id_complejo         <=> OLD.id_complejo
+       AND NEW.nombre_cancha       <=> OLD.nombre_cancha) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Un partido jugado no puede modificarse (equipos, fecha, día, turno ni cancha)';
     END IF;
 
     CALL validar_partido(OLD.id_partido, NEW.id_torneo, NEW.numero_fecha,
@@ -294,6 +339,68 @@ BEGIN
                  CONCAT('Sanción automática por acumular ', v_amarillas, ' amarillas'));
         END IF;
     END IF;
+
+    CALL registrar_auditoria(NEW.id_partido, 'tarjeta', 'alta',
+        CONCAT('Tarjeta ', NEW.color, ' a CI ', NEW.ci_jugador, ' (min ', NEW.minuto, ')'));
 END //
+
+
+-- ESTADO DEL TORNEO
+--   Solo avanza: inscripcion -> en curso -> finalizado.
+--   Sin esto, se podía volver a 'inscripcion' con partidos jugados y
+--   modificar los planteles (lo probamos: un equipo quedaba con 4 jugadores).
+CREATE TRIGGER trg_torneo_bu BEFORE UPDATE ON torneo
+FOR EACH ROW
+BEGIN
+    IF NEW.estado <> OLD.estado
+       AND NOT ((OLD.estado = 'inscripcion' AND NEW.estado = 'en curso')
+             OR (OLD.estado = 'en curso'    AND NEW.estado = 'finalizado')) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El estado del torneo solo avanza: inscripción, en curso, finalizado';
+    END IF;
+END //
+
+
+-- AUDITORÍA DE CORRECCIONES
+--   Si el partido ya está marcado como jugado, cualquier cambio en su
+--   planilla, goles o tarjetas es una corrección de resultado: se registra
+--   quién la hizo y qué cambió. (La carga inicial, con el partido todavía
+--   'programado', no se audita.)
+CREATE TRIGGER trg_gol_ai AFTER INSERT ON gol
+FOR EACH ROW
+    CALL registrar_auditoria(NEW.id_partido, 'gol', 'alta',
+        CONCAT(IF(NEW.autogol, 'Autogol', 'Gol'), ' de CI ', NEW.ci_jugador, ' (min ', NEW.minuto, ')')) //
+
+CREATE TRIGGER trg_gol_au AFTER UPDATE ON gol
+FOR EACH ROW
+    CALL registrar_auditoria(NEW.id_partido, 'gol', 'modificacion',
+        CONCAT('Gol ', OLD.id_gol, ': CI ', OLD.ci_jugador, ' min ', OLD.minuto,
+               ' -> CI ', NEW.ci_jugador, ' min ', NEW.minuto)) //
+
+CREATE TRIGGER trg_gol_ad AFTER DELETE ON gol
+FOR EACH ROW
+    CALL registrar_auditoria(OLD.id_partido, 'gol', 'baja',
+        CONCAT('Se eliminó gol de CI ', OLD.ci_jugador, ' (min ', OLD.minuto, ')')) //
+
+CREATE TRIGGER trg_tarjeta_au AFTER UPDATE ON tarjeta
+FOR EACH ROW
+    CALL registrar_auditoria(NEW.id_partido, 'tarjeta', 'modificacion',
+        CONCAT('Tarjeta ', OLD.id_tarjeta, ': ', OLD.color, ' min ', OLD.minuto,
+               ' -> ', NEW.color, ' min ', NEW.minuto)) //
+
+CREATE TRIGGER trg_tarjeta_ad AFTER DELETE ON tarjeta
+FOR EACH ROW
+    CALL registrar_auditoria(OLD.id_partido, 'tarjeta', 'baja',
+        CONCAT('Se eliminó tarjeta ', OLD.color, ' de CI ', OLD.ci_jugador)) //
+
+CREATE TRIGGER trg_planilla_ai AFTER INSERT ON planilla_partido
+FOR EACH ROW
+    CALL registrar_auditoria(NEW.id_partido, 'planilla_partido', 'alta',
+        CONCAT('Se agregó CI ', NEW.ci_jugador, ' (equipo ', NEW.id_equipo, ')')) //
+
+CREATE TRIGGER trg_planilla_ad AFTER DELETE ON planilla_partido
+FOR EACH ROW
+    CALL registrar_auditoria(OLD.id_partido, 'planilla_partido', 'baja',
+        CONCAT('Se quitó CI ', OLD.ci_jugador, ' (equipo ', OLD.id_equipo, ')')) //
 
 DELIMITER ;
