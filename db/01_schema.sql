@@ -1,5 +1,5 @@
 -- SCHEMA DEL OBLIGATORIO 
--- contiene la base de datos, las 14 tablas usadas con sus columnas con sus respectivos tipos de datos,
+-- contiene la base de datos, las 14 tablas de la letra + auditoria_resultado con sus columnas con sus respectivos tipos de datos,
 -- las llaves primarias y foráneas, y las restricciones.
 -- Lo único que carga con datos son los 5 turnos (de 18 a 23), porque son fijos.
 SET NAMES utf8mb4;    -- tildess
@@ -181,10 +181,10 @@ CREATE TABLE gol (
     ci_jugador VARCHAR(8) NOT NULL,
     minuto     TINYINT    NOT NULL,
     autogol    BOOLEAN    NOT NULL DEFAULT FALSE,
-    -- solo convierte quien figura en la planilla
+    -- solo convierte quien figura en la planilla como planillero
     CONSTRAINT fk_gol_planilla FOREIGN KEY (id_partido, ci_jugador)
         REFERENCES planilla_partido(id_partido, ci_jugador),
-    CONSTRAINT chk_gol_minuto CHECK (minuto BETWEEN 0 AND 60)   -- ajustar a la duración real
+    CONSTRAINT chk_gol_minuto CHECK (minuto BETWEEN 0 AND 60)  
 );
 
 CREATE TABLE tarjeta (
@@ -220,6 +220,24 @@ CREATE TABLE sancion_jugador (
     CONSTRAINT fk_sancion_tarjeta FOREIGN KEY (id_tarjeta)
         REFERENCES tarjeta(id_tarjeta) ON DELETE CASCADE,
     CONSTRAINT chk_sancion_fechas CHECK (numero_fecha_inicio >= 1 AND cantidad_fechas >= 1)
+);
+
+-- Auditoría de correcciones
+-- Trazabilidad: cada vez que se toca la planilla, un gol o una tarjeta de un
+-- partido que ya está marcado como jugado (corrección dentro de las 48 h),
+-- un trigger deja registro acá. Nadie, salvo root, puede modificar esta tabla.
+CREATE TABLE auditoria_resultado (
+    id_auditoria INT AUTO_INCREMENT PRIMARY KEY,
+    id_partido   INT          NOT NULL,
+    tabla        ENUM('planilla_partido','gol','tarjeta') NOT NULL,
+    accion       ENUM('alta','modificacion','baja')       NOT NULL,
+    detalle      VARCHAR(255) NOT NULL,
+    -- el backend setea el @usuario_app con el correo del usuario logueado;
+    -- si no hay, queda el usuario de sql
+    usuario      VARCHAR(100) NOT NULL,
+    fecha_hora   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_auditoria_partido FOREIGN KEY (id_partido) REFERENCES partido(id_partido),
+    INDEX idx_auditoria_partido (id_partido, fecha_hora)
 );
 
 -- Datos maestros: los 5 turnos fijos del torneo, de 18:00 a 23:00.
