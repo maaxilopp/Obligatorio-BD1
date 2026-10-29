@@ -29,7 +29,7 @@ ORDER BY posicion, jugador;
 
 
 -- 3. FAIR PLAY POR EQUIPO (amarilla = 1, roja = 3; el mejor es el de menor puntaje)
-SELECT RANK() OVER (ORDER BY puntaje) AS posicion,
+SELECT DENSE_RANK() OVER (ORDER BY puntaje) AS posicion,
        equipo, amarillas, rojas, puntaje
 FROM v_fair_play
 WHERE id_torneo = @torneo
