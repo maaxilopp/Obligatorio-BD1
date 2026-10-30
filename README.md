@@ -143,8 +143,6 @@ cp .env.example .env        # en Windows: copy .env.example .env
 uvicorn backend.main:app --reload
 ```
 
-La documentación interactiva de la API queda en http://localhost:8000/docs.
-
 #### 3. Levantar el frontend
 
 Requiere [Node.js](https://nodejs.org/) 20 o superior. Con el backend corriendo, en otra terminal:
