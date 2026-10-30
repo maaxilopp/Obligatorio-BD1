@@ -87,7 +87,6 @@ Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 docker compose up --build
 ```
 
-- API y documentación interactiva: http://localhost:8000/docs
 - MySQL: `localhost:3307`, usuario `root`, contraseña `root` (puerto 3307 para no chocar con un MySQL instalado). Sirve para conectarse desde DataGrip.
 
 La base se crea **solo la primera vez**, con los scripts `01` a `06`. Como los datos de prueba usan fechas relativas al día de carga, para recrearla desde cero (por ejemplo, el día de la defensa):
