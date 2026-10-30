@@ -40,7 +40,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 ### Reportes
 
 1. Tabla de posiciones, con partidos jugados, ganados, empatados y perdidos, goles a favor y en contra, diferencia de goles y puntos.
-2. Tabla de goleadores los 10 primeros, incluyendo a los empatados.
+2. Tabla de goleadores: los 10 primeros, incluyendo a los empatados.
 3. Clasificación de fair play por equipo.
 4. Promedio de goles por fecha y para toda la edición.
 5. Utilización de canchas y turnos.
