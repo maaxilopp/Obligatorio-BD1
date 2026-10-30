@@ -9,8 +9,10 @@ from backend.routers import (
     equipos,
     facultades,
     jugadores,
+    partidos,
     planillas,
     reportes,
+    sanciones,
     torneos,
 )
 
@@ -39,6 +41,8 @@ app.include_router(complejos.router)
 app.include_router(torneos.router)
 app.include_router(planillas.router)
 app.include_router(reportes.router)
+app.include_router(partidos.router)
+app.include_router(sanciones.router)
 
 MENSAJES = {
     "missing": "es obligatorio",
