@@ -7,7 +7,7 @@ from backend.auth import solo_admin
 from backend.database import consultar, ejecutar
 
 router = APIRouter(prefix="/partidos", tags=["Administración de partidos"])
-EstadoEditable = Literal["cancelado", "postergado"]
+EstadoEditable = Literal["programado", "cancelado", "postergado"]
 
 class PartidoDatos(BaseModel):
     id_torneo: int = Field(gt=0)

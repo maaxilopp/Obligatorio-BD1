@@ -71,8 +71,8 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `db/`       | Scripts SQL numerados (esquema, triggers, procedimientos, vistas, usuarios, datos de prueba, reportes) y `setup_db.py` |
 | `backend/`  | API en FastAPI: conexión por rol, login, traducción de errores y un archivo por grupo de endpoints en `routers/`       |
-| `frontend/` | Aplicación en React (en desarrollo)                                                                                    |
-| `tests/`    | Tests automáticos (pytest) de las reglas de negocio, permisos, reportes y API, contra MySQL real                       |
+| `frontend/` | Aplicación en React + Vite: login, menú por rol, catálogos, partidos, planillas y reportes                             |
+| `tests/`    | Tests automáticos (pytest) contra MySQL real: `db/` reglas de la base (triggers, permisos) y `api/` endpoints del backend |
 | `docs/`     | Diagrama, informe y bitácora                                                                                           |
 
 ## Cómo correrlo
@@ -143,6 +143,20 @@ cp .env.example .env        # en Windows: copy .env.example .env
 uvicorn backend.main:app --reload
 ```
 
+La documentación interactiva de la API queda en http://localhost:8000/docs.
+
+#### 3. Levantar el frontend
+
+Requiere [Node.js](https://nodejs.org/) 20 o superior. Con el backend corriendo, en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+La aplicación queda en http://localhost:5173. Se entra con los usuarios de la tabla de abajo.
+
 ## Usuarios
 
 | Aplicación              | Contraseña      | Rol           |
@@ -162,11 +176,15 @@ uvicorn backend.main:app --reload
 2. Ese token va en cada pedido, en el header `Authorization: Bearer <token>`. En `/docs`, se pega con el botón **Authorize**.
 3. Según el rol del token, el backend se conecta a MySQL con `torneo_admin` o con `torneo_planillero`. Así, aunque el backend tuviera un error, la base igual impide que un planillero haga algo que no le corresponde.
 
-| Endpoints                                              | Administrador | Planillero |
-| ------------------------------------------------------ | ------------- | ---------- |
-| `/jugadores` (ABM)                                     | puede         | no puede   |
-| `/partidos`: ver partidos, cargar goles, marcar jugado | puede         | puede      |
-| `/torneos/{id}/...` (reportes)                         | puede         | no puede   |
+| Endpoints                                                              | Administrador | Planillero |
+| ---------------------------------------------------------------------- | ------------- | ---------- |
+| `/facultades`, `/torneos`, `/equipos`, `/complejos`, `/turnos`: ver    | puede         | puede      |
+| `/facultades`, `/torneos`, `/equipos`, `/complejos`, `/jugadores`: ABM | puede         | no puede   |
+| `/partidos`: programar, modificar, postergar, cancelar                 | puede         | no puede   |
+| `/partidos/{id}/...`: planilla, goles, tarjetas y marcar jugado        | puede         | puede      |
+| `/sanciones`: ver                                                      | puede         | puede      |
+| `/sanciones`: ABM de disciplinarias                                    | puede         | no puede   |
+| `/torneos/{id}/...` y `/reportes/...` (reportes)                       | puede         | no puede   |
 
 Cuando la base rechaza una operación, la API responde con el motivo en español. Por ejemplo, con `400` y "Pasaron más de 48 horas desde el partido: su resultado ya no puede corregirse", o con `409` y "La cancha ya tiene un partido en ese día y turno".
 
@@ -177,12 +195,12 @@ Prueban cada regla de la letra intentando violarla, además de los permisos, los
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 # Windows (PowerShell): $env:DB_PASSWORD="..."   |   Linux/Mac: export DB_PASSWORD=...
-pytest tests -v
+pytest -v
 ```
 
 Con la base de Docker, agregar también `DB_PORT=3307` y usar `DB_PASSWORD=root`.
 
-**Última ejecución:** 90 tests aprobados.
+**Última ejecución:** 144 tests aprobados.
 
 ## Organización
 
