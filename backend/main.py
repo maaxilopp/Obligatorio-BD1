@@ -18,7 +18,7 @@ from backend.routers import (
 
 app = FastAPI(
     title="Torneo Interfacultades de Fútbol 5",
-    description="API para la gestión del torneo de la UCU",
+    description="!Hola Mundo! Esta es la API para el Torneo Interfacultades de Fútbol 5 :d. ",
     version="1.0.0",
 )
 
