@@ -54,7 +54,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 
 **Base de datos (MySQL).** Las reglas de negocio viven en la base, así se cumplen sin importar desde dónde se accede:
 
-- Tablas con claves primarias, foráneas, algunas compuestas, y restricciones`.
+- Tablas con claves primarias, foráneas, algunas compuestas, y restricciones.
 - Triggers para las reglas que no entran en una constraint y para las sanciones automáticas.
 - Procedimientos almacenados para generar el fixture y para cerrar un partido.
 - Vistas que centralizan los cálculos de los reportes.
@@ -152,7 +152,7 @@ npm install
 npm run dev
 ```
 
-La aplicación queda en http://localhost:5173. Se entra con los usuarios de la tabla de abajo.
+La aplicación queda en http://localhost:5173 (la API corre en http://localhost:8000). Se entra con los usuarios de la tabla de abajo.
 
 ## Usuarios
 
@@ -166,24 +166,6 @@ La aplicación queda en http://localhost:5173. Se entra con los usuarios de la t
 | `torneo_admin`      | `Admin.Torneo2026`      | conexión del backend para administradores         |
 | `torneo_planillero` | `Planillero.Torneo2026` | conexión del backend para planilleros             |
 | `torneo_auth`       | `Auth.Torneo2026`       | solo lee `login` para validar el inicio de sesión |
-
-## Cómo usar la API
-
-1. `POST /login` con `{"correo": "...", "contrasena": "..."}` devuelve un `token`.
-2. Ese token va en cada pedido, en el header `Authorization: Bearer <token>`. En `/docs`, se pega con el botón **Authorize**.
-3. Según el rol del token, el backend se conecta a MySQL con `torneo_admin` o con `torneo_planillero`. Así, aunque el backend tuviera un error, la base igual impide que un planillero haga algo que no le corresponde.
-
-| Endpoints                                                              | Administrador | Planillero |
-| ---------------------------------------------------------------------- | ------------- | ---------- |
-| `/facultades`, `/torneos`, `/equipos`, `/complejos`, `/turnos`: ver    | puede         | puede      |
-| `/facultades`, `/torneos`, `/equipos`, `/complejos`, `/jugadores`: ABM | puede         | no puede   |
-| `/partidos`: programar, modificar, postergar, cancelar                 | puede         | no puede   |
-| `/partidos/{id}/...`: planilla, goles, tarjetas y marcar jugado        | puede         | puede      |
-| `/sanciones`: ver                                                      | puede         | puede      |
-| `/sanciones`: ABM de disciplinarias                                    | puede         | no puede   |
-| `/torneos/{id}/...` y `/reportes/...` (reportes)                       | puede         | no puede   |
-
-Cuando la base rechaza una operación, la API responde con el motivo en español. Por ejemplo, con `400` y "Pasaron más de 48 horas desde el partido: su resultado ya no puede corregirse", o con `409` y "La cancha ya tiene un partido en ese día y turno".
 
 ## Tests
 
