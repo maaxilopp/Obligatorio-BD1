@@ -22,7 +22,7 @@ Trabajo obligatorio de Base de Datos I - Segundo semestre de 2026.
 
 ## Descripción del proyecto
 
-El proyecto consiste en el diseño e implementación de un sistema de información para la gestión del Torneo Interfacultades de Fútbol 5.
+El proyecto consiste en el diseño e implementación de un sistema de información para la gestión de un Torneo Interfacultades de Fútbol 5.
 
 El objetivo es centralizar la información del torneo y asegurar la integridad de los datos, automatizando las reglas de negocio relacionadas con la inscripción de equipos, la programación de partidos, el registro de resultados y las sanciones disciplinarias.
 
@@ -55,7 +55,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 **Base de datos (MySQL).** Las reglas de negocio viven en la base, así se cumplen sin importar desde dónde se accede:
 
 - Tablas con claves primarias, foráneas, algunas compuestas, y restricciones.
-- Triggers para las reglas que no entran en una constraint y para las sanciones automáticas.
+- Triggers para las reglas que no entran en una restricción y para las sanciones automáticas.
 - Procedimientos almacenados para generar el fixture y para cerrar un partido.
 - Vistas que centralizan los cálculos de los reportes.
 - Usuarios de MySQL con permisos diferenciados por rol.
@@ -89,7 +89,7 @@ docker compose up --build
 
 - MySQL: `localhost:3307`, usuario `root`, contraseña `root` (puerto 3307 para no chocar con un MySQL instalado). Sirve para conectarse desde DataGrip.
 
-La base se crea **solo la primera vez**, con los scripts `01` a `06`. Como los datos de prueba usan fechas relativas al día de carga, para recrearla desde cero (por ejemplo, el día de la defensa):
+La base se crea **solo la primera vez**, con los scripts `01` a `06`. Como los datos de prueba usan fechas relativas al día de carga, para recrearla desde cero.
 
 ```bash
 docker compose down -v
@@ -128,7 +128,8 @@ pip install -r requirements-dev.txt
 python db/setup_db.py --password <contraseña de root>
 ```
 
-> Los datos de prueba usan fechas relativas al día en que se cargan: la fecha 3 se jugó "ayer" (todavía se puede corregir, ventana de 48 h) y la fecha 4 queda a futuro. Si pasan más de dos días, conviene volver a cargarlos.
+
+Los datos de prueba usan fechas relativas al día en que se cargan: la fecha 3 se jugó "ayer" (todavía se puede corregir, ventana de 48 h) y la fecha 4 queda a futuro. Si pasan más de dos días, conviene volver a cargarlos.
 
 #### 2. Levantar el backend
 
