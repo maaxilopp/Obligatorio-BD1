@@ -18,7 +18,7 @@ ORDER BY posicion, equipo;
 
 -- 2. TABLA DE GOLEADORES (top 10, sin autogoles)
 --    Con DENSE_RANK() los empatados comparten posición: si hay empate en el
---    puesto 10, entran todos los empatados (puede devolver más de 10 filas).
+--    puesto 10, entran todos los empatados.
    SELECT DENSE_RANK() OVER (ORDER BY goles DESC) AS posicion, jugador, equipo, goles
    FROM (SELECT RANK() OVER (ORDER BY goles DESC) AS corte, jugador, equipo, goles
          FROM v_goleadores
@@ -35,7 +35,7 @@ ORDER BY posicion, equipo;
 
 
 -- 4. PROMEDIO DE GOLES POR PARTIDO, POR FECHA Y EN TODA LA EDICIÓN
---    WITH ROLLUP agrega la fila del total de la edición (numero_fecha NULL).
+--    WITH ROLLUP es un comando de SQL, que aunque no vimos en clase, agrega la fila del total de la edición, con fecha null.
 SELECT IF(GROUPING(numero_fecha), 'Total edición', CONCAT('Fecha ', numero_fecha)) AS fecha,
        COUNT(*)                                          AS partidos_jugados,
        SUM(goles_local + goles_visitante)                AS goles,
@@ -177,10 +177,7 @@ WHERE tp.id_torneo = @torneo
 GROUP BY tp.id_equipo, tp.equipo, tp.pts
 ORDER BY puntos_ultimos_3 DESC, tp.pts DESC;
 
-
--- CONSULTAS PARA DEFENSA
-
--- Jugadores suspendidos para una fecha (lo que ve el planillero)
+-- Jugadores suspendidos para una fecha 
 SET @fecha = 4;
 SELECT jugador, equipo, motivo, desde_fecha, hasta_fecha
 FROM v_sanciones
