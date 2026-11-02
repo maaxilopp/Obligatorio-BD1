@@ -5,6 +5,7 @@
 
 .app {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
@@ -118,4 +119,26 @@ button {
 
 .error {
   color: #c0392b;
+}
+
+
+/* Nuevo diseño del torneo */
+
+.sidebar {
+  display: none;
+}
+
+.app {
+  background-color: #fff8e7;
+  min-height: 100vh;
+}
+
+.content {
+  background-color: #fff8e7;
+  color: #191720;
+  padding: 35px;
+}
+
+.content h1 {
+  color: #191720;
 }

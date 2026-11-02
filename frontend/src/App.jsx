@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { apiRequest, login } from './services/api';
 import './App.css';
+import Navbar from './components/Navbar';
+import TablaPosiciones from './components/TablaPosiciones';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -63,6 +65,60 @@ function App() {
       setError(err.message);
     }
   }
+
+  
+
+async function cambiarSeccionNavbar(nombre) {
+  if (nombre === 'Posiciones') {
+    setSeccion({ nombre: 'Posiciones' });
+    setDatos(null);
+    setError('');
+    setCargando(true);
+
+    try {
+      // Primero buscamos los torneos disponibles
+      const torneosDisponibles = await apiRequest('/torneos');
+
+      if (torneosDisponibles.length === 0) {
+        setError('No hay torneos disponibles.');
+        return;
+      }
+
+      // Por ahora mostramos el primer torneo
+      const idTorneo = torneosDisponibles[0].id_torneo;
+
+      // Pedimos las posiciones al backend
+      const resultado = await apiRequest(
+        `/torneos/${idTorneo}/posiciones`
+      );
+
+      const rachas = await apiRequest(
+  `/torneos/${idTorneo}/rachas`
+);
+
+setDatos({
+  posiciones: resultado.posiciones,
+  rachas: rachas
+});
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+
+    return;
+  }
+
+  const item = SECCIONES.find(
+    (seccion) => seccion.nombre === nombre
+  );
+
+  if (item) {
+    cargarSeccion(item);
+  }
+}
+
+
 
   async function cargarSeccion(item) {
     setSeccion(item);
@@ -244,6 +300,13 @@ function App() {
 
   return (
     <div className="app">
+      
+      <Navbar
+        seccionActual={seccion.nombre}
+        cambiarSeccion={cambiarSeccionNavbar}
+        rol="Admin"
+      />
+
       <aside className="sidebar">
         <h2>Torneo UCU</h2>
 
@@ -266,8 +329,12 @@ function App() {
 
       <main className="content">
         <header>
-          <h1>{seccion.nombre}</h1>
-          <span>Panel de administración</span>
+          {seccion.nombre !== 'Posiciones' && (
+  <h1>{seccion.nombre}</h1>
+)}
+          {seccion.nombre !== 'Posiciones' && (
+  <span>Panel de administración</span>
+)}
         </header>
 
         {(seccion.nombre === 'Partidos' ||
@@ -374,6 +441,15 @@ function App() {
             </select>
           </section>
         )}
+        
+        {seccion.nombre === 'Posiciones' &&
+  datos !== null &&
+  !Array.isArray(datos) && (
+    <TablaPosiciones
+      posiciones={datos.posiciones}
+      rachas={datos.rachas}
+    />
+  )}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}
@@ -415,6 +491,7 @@ function App() {
 
         {seccion.nombre !== 'Partidos' &&
           seccion.nombre !== 'Planillas' &&
+          seccion.nombre !== 'Posiciones' &&
           datos !== null && (
             <pre className="resultado">
               {JSON.stringify(datos, null, 2)}

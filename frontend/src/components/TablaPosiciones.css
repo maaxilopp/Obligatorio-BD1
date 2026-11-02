@@ -1,0 +1,231 @@
+
+.posiciones-contenedor {
+  margin-top: 30px;
+  width: 100%;
+}
+
+.posiciones-contenedor h2 {
+  font-size: 38px;
+  font-weight: 900;
+  margin-bottom: 25px;
+  color: #191720;
+}
+
+.posiciones-scroll {
+  overflow-x: auto;
+  border: 3px solid #191720;
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 #191720;
+  background: white;
+}
+
+.tabla-posiciones {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  color: #191720;
+}
+
+.tabla-posiciones thead {
+  background: #191720;
+  color: white;
+}
+
+.tabla-posiciones th {
+  padding: 16px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabla-posiciones td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e5dfd2;
+}
+
+.tabla-posiciones tbody tr:first-child {
+  background: #fff3c9;
+}
+
+.tabla-posiciones tbody tr:hover {
+  background: #fff8e7;
+}
+
+.nombre-equipo {
+  min-width: 150px;
+  text-align: left;
+}
+
+.nombre-equipo strong {
+  display: block;
+  font-weight: 800;
+}
+
+.nombre-equipo small {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+  font-size: 12px;
+}
+
+.puntos-equipo {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+@media (max-width: 768px) {
+  .posiciones-contenedor h2 {
+    font-size: 28px;
+  }
+
+  .tabla-posiciones {
+    font-size: 13px;
+  }
+
+  .tabla-posiciones th,
+  .tabla-posiciones td {
+    padding: 12px 8px;
+  }
+}
+
+/* Encabezado y líder del torneo */
+
+.posiciones-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 35px;
+}
+
+.posiciones-encabezado h2 {
+  font-size: 44px;
+  margin: 10px 0;
+  text-align: left;
+}
+
+.posiciones-edicion {
+  color: #c83327;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.lider-circulo {
+  width: 210px;
+  height: 210px;
+  flex-shrink: 0;
+  border: 11px solid #ffcc42;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  box-shadow: 0 12px 20px #00000012;
+  color: #191720;
+  padding: 15px;
+}
+
+.lider-etiqueta {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.lider-escudo {
+  background: #ff801f;
+  border: 2px solid #191720;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 900;
+  font-size: 23px;
+}
+
+.lider-circulo strong {
+  font-size: 17px;
+}
+
+.lider-circulo > span:last-child {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .posiciones-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lider-circulo {
+    align-self: center;
+  }
+
+  .posiciones-encabezado h2 {
+    font-size: 32px;
+  }
+}
+
+/* Insignias de los equipos */
+
+.equipo-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.equipo-escudo {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff801f;
+  border: 2px solid #191720;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #191720;
+}
+
+.equipo-info strong {
+  display: block;
+}
+
+.equipo-info small {
+  display: block;
+}
+
+
+/* Resultados de los últimos partidos */
+
+.racha-equipo {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.racha-cuadro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border: 2px solid #191720;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.racha-G {
+  background-color: #24a36a;
+}
+
+.racha-E {
+  background-color: #ffcc42;
+}
+
+.racha-P {
+  background-color: #d5352d;
+  color: white;
+}
