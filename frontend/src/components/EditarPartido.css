@@ -1,0 +1,172 @@
+
+/* Formulario para editar partidos */
+
+.editar-partido {
+  width: 100%;
+  max-width: 350px;
+  background: white;
+  border: 3px solid #191720;
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 #191720;
+  overflow: hidden;
+  color: #191720;
+}
+
+/* Encabezado rojo */
+
+.editar-partido-titulo {
+  background: #cf3025;
+  padding: 16px;
+  border-bottom: 3px solid #191720;
+}
+
+.editar-partido-titulo h2 {
+  margin: 0;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Contenido del formulario */
+
+.editar-partido form {
+  padding: 16px;
+}
+
+.editar-partido-equipos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.editar-partido-equipos strong {
+  flex: 1;
+}
+
+.editar-partido-equipos span {
+  padding: 6px 9px;
+  background: #191720;
+  color: white;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* Campos */
+
+.editar-partido-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.editar-partido-campos > div {
+  min-width: 0;
+}
+
+.editar-partido label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.editar-partido input,
+.editar-partido select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px;
+  border: 2px solid #191720;
+  border-radius: 7px;
+  background: white;
+  color: #191720;
+  font-size: 11px;
+}
+
+.editar-partido input:focus,
+.editar-partido select:focus {
+  outline: 2px solid #89c9f4;
+  outline-offset: 1px;
+}
+
+.editar-partido .campo-completo {
+  grid-column: 1 / -1;
+}
+
+/* Estados */
+
+.editar-partido-estado {
+  margin-top: 20px;
+}
+
+.editar-estado-opciones {
+  display: flex;
+  gap: 7px;
+}
+
+.editar-estado-opciones button {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 5px;
+  border: 2px solid #191720;
+  border-radius: 7px;
+  background: white;
+  color: #191720;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editar-estado-opciones button.estado-seleccionado {
+  background: #ffcc42;
+}
+
+.editar-estado-opciones button:hover {
+  background: #fff2cc;
+}
+
+/* Botones inferiores */
+
+.editar-partido-botones {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.editar-partido-botones button {
+  flex: 1;
+  padding: 11px 8px;
+  border: 2px solid #191720;
+  border-radius: 7px;
+  color: #191720;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.editar-guardar {
+  background: #80d5a4;
+}
+
+.editar-cancelar {
+  background: white;
+}
+
+.editar-guardar:hover {
+  background: #5bc58c;
+}
+
+.editar-cancelar:hover {
+  background: #eeeeee;
+}
+
+@media (max-width: 768px) {
+  .editar-partido {
+    max-width: none;
+  }
+}

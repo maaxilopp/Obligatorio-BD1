@@ -1,0 +1,412 @@
+
+/* Pantalla principal del Fixture */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+.fixture-contenedor {
+  width: 100%;
+  padding: 10px 0 40px;
+  color: #191720;
+}
+
+.fixture-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.fixture-etiqueta {
+  color: #c83327;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.fixture-encabezado h1 {
+  color: #191720;
+  font-size: 48px;
+  font-weight: 900;
+  margin: 0;
+}
+
+/* Resumen de partidos */
+
+.fixture-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.fixture-resumen span {
+  padding: 8px 14px;
+  background: white;
+  border: 2px solid #191720;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.fixture-resumen .resumen-jugado {
+  background: #80d5a4;
+}
+
+.fixture-resumen .resumen-programado {
+  background: #89c9f4;
+}
+
+.fixture-resumen .resumen-postergado {
+  background: #ffcc42;
+}
+
+.fixture-resumen .resumen-cancelado {
+  background: #ff9890;
+}
+
+/* Pestañas para seleccionar fechas */
+
+.fixture-fechas {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.fixture-fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 145px;
+  padding: 15px;
+  background: white;
+  color: #191720;
+  border: 2px solid #191720;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 #191720;
+  cursor: pointer;
+}
+
+.fixture-fecha strong {
+  font-size: 16px;
+}
+
+.fixture-fecha small {
+  font-size: 12px;
+  color: #777;
+}
+
+.fixture-fecha:hover {
+  background: #fff0c7;
+}
+
+.fixture-fecha.activa {
+  background: #cf3025;
+  color: white;
+}
+
+.fixture-fecha.activa small {
+  color: white;
+}
+
+/* Tarjetas de partidos */
+
+.fixture-partidos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 850px;
+}
+
+.fixture-partido {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  background: white;
+  border: 3px solid #191720;
+  border-radius: 13px;
+  box-shadow: 5px 5px 0 #191720;
+  overflow: hidden;
+  min-height: 110px;
+}
+
+.fixture-enfrentamiento {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 22px;
+}
+
+.fixture-equipo {
+  font-size: 15px;
+  font-weight: 900;
+  flex: 1;
+}
+
+.fixture-vs {
+  background: #191720;
+  color: white;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fixture-detalles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 18px;
+  background: #faf8f2;
+  border-left: 2px dashed #c5c0b5;
+  font-size: 12px;
+}
+
+.fixture-dia {
+  font-weight: 900;
+  font-size: 15px;
+}
+
+/* Estados */
+
+.fixture-estado {
+  display: inline-block;
+  padding: 5px 10px;
+  border: 2px solid #191720;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.estado-jugado {
+  background: #80d5a4;
+}
+
+.estado-programado {
+  background: #89c9f4;
+}
+
+.estado-postergado {
+  background: #ffcc42;
+}
+
+.estado-cancelado {
+  background: #ff9890;
+}
+
+/* Adaptación para pantallas pequeñas */
+
+@media (max-width: 768px) {
+  .fixture-encabezado h1 {
+    font-size: 34px;
+  }
+
+  .fixture-fecha {
+    min-width: 120px;
+  }
+
+  .fixture-partido {
+    grid-template-columns: 1fr;
+  }
+
+  .fixture-enfrentamiento {
+    padding: 18px;
+  }
+
+  .fixture-detalles {
+    border-left: none;
+    border-top: 2px dashed #c5c0b5;
+  }
+}
+
+
+
+/* Tipografía retro del Fixture */
+
+.fixture-contenedor h1,
+.fixture-fecha strong,
+.fixture-vs,
+.fixture-estado {
+  font-family: 'Press Start 2P', monospace;
+}
+
+.fixture-contenedor h1 {
+  font-size: 36px;
+}
+
+.fixture-fecha strong {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.fixture-vs {
+  font-size: 10px;
+}
+
+.fixture-estado {
+  font-size: 9px;
+}
+
+.fixture-resumen,
+.fixture-equipo,
+.fixture-detalles {
+  font-family: 'Inter', sans-serif;
+}
+
+
+
+/* Escudos de los equipos */
+
+.fixture-equipo-con-escudo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fixture-equipo-con-escudo:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.fixture-equipo-con-escudo .fixture-equipo {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fixture-equipo-con-escudo .insignia {
+  flex-shrink: 0;
+}
+
+
+
+/* Ajustes finales de las tarjetas */
+
+.fixture-partido {
+  min-height: 90px;
+  grid-template-columns: minmax(0, 1fr) 230px;
+}
+
+.fixture-enfrentamiento {
+  padding: 12px 18px;
+}
+
+.fixture-detalles {
+  padding: 12px 16px;
+  gap: 6px;
+}
+
+.fixture-horario {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+}
+
+.fixture-estado-texto {
+  display: none;
+}
+
+.fixture-dia {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fixture-equipo-con-escudo .fixture-equipo {
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .fixture-partido {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Botón para editar un partido */
+
+.fixture-boton-editar {
+  width: fit-content;
+  padding: 7px 12px;
+  background: white;
+  color: #191720;
+  border: 2px solid #191720;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fixture-boton-editar:hover {
+  background: #ffcc42;
+}
+
+
+
+/* Lista de partidos + formulario lateral */
+
+.fixture-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  align-items: start;
+  gap: 20px;
+}
+
+/* Cuando no hay formulario, las tarjetas ocupan todo */
+
+.fixture-cuerpo:not(:has(.editar-partido)) {
+  grid-template-columns: 1fr;
+}
+
+.fixture-cuerpo .fixture-partidos {
+  min-width: 0;
+}
+
+@media (max-width: 1050px) {
+  .fixture-cuerpo {
+    grid-template-columns: 1fr;
+  }
+
+  .fixture-cuerpo .editar-partido {
+    max-width: none;
+  }
+}
+
+
+
+/* Ajuste definitivo del tamaño de las tarjetas */
+
+.fixture-partido {
+  min-height: 0;
+  height: auto;
+}
+
+.fixture-enfrentamiento {
+  min-height: 125px;
+  padding: 12px 16px;
+}
+
+.fixture-detalles {
+  min-height: 125px;
+  padding: 12px 16px;
+  gap: 5px;
+}
+
+.fixture-partidos {
+  gap: 14px;
+}
+
+
+.fixture-mensaje-exito {
+  background: #80d5a4;
+  border: 2px solid #191720;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: bold;
+  margin: 16px 0;
+}

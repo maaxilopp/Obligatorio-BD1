@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { apiRequest, login } from './services/api';
 import './App.css';
+import './components/Login.css';
 import Navbar from './components/Navbar';
 import TablaPosiciones from './components/TablaPosiciones';
+import Fixture from './components/Fixture';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -50,6 +52,8 @@ function App() {
   const [torneos, setTorneos] = useState([]);
   const [torneoSeleccionado, setTorneoSeleccionado] = useState('');
   const [partidos, setPartidos] = useState([]);
+  const [turnos, setTurnos] = useState([]);
+  const [complejos, setComplejos] = useState([]);
   const [partidoSeleccionado, setPartidoSeleccionado] = useState('');
 
   const [reporteSeleccionado, setReporteSeleccionado] = useState('');
@@ -181,10 +185,20 @@ function App() {
     setCargando(true);
 
     try {
-      const resultado = await apiRequest(
-        `/partidos?id_torneo=${idTorneo}`
-      );
-      setPartidos(Array.isArray(resultado) ? resultado : []);
+      
+const [resultado, datosTurnos, datosComplejos] =
+  await Promise.all([
+    apiRequest(`/partidos?id_torneo=${idTorneo}`),
+    apiRequest('/turnos'),
+    apiRequest('/complejos')
+  ]);
+
+setPartidos(Array.isArray(resultado) ? resultado : []);
+setTurnos(Array.isArray(datosTurnos) ? datosTurnos : []);
+setComplejos(
+  Array.isArray(datosComplejos) ? datosComplejos : []
+);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -276,38 +290,65 @@ function App() {
     setDatos(null);
   }
 
-  if (!token) {
-    return (
-      <main className="login-container">
+
+if (!token) {
+  return (
+    <main className="login-container">
+      <section className="login-cancha">
+        <div className="login-brand">
+          <div className="login-brand-logo"></div>
+
+          <div className="login-brand-text">
+            <span>Torneo InterFacultades</span>
+            <span>Universidad Católica del Uruguay</span>
+          </div>
+        </div>
+
+        <div className="login-circulo"></div>
+
+        <div className="login-frase">
+          ¡El fútbol es
+          <br />
+          mucho más que
+          <br />
+          un deporte!
+        </div>
+      </section>
+
+      <section className="login-derecha">
         <form className="login-card" onSubmit={handleLogin}>
-          <h1>Torneo Interfacultades</h1>
-          <p>Fútbol 5 · UCU</p>
+          <h1>Ingrese sus datos:</h1>
 
-          <label htmlFor="correo">Correo electrónico</label>
-          <input
-            id="correo"
-            type="email"
-            value={correo}
-            onChange={(event) => setCorreo(event.target.value)}
-            required
-          />
+          <div className="login-form-body">
+            <label htmlFor="correo">Correo</label>
+            <input
+              id="correo"
+              type="email"
+              placeholder="nombre@ucu.edu.uy"
+              value={correo}
+              onChange={(event) => setCorreo(event.target.value)}
+              required
+            />
 
-          <label htmlFor="contrasena">Contraseña</label>
-          <input
-            id="contrasena"
-            type="password"
-            value={contrasena}
-            onChange={(event) => setContrasena(event.target.value)}
-            required
-          />
+            <label htmlFor="contrasena">Contraseña</label>
+            <input
+              id="contrasena"
+              type="password"
+              value={contrasena}
+              onChange={(event) => setContrasena(event.target.value)}
+              required
+            />
 
-          {error && <p className="error">{error}</p>}
+            {error && <p className="error">{error}</p>}
 
-          <button type="submit">Iniciar sesión</button>
+            <button type="submit">Ingresar</button>
+          </div>
         </form>
-      </main>
-    );
-  }
+      </section>
+    </main>
+  );
+}
+
 
   return (
     <div className="app">
@@ -346,19 +387,21 @@ function App() {
         }
       >
         <header>
-          {seccion.nombre !== 'Posiciones' && (
-  <h1>{seccion.nombre}</h1>
-)}
-          {seccion.nombre !== 'Posiciones' && (
-  <span>Panel de administración</span>
-)}
+{seccion.nombre !== 'Posiciones' &&
+  seccion.nombre !== 'Partidos' && (
+    <h1>{seccion.nombre}</h1>
+  )}
+
+{seccion.nombre !== 'Posiciones' &&
+  seccion.nombre !== 'Partidos' && (
+    <span>Panel de administración</span>
+  )}
         </header>
 
         {(seccion.nombre === 'Partidos' ||
           seccion.nombre === 'Planillas' ||
           seccion.nombre === 'Reportes') && (
           <section>
-            <label htmlFor="torneo">Seleccionar torneo</label>
 
             <select
               id="torneo"
@@ -381,7 +424,7 @@ function App() {
 
         {seccion.nombre === 'Partidos' &&
           torneoSeleccionado && (
-            <section>
+            <section className="selector-partido-antiguo">
               <h2>Partidos del torneo</h2>
 
               <label htmlFor="partido">Seleccionar partido</label>
@@ -470,6 +513,19 @@ function App() {
               irA={cambiarSeccionNavbar}
             />
           )}
+
+
+        {seccion.nombre === 'Partidos' &&
+          torneoSeleccionado && (
+            <Fixture
+              key={torneoSeleccionado}
+              partidos={partidos}
+              turnos={turnos}
+              complejos={complejos}
+              onPartidosActualizados={() => cargarPartidos(torneoSeleccionado)}
+            />
+          )}
+
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}

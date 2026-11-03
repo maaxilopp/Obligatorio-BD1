@@ -180,3 +180,9 @@ body {
   margin: 30px auto;
   padding: 0 32px;
 }
+
+/* Ocultar el selector antiguo de partidos */
+
+.selector-partido-antiguo {
+  display: none;
+}

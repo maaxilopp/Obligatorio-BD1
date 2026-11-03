@@ -1,0 +1,359 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Press+Start+2P&display=swap');
+
+:root {
+  --bg-cream: #f7f0df;
+  --green-1: #27a861;
+  --green-2: #2db56a;
+  --dark: #171624;
+  --red: #d62a1d;
+  --yellow: #f2c63b;
+  --white-soft: rgba(255, 255, 255, 0.45);
+}
+
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--bg-cream);
+  font-family: 'Inter', sans-serif;
+}
+
+/* =========================
+   LADO IZQUIERDO - CANCHA
+========================= */
+
+.login-cancha {
+  position: relative;
+  width: 53%;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--green-1) 0,
+      var(--green-1) 90px,
+      var(--green-2) 90px,
+      var(--green-2) 180px
+    );
+}
+
+.login-cancha::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+}
+
+.login-cancha::after {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 28px;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.login-brand {
+  position: absolute;
+  top: 54px;
+  left: 54px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.login-brand-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid var(--dark);
+  background:
+    conic-gradient(
+      from 0deg,
+      #ffffff 0 25%,
+      #1d1d2d 25% 50%,
+      #ffffff 50% 75%,
+      #1d1d2d 75% 100%
+    );
+  box-sizing: border-box;
+}
+
+.login-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--dark);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.login-circulo {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+.login-frase {
+  position: absolute;
+  left: 56px;
+  bottom: 230px;
+  z-index: 3;
+  max-width: 620px;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 44px;
+  line-height: 1.55;
+  letter-spacing: 0.5px;
+}
+
+/* =========================
+   LADO DERECHO
+========================= */
+
+.login-derecha {
+  width: 47%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-cream);
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+/* =========================
+   FORMULARIO TIPO PLANILLA
+========================= */
+
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: #f3f3f3;
+  border: 4px solid var(--dark);
+  border-radius: 26px;
+  overflow: visible;
+  box-shadow: 14px 10px 0 #1a1a2a;
+  padding: 0 0 28px 0;
+}
+
+/* pieza roja vertical */
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 165px;
+  border: 4px solid var(--dark);
+  border-bottom: none;
+  background: linear-gradient(
+    90deg,
+    #c32519 0%,
+    #c32519 18%,
+    #ef6a58 18%,
+    #ef6a58 28%,
+    #c32519 28%,
+    #c32519 72%,
+    #ef6a58 72%,
+    #ef6a58 82%,
+    #c32519 82%,
+    #c32519 100%
+  );
+  z-index: 0;
+}
+
+/* soporte gris del clip */
+.login-card::after {
+  content: "";
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 32px;
+  border: 4px solid var(--dark);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: #d7d2c8;
+  z-index: 2;
+}
+
+.login-card h1 {
+  position: relative;
+  margin: 0;
+  padding: 54px 30px 28px;
+  background: var(--red);
+  color: white;
+  border-bottom: 4px solid var(--dark);
+  border-radius: 22px 22px 0 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 30px;
+  line-height: 1.45;
+  z-index: 1;
+}
+
+/* ranura blanca del clip */
+.login-card h1::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 12px;
+  border: 4px solid var(--dark);
+  border-radius: 999px;
+  background: #fff7ea;
+}
+
+.login-form-body {
+  padding: 22px 28px 0;
+}
+
+.login-card label {
+  display: block;
+  margin: 10px 0 10px;
+  color: #20202b;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.login-card input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 4px solid #2b2b36;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 18px 16px;
+  font-size: 16px;
+  color: #2b2b36;
+  outline: none;
+  margin-bottom: 18px;
+}
+
+.login-card input::placeholder {
+  color: #6f7178;
+}
+
+.login-card input:focus {
+  border-color: #171624;
+}
+
+.login-card .error {
+  margin: 4px 0 14px;
+  color: #c83327;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-card button {
+  width: 100%;
+  border: 4px solid var(--dark);
+  border-radius: 16px;
+  background: var(--yellow);
+  color: #1a1a2a;
+  padding: 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 8px 6px 0 #1a1a2a;
+  transition: transform 0.08s ease;
+}
+
+.login-card button:hover {
+  transform: translate(-1px, -1px);
+}
+
+.login-card button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 5px 4px 0 #1a1a2a;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+  .login-frase {
+    font-size: 34px;
+    max-width: 500px;
+  }
+
+  .login-brand-text {
+    font-size: 12px;
+  }
+
+  .login-card {
+    max-width: 460px;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-cancha,
+  .login-derecha {
+    width: 100%;
+  }
+
+  .login-cancha {
+    min-height: 420px;
+  }
+
+  .login-frase {
+    left: 36px;
+    bottom: 70px;
+    font-size: 24px;
+    max-width: 360px;
+  }
+
+  .login-brand {
+    top: 32px;
+    left: 32px;
+  }
+
+  .login-brand-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .login-brand-text {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .login-circulo {
+    width: 210px;
+    height: 210px;
+  }
+
+  .login-derecha {
+    padding: 44px 20px 30px;
+  }
+
+  .login-card::before {
+    top: -110px;
+    height: 125px;
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+  }
+}
