@@ -59,7 +59,9 @@ function App() {
     setError('');
 
     try {
-      await login(correo, contrasena);
+      const sesion = await login(correo, contrasena);
+      localStorage.setItem('correo', sesion.correo || correo);
+      localStorage.setItem('rol', sesion.rol || '');
       setToken(localStorage.getItem('token'));
     } catch (err) {
       setError(err.message);
@@ -68,57 +70,64 @@ function App() {
 
   
 
-async function cambiarSeccionNavbar(nombre) {
-  if (nombre === 'Posiciones') {
+  async function cargarPosiciones(idTorneoElegido) {
     setSeccion({ nombre: 'Posiciones' });
     setDatos(null);
     setError('');
     setCargando(true);
 
     try {
-      // Primero buscamos los torneos disponibles
       const torneosDisponibles = await apiRequest('/torneos');
+      setTorneos(Array.isArray(torneosDisponibles) ? torneosDisponibles : []);
 
-      if (torneosDisponibles.length === 0) {
+      if (!torneosDisponibles || torneosDisponibles.length === 0) {
         setError('No hay torneos disponibles.');
         return;
       }
 
-      // Por ahora mostramos el primer torneo
-      const idTorneo = torneosDisponibles[0].id_torneo;
+      // Por defecto se muestra el primer torneo
+      const idTorneo = idTorneoElegido || torneosDisponibles[0].id_torneo;
+      setTorneoSeleccionado(String(idTorneo));
 
-      // Pedimos las posiciones al backend
-      const resultado = await apiRequest(
-        `/torneos/${idTorneo}/posiciones`
-      );
+      const [resultado, rachas, partidosTorneo, goleadores, turnos, complejos, sanciones] =
+        await Promise.all([
+          apiRequest(`/torneos/${idTorneo}/posiciones`),
+          apiRequest(`/torneos/${idTorneo}/rachas`),
+          apiRequest(`/partidos?id_torneo=${idTorneo}`),
+          apiRequest(`/torneos/${idTorneo}/goleadores`),
+          apiRequest('/turnos'),
+          apiRequest('/complejos'),
+          apiRequest(`/sanciones?id_torneo=${idTorneo}`),
+        ]);
 
-      const rachas = await apiRequest(
-  `/torneos/${idTorneo}/rachas`
-);
-
-setDatos({
-  posiciones: resultado.posiciones,
-  rachas: rachas
-});
+      setDatos({
+        posiciones: resultado.posiciones,
+        rachas,
+        partidos: partidosTorneo,
+        goleadores,
+        turnos,
+        complejos,
+        sanciones,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
       setCargando(false);
     }
-
-    return;
   }
 
-  const item = SECCIONES.find(
-    (seccion) => seccion.nombre === nombre
-  );
+  function cambiarSeccionNavbar(nombre) {
+    if (nombre === 'Posiciones') {
+      cargarPosiciones();
+      return;
+    }
 
-  if (item) {
-    cargarSeccion(item);
+    const item = SECCIONES.find((seccion) => seccion.nombre === nombre);
+
+    if (item) {
+      cargarSeccion(item);
+    }
   }
-}
-
-
 
   async function cargarSeccion(item) {
     setSeccion(item);
@@ -261,6 +270,8 @@ setDatos({
 
   function cerrarSesion() {
     localStorage.removeItem('token');
+    localStorage.removeItem('correo');
+    localStorage.removeItem('rol');
     setToken(null);
     setDatos(null);
   }
@@ -304,7 +315,9 @@ setDatos({
       <Navbar
         seccionActual={seccion.nombre}
         cambiarSeccion={cambiarSeccionNavbar}
-        rol="Admin"
+        rol={localStorage.getItem('rol') === 'planillero' ? 'Planillero' : 'Administrador'}
+        correo={localStorage.getItem('correo')}
+        cerrarSesion={cerrarSesion}
       />
 
       <aside className="sidebar">
@@ -327,7 +340,11 @@ setDatos({
         </button>
       </aside>
 
-      <main className="content">
+      <main
+        className={
+          seccion.nombre === 'Posiciones' ? 'content content-posiciones' : 'content'
+        }
+      >
         <header>
           {seccion.nombre !== 'Posiciones' && (
   <h1>{seccion.nombre}</h1>
@@ -443,13 +460,16 @@ setDatos({
         )}
         
         {seccion.nombre === 'Posiciones' &&
-  datos !== null &&
-  !Array.isArray(datos) && (
-    <TablaPosiciones
-      posiciones={datos.posiciones}
-      rachas={datos.rachas}
-    />
-  )}
+          datos !== null &&
+          !Array.isArray(datos) && (
+            <TablaPosiciones
+              {...datos}
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={(idTorneo) => cargarPosiciones(idTorneo)}
+              irA={cambiarSeccionNavbar}
+            />
+          )}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}

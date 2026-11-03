@@ -1,112 +1,150 @@
-
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 16px 30px;
+  padding: 10px 24px;
   background-color: #ffffff;
   border-bottom: 3px solid #191720;
+  color: #191720;
+  text-align: left;
 }
 
 .navbar-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 17px;
-  font-weight: bold;
-  color: #191720;
-  line-height: 1.2;
+  gap: 10px;
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
-.pelota {
-  font-size: 35px;
+.navbar-pelota {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
 }
 
 .navbar-menu {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.navbar-menu button {
-  padding: 12px 16px;
+.navbar-menu > button,
+.navbar-catalogos summary {
+  padding: 8px 14px;
   border: 2px solid transparent;
+  border-radius: 9px;
   background: transparent;
   color: #191720;
+  font-family: var(--fuente-pixel);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 500;
   cursor: pointer;
 }
 
-.navbar-menu button:hover {
+.navbar-menu > button:hover,
+.navbar-catalogos summary:hover {
   background: #fff2cc;
 }
 
-.navbar-menu button.nav-activo {
-  background: #cf3025;
-  color: white;
-  border: 2px solid #191720;
-  border-radius: 10px;
-  box-shadow: 4px 4px 0 #191720;
+.navbar-menu > button.nav-activo,
+.navbar-catalogos summary.nav-activo {
+  background: #d42c20;
+  color: #ffffff;
+  border-color: #191720;
+  box-shadow: 3px 3px 0 #191720;
+  font-weight: 700;
 }
 
-.navbar-usuario {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 15px;
-  border-radius: 9px;
-  background: #191720;
-  color: white;
-  font-size: 13px;
-  font-weight: bold;
-}
-
-.indicador-rol {
-  width: 10px;
-  height: 10px;
-  background: #ffd044;
-}
-
-.navbar-admin {
+.navbar-catalogos {
   position: relative;
 }
 
-.navbar-admin summary {
-  cursor: pointer;
+.navbar-catalogos summary {
   list-style: none;
 }
 
-.navbar-admin summary::-webkit-details-marker {
+.navbar-catalogos summary::-webkit-details-marker {
   display: none;
 }
 
-.navbar-admin-menu {
+.navbar-catalogos-menu {
   position: absolute;
-  top: 55px;
-  right: 0;
+  top: 46px;
+  left: 0;
   z-index: 100;
   min-width: 170px;
-  padding: 8px;
+  padding: 6px;
   background: #ffffff;
   border: 2px solid #191720;
   border-radius: 10px;
   box-shadow: 4px 4px 0 #191720;
 }
 
-.navbar-admin-menu button {
+.navbar-catalogos-menu button {
   display: block;
   width: 100%;
-  padding: 12px;
-  background: transparent;
+  padding: 10px 12px;
   border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #191720;
+  font-family: var(--fuente-texto);
+  font-size: 14px;
   text-align: left;
+  cursor: pointer;
+}
+
+.navbar-catalogos-menu button:hover {
+  background: #fff2cc;
+}
+
+.navbar-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-usuario-datos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--fuente-texto);
+  line-height: 1.25;
+}
+
+.navbar-usuario-datos strong {
+  font-size: 12px;
+}
+
+.navbar-usuario-datos span {
+  font-size: 11px;
+  color: #6d6a73;
+}
+
+.navbar-salir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid #191720;
+  border-radius: 9px;
+  background: #fff6e0;
   color: #191720;
   cursor: pointer;
 }
 
-.navbar-admin-menu button:hover {
-  background: #fff2cc;
+.navbar-salir svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navbar-salir:hover {
+  background: #ffc93c;
 }
