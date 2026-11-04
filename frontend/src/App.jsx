@@ -574,7 +574,10 @@ if (!token) {
 
 
         {seccion.nombre === 'Planillas' && (
-  <Planillas partidos={partidos} />
+  <Planillas
+  partidos={partidos}
+  onActualizar={() => cargarPartidos(torneoSeleccionado)}
+/>
 )}
 
         {cargando && <p>Cargando...</p>}
