@@ -5,6 +5,7 @@
 
 .app {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
@@ -118,4 +119,70 @@ button {
 
 .error {
   color: #c0392b;
+}
+
+
+/* Nuevo diseño del torneo */
+
+.sidebar {
+  display: none;
+}
+
+.app {
+  background-color: #fff8e7;
+  min-height: 100vh;
+}
+
+.content {
+  background-color: #fff8e7;
+  color: #191720;
+  padding: 35px;
+}
+
+.content h1 {
+  color: #191720;
+}
+
+/* Fuentes y lienzo de la pantalla de posiciones */
+
+:root {
+  --fuente-pixel: 'Pixelify Sans', 'DM Sans', system-ui, sans-serif;
+  --fuente-texto: 'DM Sans', system-ui, sans-serif;
+  --fuente-mono: 'DM Mono', ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+
+body {
+  background-color: #fef6e4;
+}
+
+#root {
+  width: 100%;
+  border-inline: none;
+  text-align: left;
+}
+
+.app,
+.content {
+  background-color: #fef6e4;
+}
+
+.content-posiciones {
+  padding: 0;
+}
+
+.content-posiciones > header {
+  display: none;
+}
+
+.content-posiciones > p {
+  max-width: 1180px;
+  margin: 30px auto;
+  padding: 0 32px;
+}
+
+/* Ocultar el selector antiguo de partidos */
+
+.selector-partido-antiguo {
+  display: none;
 }

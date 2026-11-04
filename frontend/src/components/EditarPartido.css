@@ -1,0 +1,207 @@
+/* Formulario lateral para crear o editar partidos */
+
+.editar-partido {
+  width: 100%;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--tinta);
+  overflow: hidden;
+  color: var(--tinta);
+}
+
+/* Encabezado amarillo */
+
+.editar-partido-titulo {
+  background: var(--amarillo);
+  padding: 12px 16px;
+  border-bottom: 3px solid var(--tinta);
+}
+
+.editar-partido-titulo h2 {
+  margin: 0;
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.editar-partido form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Equipos del partido */
+
+.editar-partido-equipos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.editar-partido-equipo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.editar-partido-equipo.visitante {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.editar-partido-equipos > span {
+  color: #6b6375;
+  font-size: 11px;
+}
+
+/* Campos */
+
+.editar-partido-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.editar-partido-campos > div {
+  min-width: 0;
+}
+
+.editar-partido label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editar-partido input,
+.editar-partido select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 2px solid var(--tinta);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 12px;
+}
+
+.editar-partido input:focus,
+.editar-partido select:focus {
+  outline: 2px solid var(--azul);
+  outline-offset: 1px;
+}
+
+/* Estados */
+
+.editar-estado-opciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.editar-estado-opciones button {
+  padding: 8px 5px;
+  border: 2px solid var(--tinta);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editar-estado-opciones .opcion-cancelado {
+  grid-column: 1 / -1;
+}
+
+.editar-estado-opciones button:hover {
+  background: #fff2cc;
+}
+
+.editar-estado-opciones .estado-seleccionado.opcion-programado {
+  background: var(--azul);
+}
+
+.editar-estado-opciones .estado-seleccionado.opcion-postergado {
+  background: var(--amarillo);
+}
+
+.editar-estado-opciones .estado-seleccionado.opcion-cancelado {
+  background: var(--rosa);
+}
+
+/* Botones inferiores */
+
+.editar-partido-botones {
+  display: flex;
+  gap: 10px;
+}
+
+.editar-partido-botones button {
+  flex: 1;
+  padding: 10px 8px;
+  border: 2px solid var(--tinta);
+  border-radius: 7px;
+  box-shadow: 3px 3px 0 var(--tinta);
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editar-guardar {
+  background: #22a05b;
+  color: #ffffff !important;
+}
+
+.editar-cancelar {
+  background: #ffffff;
+}
+
+.editar-partido-botones button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--tinta);
+}
+
+.editar-partido-aviso {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--rojo);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editar-partido select:disabled {
+  background: #f1efe9;
+  cursor: not-allowed;
+}
+
+.editar-partido-problemas {
+  margin: 0;
+  padding: 10px 12px 10px 26px;
+  background: #ffe1de;
+  border: 2px solid var(--rojo);
+  border-radius: 8px;
+  color: var(--rojo);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editar-partido-botones .editar-guardar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}

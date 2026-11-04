@@ -1,0 +1,146 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 24px;
+  background-color: #ffffff;
+  border-bottom: 3px solid #191720;
+  color: #191720;
+  text-align: left;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.navbar-pelota {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.navbar-menu > button {
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #191720;
+  font-family: var(--fuente-pixel);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.navbar-menu > button:hover {
+  background: #fff2cc;
+}
+
+.navbar-menu > button.nav-activo {
+  background: #d42c20;
+  color: #ffffff;
+  border-color: #191720;
+  box-shadow: 3px 3px 0 #191720;
+  font-weight: 700;
+}
+
+.navbar-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-usuario-datos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--fuente-texto);
+  line-height: 1.25;
+}
+
+.navbar-usuario-datos strong {
+  font-size: 12px;
+}
+
+.navbar-usuario-datos span {
+  font-size: 11px;
+  color: #6d6a73;
+}
+
+.navbar-salir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid #191720;
+  border-radius: 9px;
+  background: #fff6e0;
+  color: #191720;
+  cursor: pointer;
+}
+
+.navbar-salir svg {
+  width: 18px;
+  height: 18px;
+}
+
+.navbar-salir:hover {
+  background: #ffc93c;
+}
+
+/* Barra de catálogos */
+
+.catalogos-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 24px;
+  background: #5db8f2;
+  border-bottom: 3px solid #191720;
+  font-family: var(--fuente-texto);
+}
+
+.catalogos-nav-titulo {
+  margin-right: 8px;
+  color: #191720;
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.catalogos-nav button {
+  padding: 6px 14px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #191720;
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalogos-nav button:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.catalogos-nav button.catalogo-activo {
+  background: #ffffff;
+  border-color: #191720;
+}

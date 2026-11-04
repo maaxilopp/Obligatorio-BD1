@@ -1,7 +1,13 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest, login } from './services/api';
 import './App.css';
+import './components/Login.css';
+import Navbar, { CatalogosNav, LogoPelota } from './components/Navbar';
+import { catalogos, puedeVer } from './components/secciones';
+import TablaPosiciones from './components/TablaPosiciones';
+import Fixture from './components/Fixture';
+import Jugadores from './components/Jugadores';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -14,6 +20,9 @@ const SECCIONES = [
   { nombre: 'Sanciones', ruta: '/sanciones' },
   { nombre: 'Reportes' },
 ];
+
+// Secciones que tienen su propia pantalla (no muestran el JSON de la respuesta)
+const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Jugadores'];
 
 const REPORTES = [
   { nombre: 'Posiciones', ruta: 'posiciones' },
@@ -40,7 +49,8 @@ function App() {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
 
-  const [seccion, setSeccion] = useState(SECCIONES[0]);
+  // Al entrar se muestra la tabla de posiciones
+  const [seccion, setSeccion] = useState({ nombre: 'Posiciones' });
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -48,6 +58,8 @@ function App() {
   const [torneos, setTorneos] = useState([]);
   const [torneoSeleccionado, setTorneoSeleccionado] = useState('');
   const [partidos, setPartidos] = useState([]);
+  const [turnos, setTurnos] = useState([]);
+  const [complejos, setComplejos] = useState([]);
   const [partidoSeleccionado, setPartidoSeleccionado] = useState('');
 
   const [reporteSeleccionado, setReporteSeleccionado] = useState('');
@@ -57,10 +69,106 @@ function App() {
     setError('');
 
     try {
-      await login(correo, contrasena);
+      const sesion = await login(correo, contrasena);
+      localStorage.setItem('correo', sesion.correo || correo);
+      localStorage.setItem('rol', sesion.rol || '');
       setToken(localStorage.getItem('token'));
+      abrirPantallaInicial();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  
+
+  async function cargarPosiciones(idTorneoElegido) {
+    setSeccion({ nombre: 'Posiciones' });
+    setDatos(null);
+    setError('');
+    setCargando(true);
+
+    try {
+      const torneosDisponibles = await apiRequest('/torneos');
+      setTorneos(Array.isArray(torneosDisponibles) ? torneosDisponibles : []);
+
+      if (!torneosDisponibles || torneosDisponibles.length === 0) {
+        setError('No hay torneos disponibles.');
+        return;
+      }
+
+      // Por defecto se muestra el primer torneo
+      const idTorneo = idTorneoElegido || torneosDisponibles[0].id_torneo;
+      setTorneoSeleccionado(String(idTorneo));
+
+      const [resultado, rachas, partidosTorneo, goleadores, turnos, complejos, sanciones] =
+        await Promise.all([
+          apiRequest(`/torneos/${idTorneo}/posiciones`),
+          apiRequest(`/torneos/${idTorneo}/rachas`),
+          apiRequest(`/partidos?id_torneo=${idTorneo}`),
+          apiRequest(`/torneos/${idTorneo}/goleadores`),
+          apiRequest('/turnos'),
+          apiRequest('/complejos'),
+          apiRequest(`/sanciones?id_torneo=${idTorneo}`),
+        ]);
+
+      setDatos({
+        posiciones: resultado.posiciones,
+        rachas,
+        partidos: partidosTorneo,
+        goleadores,
+        turnos,
+        complejos,
+        sanciones,
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  // Agrega la edición recién creada a la lista y la deja seleccionada
+  function edicionCreada(torneo) {
+    setTorneos((anteriores) => [...anteriores, torneo]);
+
+    if (seccion.nombre === 'Posiciones') {
+      cargarPosiciones(torneo.id_torneo);
+    } else {
+      cargarPartidos(String(torneo.id_torneo));
+    }
+  }
+
+  // Si ya había una sesión abierta, la pantalla inicial también es posiciones
+  // El administrador arranca en posiciones; el planillero no puede verlas,
+  // así que arranca en el fixture
+  function abrirPantallaInicial() {
+    if (localStorage.getItem('rol') === 'administrador') {
+      cargarPosiciones();
+    } else {
+      cambiarSeccionNavbar('Partidos');
+    }
+  }
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      abrirPantallaInicial();
+    }
+    // Solo al abrir la página, si ya había una sesión iniciada
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function cambiarSeccionNavbar(nombre) {
+    if (!puedeVer(localStorage.getItem('rol'), nombre)) return;
+
+    if (nombre === 'Posiciones') {
+      cargarPosiciones();
+      return;
+    }
+
+    const item = SECCIONES.find((seccion) => seccion.nombre === nombre);
+
+    if (item) {
+      cargarSeccion(item);
     }
   }
 
@@ -73,6 +181,9 @@ function App() {
     setPartidos([]);
     setReporteSeleccionado('');
 
+    // El catálogo de jugadores carga sus propios datos
+    if (item.nombre === 'Jugadores') return;
+
     if (
       item.nombre === 'Partidos' ||
       item.nombre === 'Planillas' ||
@@ -82,7 +193,13 @@ function App() {
 
       try {
         const resultado = await apiRequest('/torneos');
-        setTorneos(Array.isArray(resultado) ? resultado : []);
+        const lista = Array.isArray(resultado) ? resultado : [];
+        setTorneos(lista);
+
+        // El fixture abre directamente con el primer torneo
+        if (item.nombre === 'Partidos' && lista.length > 0) {
+          await cargarPartidos(String(lista[0].id_torneo));
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -116,10 +233,20 @@ function App() {
     setCargando(true);
 
     try {
-      const resultado = await apiRequest(
-        `/partidos?id_torneo=${idTorneo}`
-      );
-      setPartidos(Array.isArray(resultado) ? resultado : []);
+      
+const [resultado, datosTurnos, datosComplejos] =
+  await Promise.all([
+    apiRequest(`/partidos?id_torneo=${idTorneo}`),
+    apiRequest('/turnos'),
+    apiRequest('/complejos')
+  ]);
+
+setPartidos(Array.isArray(resultado) ? resultado : []);
+setTurnos(Array.isArray(datosTurnos) ? datosTurnos : []);
+setComplejos(
+  Array.isArray(datosComplejos) ? datosComplejos : []
+);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -205,45 +332,103 @@ function App() {
 
   function cerrarSesion() {
     localStorage.removeItem('token');
+    localStorage.removeItem('correo');
+    localStorage.removeItem('rol');
     setToken(null);
     setDatos(null);
   }
 
-  if (!token) {
-    return (
-      <main className="login-container">
-        <form className="login-card" onSubmit={handleLogin}>
-          <h1>Torneo Interfacultades</h1>
-          <p>Fútbol 5 · UCU</p>
 
-          <label htmlFor="correo">Correo electrónico</label>
-          <input
-            id="correo"
-            type="email"
-            value={correo}
-            onChange={(event) => setCorreo(event.target.value)}
-            required
-          />
+if (!token) {
+  return (
+    <main className="login-container">
+      <section className="login-cancha">
+        <div className="login-lineas" aria-hidden="true">
+          <span className="login-circulo" />
+        </div>
 
-          <label htmlFor="contrasena">Contraseña</label>
-          <input
-            id="contrasena"
-            type="password"
-            value={contrasena}
-            onChange={(event) => setContrasena(event.target.value)}
-            required
-          />
+        <div className="login-brand">
+          <LogoPelota className="login-brand-logo" />
 
-          {error && <p className="error">{error}</p>}
+          <div className="login-brand-text">
+            <span>Torneo Interfacultades</span>
+            <span>Universidad Católica del Uruguay</span>
+          </div>
+        </div>
 
-          <button type="submit">Iniciar sesión</button>
-        </form>
-      </main>
-    );
-  }
+        <h2 className="login-frase">
+          ¡El fútbol es
+          <br />
+          mucho más que
+          <br />
+          un deporte!
+        </h2>
+      </section>
+
+      <section className="login-derecha">
+        <div className="login-credencial">
+          <span className="login-cinta" aria-hidden="true" />
+          <span className="login-clip" aria-hidden="true" />
+
+          <form className="login-card" onSubmit={handleLogin}>
+            <div className="login-card-encabezado">
+              <span className="login-ranura" aria-hidden="true" />
+              <h1>Ingrese sus datos:</h1>
+            </div>
+
+            <div className="login-form-body">
+              <label htmlFor="correo">Correo</label>
+              <input
+                id="correo"
+                type="email"
+                autoComplete="username"
+                maxLength={100}
+                value={correo}
+                onChange={(event) => setCorreo(event.target.value)}
+                required
+              />
+
+              <label htmlFor="contrasena">Contraseña</label>
+              <input
+                id="contrasena"
+                type="password"
+                autoComplete="current-password"
+                maxLength={100}
+                value={contrasena}
+                onChange={(event) => setContrasena(event.target.value)}
+                required
+              />
+
+              {error && <p className="error">{error}</p>}
+
+              <button type="submit">Ingresar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 
   return (
     <div className="app">
+      
+      <Navbar
+        seccionActual={seccion.nombre}
+        cambiarSeccion={cambiarSeccionNavbar}
+        rol={localStorage.getItem('rol') === 'planillero' ? 'Planillero' : 'Administrador'}
+        correo={localStorage.getItem('correo')}
+        cerrarSesion={cerrarSesion}
+      />
+
+      {catalogos.includes(seccion.nombre) && (
+        <CatalogosNav
+          seccionActual={seccion.nombre}
+          cambiarSeccion={cambiarSeccionNavbar}
+        />
+      )}
+
       <aside className="sidebar">
         <h2>Torneo UCU</h2>
 
@@ -264,17 +449,24 @@ function App() {
         </button>
       </aside>
 
-      <main className="content">
+      <main
+        className={
+          seccion.nombre === 'Posiciones' ? 'content content-posiciones' : 'content'
+        }
+      >
         <header>
-          <h1>{seccion.nombre}</h1>
-          <span>Panel de administración</span>
+{!PANTALLAS_PROPIAS.includes(seccion.nombre) && (
+    <h1>{seccion.nombre}</h1>
+  )}
+
+{!PANTALLAS_PROPIAS.includes(seccion.nombre) && (
+    <span>Panel de administración</span>
+  )}
         </header>
 
-        {(seccion.nombre === 'Partidos' ||
-          seccion.nombre === 'Planillas' ||
+        {(seccion.nombre === 'Planillas' ||
           seccion.nombre === 'Reportes') && (
           <section>
-            <label htmlFor="torneo">Seleccionar torneo</label>
 
             <select
               id="torneo"
@@ -294,36 +486,6 @@ function App() {
             </select>
           </section>
         )}
-
-        {seccion.nombre === 'Partidos' &&
-          torneoSeleccionado && (
-            <section>
-              <h2>Partidos del torneo</h2>
-
-              <label htmlFor="partido">Seleccionar partido</label>
-
-              <select
-                id="partido"
-                value={partidoSeleccionado}
-                onChange={(event) =>
-                  seleccionarPartido(event.target.value)
-                }
-              >
-                <option value="">Seleccioná un partido</option>
-
-                {partidos.map((partido) => (
-                  <option
-                    key={partido.id_partido}
-                    value={partido.id_partido}
-                  >
-                    Fecha {partido.numero_fecha}: {partido.equipo_local}
-                    {' vs '}
-                    {partido.equipo_visitante}
-                  </option>
-                ))}
-              </select>
-            </section>
-          )}
 
         {seccion.nombre === 'Planillas' &&
           torneoSeleccionado && (
@@ -374,6 +536,38 @@ function App() {
             </select>
           </section>
         )}
+        
+        {seccion.nombre === 'Posiciones' &&
+          datos !== null &&
+          !Array.isArray(datos) && (
+            <TablaPosiciones
+              {...datos}
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={(idTorneo) => cargarPosiciones(idTorneo)}
+              onEdicionCreada={edicionCreada}
+              irA={cambiarSeccionNavbar}
+            />
+          )}
+
+
+        {seccion.nombre === 'Partidos' &&
+          torneoSeleccionado && (
+            <Fixture
+              key={torneoSeleccionado}
+              partidos={partidos}
+              turnos={turnos}
+              complejos={complejos}
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={cargarPartidos}
+              onEdicionCreada={edicionCreada}
+              onPartidosActualizados={() => cargarPartidos(torneoSeleccionado)}
+            />
+          )}
+
+
+        {seccion.nombre === 'Jugadores' && <Jugadores />}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}
@@ -413,7 +607,7 @@ function App() {
             </section>
           )}
 
-        {seccion.nombre !== 'Partidos' &&
+        {!PANTALLAS_PROPIAS.includes(seccion.nombre) &&
           seccion.nombre !== 'Planillas' &&
           datos !== null && (
             <pre className="resultado">
@@ -421,7 +615,7 @@ function App() {
             </pre>
           )}
 
-        {datos === null && !cargando && !error && (
+        {datos === null && !cargando && !error && !PANTALLAS_PROPIAS.includes(seccion.nombre) && (
           <p>
             {seccion.nombre === 'Partidos' ||
             seccion.nombre === 'Planillas' ||
