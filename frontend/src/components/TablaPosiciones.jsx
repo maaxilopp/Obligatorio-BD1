@@ -1,5 +1,6 @@
 import "./TablaPosiciones.css";
 import { InsigniaEquipo } from "./equipos";
+import SelectorEdicion from "./SelectorEdicion";
 
 const DIAS = [
   "domingo",
@@ -52,6 +53,7 @@ function TablaPosiciones({
   torneos = [],
   torneoSeleccionado = "",
   cambiarTorneo,
+  onEdicionCreada,
   posiciones = [],
   rachas = [],
   partidos = [],
@@ -100,9 +102,6 @@ function TablaPosiciones({
       ).length
     : 0;
 
-  const torneoActual = torneos.find(
-    (t) => String(t.id_torneo) === String(torneoSeleccionado),
-  );
 
   return (
     <div className="posiciones-pagina">
@@ -116,22 +115,13 @@ function TablaPosiciones({
       <section className="posiciones-contenedor">
         <div className="posiciones-encabezado">
           <div>
-            <div className="posiciones-edicion">
-              <span>EDICIÓN</span>
-              <select
-                value={torneoSeleccionado}
-                onChange={(event) => cambiarTorneo(event.target.value)}
-              >
-                {torneos.map((torneo) => (
-                  <option key={torneo.id_torneo} value={torneo.id_torneo}>
-                    {torneo.nombre}
-                  </option>
-                ))}
-                {!torneoActual && (
-                  <option value="">Seleccioná un torneo</option>
-                )}
-              </select>
-            </div>
+            <SelectorEdicion
+              className="posiciones-edicion"
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={cambiarTorneo}
+              onEdicionCreada={onEdicionCreada}
+            />
 
             <h1 className="titulo-pixel">Tabla de posiciones</h1>
 

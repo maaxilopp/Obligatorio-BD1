@@ -1,11 +1,13 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest, login } from './services/api';
 import './App.css';
 import './components/Login.css';
-import Navbar from './components/Navbar';
+import Navbar, { CatalogosNav, LogoPelota } from './components/Navbar';
+import { catalogos, puedeVer } from './components/secciones';
 import TablaPosiciones from './components/TablaPosiciones';
 import Fixture from './components/Fixture';
+import Jugadores from './components/Jugadores';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -18,6 +20,9 @@ const SECCIONES = [
   { nombre: 'Sanciones', ruta: '/sanciones' },
   { nombre: 'Reportes' },
 ];
+
+// Secciones que tienen su propia pantalla (no muestran el JSON de la respuesta)
+const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Jugadores'];
 
 const REPORTES = [
   { nombre: 'Posiciones', ruta: 'posiciones' },
@@ -44,7 +49,8 @@ function App() {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
 
-  const [seccion, setSeccion] = useState(SECCIONES[0]);
+  // Al entrar se muestra la tabla de posiciones
+  const [seccion, setSeccion] = useState({ nombre: 'Posiciones' });
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -67,6 +73,7 @@ function App() {
       localStorage.setItem('correo', sesion.correo || correo);
       localStorage.setItem('rol', sesion.rol || '');
       setToken(localStorage.getItem('token'));
+      abrirPantallaInicial();
     } catch (err) {
       setError(err.message);
     }
@@ -120,7 +127,39 @@ function App() {
     }
   }
 
+  // Agrega la edición recién creada a la lista y la deja seleccionada
+  function edicionCreada(torneo) {
+    setTorneos((anteriores) => [...anteriores, torneo]);
+
+    if (seccion.nombre === 'Posiciones') {
+      cargarPosiciones(torneo.id_torneo);
+    } else {
+      cargarPartidos(String(torneo.id_torneo));
+    }
+  }
+
+  // Si ya había una sesión abierta, la pantalla inicial también es posiciones
+  // El administrador arranca en posiciones; el planillero no puede verlas,
+  // así que arranca en el fixture
+  function abrirPantallaInicial() {
+    if (localStorage.getItem('rol') === 'administrador') {
+      cargarPosiciones();
+    } else {
+      cambiarSeccionNavbar('Partidos');
+    }
+  }
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      abrirPantallaInicial();
+    }
+    // Solo al abrir la página, si ya había una sesión iniciada
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function cambiarSeccionNavbar(nombre) {
+    if (!puedeVer(localStorage.getItem('rol'), nombre)) return;
+
     if (nombre === 'Posiciones') {
       cargarPosiciones();
       return;
@@ -142,6 +181,9 @@ function App() {
     setPartidos([]);
     setReporteSeleccionado('');
 
+    // El catálogo de jugadores carga sus propios datos
+    if (item.nombre === 'Jugadores') return;
+
     if (
       item.nombre === 'Partidos' ||
       item.nombre === 'Planillas' ||
@@ -151,7 +193,13 @@ function App() {
 
       try {
         const resultado = await apiRequest('/torneos');
-        setTorneos(Array.isArray(resultado) ? resultado : []);
+        const lista = Array.isArray(resultado) ? resultado : [];
+        setTorneos(lista);
+
+        // El fixture abre directamente con el primer torneo
+        if (item.nombre === 'Partidos' && lista.length > 0) {
+          await cargarPartidos(String(lista[0].id_torneo));
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -295,55 +343,68 @@ if (!token) {
   return (
     <main className="login-container">
       <section className="login-cancha">
+        <div className="login-lineas" aria-hidden="true">
+          <span className="login-circulo" />
+        </div>
+
         <div className="login-brand">
-          <div className="login-brand-logo"></div>
+          <LogoPelota className="login-brand-logo" />
 
           <div className="login-brand-text">
-            <span>Torneo InterFacultades</span>
+            <span>Torneo Interfacultades</span>
             <span>Universidad Católica del Uruguay</span>
           </div>
         </div>
 
-        <div className="login-circulo"></div>
-
-        <div className="login-frase">
+        <h2 className="login-frase">
           ¡El fútbol es
           <br />
           mucho más que
           <br />
           un deporte!
-        </div>
+        </h2>
       </section>
 
       <section className="login-derecha">
-        <form className="login-card" onSubmit={handleLogin}>
-          <h1>Ingrese sus datos:</h1>
+        <div className="login-credencial">
+          <span className="login-cinta" aria-hidden="true" />
+          <span className="login-clip" aria-hidden="true" />
 
-          <div className="login-form-body">
-            <label htmlFor="correo">Correo</label>
-            <input
-              id="correo"
-              type="email"
-              placeholder="nombre@ucu.edu.uy"
-              value={correo}
-              onChange={(event) => setCorreo(event.target.value)}
-              required
-            />
+          <form className="login-card" onSubmit={handleLogin}>
+            <div className="login-card-encabezado">
+              <span className="login-ranura" aria-hidden="true" />
+              <h1>Ingrese sus datos:</h1>
+            </div>
 
-            <label htmlFor="contrasena">Contraseña</label>
-            <input
-              id="contrasena"
-              type="password"
-              value={contrasena}
-              onChange={(event) => setContrasena(event.target.value)}
-              required
-            />
+            <div className="login-form-body">
+              <label htmlFor="correo">Correo</label>
+              <input
+                id="correo"
+                type="email"
+                autoComplete="username"
+                maxLength={100}
+                value={correo}
+                onChange={(event) => setCorreo(event.target.value)}
+                required
+              />
 
-            {error && <p className="error">{error}</p>}
+              <label htmlFor="contrasena">Contraseña</label>
+              <input
+                id="contrasena"
+                type="password"
+                autoComplete="current-password"
+                maxLength={100}
+                value={contrasena}
+                onChange={(event) => setContrasena(event.target.value)}
+                required
+              />
 
-            <button type="submit">Ingresar</button>
-          </div>
-        </form>
+              {error && <p className="error">{error}</p>}
+
+              <button type="submit">Ingresar</button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
   );
@@ -360,6 +421,13 @@ if (!token) {
         correo={localStorage.getItem('correo')}
         cerrarSesion={cerrarSesion}
       />
+
+      {catalogos.includes(seccion.nombre) && (
+        <CatalogosNav
+          seccionActual={seccion.nombre}
+          cambiarSeccion={cambiarSeccionNavbar}
+        />
+      )}
 
       <aside className="sidebar">
         <h2>Torneo UCU</h2>
@@ -387,19 +455,16 @@ if (!token) {
         }
       >
         <header>
-{seccion.nombre !== 'Posiciones' &&
-  seccion.nombre !== 'Partidos' && (
+{!PANTALLAS_PROPIAS.includes(seccion.nombre) && (
     <h1>{seccion.nombre}</h1>
   )}
 
-{seccion.nombre !== 'Posiciones' &&
-  seccion.nombre !== 'Partidos' && (
+{!PANTALLAS_PROPIAS.includes(seccion.nombre) && (
     <span>Panel de administración</span>
   )}
         </header>
 
-        {(seccion.nombre === 'Partidos' ||
-          seccion.nombre === 'Planillas' ||
+        {(seccion.nombre === 'Planillas' ||
           seccion.nombre === 'Reportes') && (
           <section>
 
@@ -421,36 +486,6 @@ if (!token) {
             </select>
           </section>
         )}
-
-        {seccion.nombre === 'Partidos' &&
-          torneoSeleccionado && (
-            <section className="selector-partido-antiguo">
-              <h2>Partidos del torneo</h2>
-
-              <label htmlFor="partido">Seleccionar partido</label>
-
-              <select
-                id="partido"
-                value={partidoSeleccionado}
-                onChange={(event) =>
-                  seleccionarPartido(event.target.value)
-                }
-              >
-                <option value="">Seleccioná un partido</option>
-
-                {partidos.map((partido) => (
-                  <option
-                    key={partido.id_partido}
-                    value={partido.id_partido}
-                  >
-                    Fecha {partido.numero_fecha}: {partido.equipo_local}
-                    {' vs '}
-                    {partido.equipo_visitante}
-                  </option>
-                ))}
-              </select>
-            </section>
-          )}
 
         {seccion.nombre === 'Planillas' &&
           torneoSeleccionado && (
@@ -510,6 +545,7 @@ if (!token) {
               torneos={torneos}
               torneoSeleccionado={torneoSeleccionado}
               cambiarTorneo={(idTorneo) => cargarPosiciones(idTorneo)}
+              onEdicionCreada={edicionCreada}
               irA={cambiarSeccionNavbar}
             />
           )}
@@ -522,10 +558,16 @@ if (!token) {
               partidos={partidos}
               turnos={turnos}
               complejos={complejos}
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={cargarPartidos}
+              onEdicionCreada={edicionCreada}
               onPartidosActualizados={() => cargarPartidos(torneoSeleccionado)}
             />
           )}
 
+
+        {seccion.nombre === 'Jugadores' && <Jugadores />}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}
@@ -565,16 +607,15 @@ if (!token) {
             </section>
           )}
 
-        {seccion.nombre !== 'Partidos' &&
+        {!PANTALLAS_PROPIAS.includes(seccion.nombre) &&
           seccion.nombre !== 'Planillas' &&
-          seccion.nombre !== 'Posiciones' &&
           datos !== null && (
             <pre className="resultado">
               {JSON.stringify(datos, null, 2)}
             </pre>
           )}
 
-        {datos === null && !cargando && !error && (
+        {datos === null && !cargando && !error && !PANTALLAS_PROPIAS.includes(seccion.nombre) && (
           <p>
             {seccion.nombre === 'Partidos' ||
             seccion.nombre === 'Planillas' ||

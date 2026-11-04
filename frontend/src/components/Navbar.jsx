@@ -1,19 +1,17 @@
-import './Navbar.css';
+import "./Navbar.css";
+import { catalogos, puedeVer } from "./secciones";
 
-// etiqueta que se muestra -> sección de App
 const secciones = [
-  { etiqueta: 'Posiciones', seccion: 'Posiciones' },
-  { etiqueta: 'Fixture', seccion: 'Partidos' },
-  { etiqueta: 'Planillas', seccion: 'Planillas' },
-  { etiqueta: 'Sanciones', seccion: 'Sanciones' },
-  { etiqueta: 'Reportes', seccion: 'Reportes' },
+  { etiqueta: "Posiciones", seccion: "Posiciones" },
+  { etiqueta: "Fixture", seccion: "Partidos" },
+  { etiqueta: "Planillas", seccion: "Planillas" },
+  { etiqueta: "Sanciones", seccion: "Sanciones" },
+  { etiqueta: "Reportes", seccion: "Reportes" },
 ];
 
-const catalogos = ['Facultades', 'Jugadores', 'Equipos', 'Torneos', 'Complejos'];
-
-function LogoPelota() {
+export function LogoPelota({ className = "navbar-pelota" }) {
   return (
-    <svg className="navbar-pelota" viewBox="0 0 40 40" aria-hidden="true">
+    <svg className={className} viewBox="0 0 40 40" aria-hidden="true">
       <defs>
         <clipPath id="pelota-borde">
           <circle cx="20" cy="20" r="17" />
@@ -32,17 +30,37 @@ function LogoPelota() {
                 height="6.8"
                 fill="#191720"
               />
-            ) : null
-          )
+            ) : null,
+          ),
         )}
       </g>
-      <circle cx="20" cy="20" r="17" fill="none" stroke="#191720" strokeWidth="3" />
+      <circle
+        cx="20"
+        cy="20"
+        r="17"
+        fill="none"
+        stroke="#191720"
+        strokeWidth="3"
+      />
     </svg>
   );
 }
 
-function Navbar({ seccionActual, cambiarSeccion, rol = 'Administrador', correo, cerrarSesion }) {
+function Navbar({
+  seccionActual,
+  cambiarSeccion,
+  rol = "Administrador",
+  correo,
+  cerrarSesion,
+}) {
   const enCatalogos = catalogos.includes(seccionActual);
+
+  // Solo se muestran las secciones que el rol puede usar
+  const rolSesion = rol === "Planillero" ? "planillero" : "administrador";
+  const visibles = secciones.filter((item) =>
+    puedeVer(rolSesion, item.seccion),
+  );
+  const verCatalogos = rolSesion === "administrador";
 
   return (
     <header className="navbar">
@@ -56,35 +74,26 @@ function Navbar({ seccionActual, cambiarSeccion, rol = 'Administrador', correo, 
       </div>
 
       <nav className="navbar-menu">
-        {secciones.map((item) => (
+        {visibles.map((item) => (
           <button
             key={item.etiqueta}
             type="button"
-            className={seccionActual === item.seccion ? 'nav-activo' : ''}
+            className={seccionActual === item.seccion ? "nav-activo" : ""}
             onClick={() => cambiarSeccion(item.seccion)}
           >
             {item.etiqueta}
           </button>
         ))}
 
-        <details className="navbar-catalogos">
-          <summary className={enCatalogos ? 'nav-activo' : ''}>Catálogos</summary>
-
-          <div className="navbar-catalogos-menu">
-            {catalogos.map((seccion) => (
-              <button
-                key={seccion}
-                type="button"
-                onClick={(event) => {
-                  event.currentTarget.closest('details').open = false;
-                  cambiarSeccion(seccion);
-                }}
-              >
-                {seccion}
-              </button>
-            ))}
-          </div>
-        </details>
+        {verCatalogos && (
+          <button
+            type="button"
+            className={enCatalogos ? "nav-activo" : ""}
+            onClick={() => cambiarSeccion(catalogos[0])}
+          >
+            Catálogos
+          </button>
+        )}
       </nav>
 
       <div className="navbar-usuario">
@@ -111,6 +120,24 @@ function Navbar({ seccionActual, cambiarSeccion, rol = 'Administrador', correo, 
         </button>
       </div>
     </header>
+  );
+}
+export function CatalogosNav({ seccionActual, cambiarSeccion }) {
+  return (
+    <nav className="catalogos-nav">
+      <span className="catalogos-nav-titulo">Catálogos</span>
+
+      {catalogos.map((seccion) => (
+        <button
+          key={seccion}
+          type="button"
+          className={seccionActual === seccion ? "catalogo-activo" : ""}
+          onClick={() => cambiarSeccion(seccion)}
+        >
+          {seccion}
+        </button>
+      ))}
+    </nav>
   );
 }
 

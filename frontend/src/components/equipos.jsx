@@ -1,18 +1,6 @@
 // componente para mostrar los equipos con su insignia de color.
 
-const coloresEquipos = [
-  "#ff801f",
-  "#80d5a4",
-  "#89aaff",
-  "#ff9890",
-  "#c5a0eb",
-  "#ffd044",
-];
-
-function colorEquipo(idEquipo) {
-  const indice = (Number(idEquipo) - 1) % coloresEquipos.length;
-  return coloresEquipos[indice >= 0 ? indice : 0];
-}
+import { colorEquipo } from './colores';
 
 // Función para generar la sigla del equipo a partir de su nombre
 function siglaEquipo(nombre = "") {
