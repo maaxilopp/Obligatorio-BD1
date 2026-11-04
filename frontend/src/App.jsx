@@ -8,6 +8,11 @@ import { catalogos, puedeVer } from './components/secciones';
 import TablaPosiciones from './components/TablaPosiciones';
 import Fixture from './components/Fixture';
 import Jugadores from './components/Jugadores';
+import CatalogoEquipos from './components/CatalogoEquipos';
+import Torneos from './components/Torneos';
+import Complejos from './components/Complejos';
+import Facultades from './components/Facultades';
+import Sanciones from './components/Sanciones';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -21,8 +26,17 @@ const SECCIONES = [
   { nombre: 'Reportes' },
 ];
 
-// Secciones que tienen su propia pantalla (no muestran el JSON de la respuesta)
-const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Jugadores'];
+
+const CATALOGOS_PROPIOS = [
+  'Jugadores',
+  'Equipos',
+  'Torneos',
+  'Complejos',
+  'Facultades',
+  'Sanciones',
+];
+
+const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', ...CATALOGOS_PROPIOS];
 
 const REPORTES = [
   { nombre: 'Posiciones', ruta: 'posiciones' },
@@ -181,8 +195,8 @@ function App() {
     setPartidos([]);
     setReporteSeleccionado('');
 
-    // El catálogo de jugadores carga sus propios datos
-    if (item.nombre === 'Jugadores') return;
+    // Los catálogos cargan sus propios datos
+    if (CATALOGOS_PROPIOS.includes(item.nombre)) return;
 
     if (
       item.nombre === 'Partidos' ||
@@ -568,6 +582,11 @@ if (!token) {
 
 
         {seccion.nombre === 'Jugadores' && <Jugadores />}
+        {seccion.nombre === 'Equipos' && <CatalogoEquipos />}
+        {seccion.nombre === 'Torneos' && <Torneos />}
+        {seccion.nombre === 'Complejos' && <Complejos />}
+        {seccion.nombre === 'Facultades' && <Facultades />}
+        {seccion.nombre === 'Sanciones' && <Sanciones />}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}

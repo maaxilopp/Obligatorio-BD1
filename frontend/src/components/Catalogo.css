@@ -1,0 +1,270 @@
+
+/* Estados de un torneo */
+.cat-estado {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cat-estado.estado-inscripcion {
+  background: #5db8f2;
+}
+
+.cat-estado.estado-en-curso {
+  background: var(--amarillo);
+}
+
+.cat-estado.estado-finalizado {
+  background: #80d5a4;
+}
+
+/* Motivos de una sanción */
+.cat-estado.motivo-roja {
+  background: #ff9890;
+}
+
+.cat-estado.motivo-acumulacion-de-amarillas {
+  background: var(--amarillo);
+}
+
+.cat-estado.motivo-disciplinaria {
+  background: #ddd3fb;
+}
+
+/* Celdas */
+.cat-principal {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cat-secundario {
+  display: block;
+  max-width: 260px;
+  overflow: hidden;
+  color: #6d6a73;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-mono {
+  font-family: var(--fuente-mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cat-con-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+/* Botón de texto dentro de la tabla (por ejemplo "Iniciar torneo") */
+.cat-boton-texto {
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  background: var(--amarillo);
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cat-boton-texto:hover {
+  background: #ffe08a;
+}
+
+.cat-candado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6d6a73;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cat-candado svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Secciones extra dentro del panel lateral (canchas, plantel) */
+.cat-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-top: 3px solid var(--tinta);
+  background: #fffaf0;
+}
+
+.cat-seccion h3 {
+  margin: 0;
+  font-family: var(--fuente-pixel);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cat-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 2px solid var(--tinta);
+  border-radius: 9px;
+}
+
+.cat-lista li strong {
+  display: block;
+  font-size: 14px;
+}
+
+.cat-lista li small {
+  display: block;
+  color: #6d6a73;
+  font-size: 12px;
+}
+
+.cat-lista .jugador-acciones button {
+  width: 30px;
+  height: 30px;
+}
+
+.cat-camiseta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cat-camiseta input {
+  width: 56px;
+  padding: 5px 6px;
+  border: 2px solid var(--tinta);
+  border-radius: 7px;
+  font-family: var(--fuente-mono);
+  font-size: 13px;
+  text-align: center;
+}
+
+.cat-capitan {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  background: var(--amarillo);
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cat-mini-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cat-mini-form .ancho {
+  grid-column: 1 / -1;
+}
+
+.cat-mini-form input,
+.cat-mini-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 2px solid var(--tinta);
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+}
+
+.cat-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cat-check input {
+  width: 18px;
+  height: 18px;
+}
+
+.cat-boton-agregar {
+  padding: 9px 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 9px;
+  background: var(--amarillo);
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cat-boton-agregar:hover {
+  background: #ffe08a;
+}
+
+.cat-boton-agregar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cat-aviso {
+  margin: 0;
+  padding: 10px 12px;
+  background: #e4f2fc;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cat-selector-torneo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cat-selector-torneo label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cat-selector-torneo select {
+  padding: 8px 12px;
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  font-weight: 600;
+}
