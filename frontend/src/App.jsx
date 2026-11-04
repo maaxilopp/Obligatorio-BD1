@@ -8,6 +8,7 @@ import { catalogos, puedeVer } from './components/secciones';
 import TablaPosiciones from './components/TablaPosiciones';
 import Fixture from './components/Fixture';
 import Jugadores from './components/Jugadores';
+import Planillas from './components/Planillas';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -22,7 +23,7 @@ const SECCIONES = [
 ];
 
 // Secciones que tienen su propia pantalla (no muestran el JSON de la respuesta)
-const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Jugadores'];
+const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Jugadores', 'Planillas'];
 
 const REPORTES = [
   { nombre: 'Posiciones', ruta: 'posiciones' },
@@ -197,9 +198,14 @@ function App() {
         setTorneos(lista);
 
         // El fixture abre directamente con el primer torneo
-        if (item.nombre === 'Partidos' && lista.length > 0) {
-          await cargarPartidos(String(lista[0].id_torneo));
-        }
+
+      if (
+        (item.nombre === 'Partidos' || item.nombre === 'Planillas') &&
+        lista.length > 0
+      ) {
+        await cargarPartidos(String(lista[0].id_torneo));
+      }
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -487,7 +493,7 @@ if (!token) {
           </section>
         )}
 
-        {seccion.nombre === 'Planillas' &&
+        {false && seccion.nombre === 'Planillas' &&
           torneoSeleccionado && (
             <section>
               <h2>Planillas de partidos</h2>
@@ -567,7 +573,9 @@ if (!token) {
           )}
 
 
-        {seccion.nombre === 'Jugadores' && <Jugadores />}
+        {seccion.nombre === 'Planillas' && (
+  <Planillas partidos={partidos} />
+)}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}
@@ -582,7 +590,7 @@ if (!token) {
             </section>
           )}
 
-        {seccion.nombre === 'Planillas' &&
+        {false && seccion.nombre === 'Planillas' &&
           datos !== null && (
             <section>
               <h2>Plantel disponible</h2>

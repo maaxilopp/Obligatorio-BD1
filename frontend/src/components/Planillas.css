@@ -1,0 +1,205 @@
+
+/* Pantalla de Planillas */
+
+.planillas-contenedor {
+  padding: 24px 32px;
+  background: #fff7e6;
+  color: #191720;
+  min-height: 100vh;
+}
+
+/* Encabezado */
+
+.planillas-encabezado {
+  margin-bottom: 28px;
+}
+
+.planillas-etiqueta {
+  color: #cf3025;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.planillas-encabezado h1 {
+  font-family: var(--fuente-pixel);
+  font-size: 48px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.planillas-subtitulo {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Listado de partidos */
+
+.planillas-listado {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 950px;
+}
+
+.planillas-partido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  padding: 20px;
+  background: white;
+  border: 2px solid #191720;
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 #191720;
+  color: #191720;
+  cursor: pointer;
+  text-align: left;
+}
+
+.planillas-partido:hover {
+  background: #fff5da;
+}
+
+.planillas-partido.seleccionado {
+  border-color: #cf3025;
+  background: #fff1e4;
+}
+
+/* Fecha y equipos */
+
+.planillas-fecha {
+  min-width: 75px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.planillas-equipos {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+.planillas-equipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.planillas-equipos > strong {
+  padding: 9px;
+  background: #191720;
+  color: white;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+/* Estado del partido */
+
+.planillas-estado {
+  padding: 8px 12px;
+  border: 2px solid #191720;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.planillas-estado.estado-jugado {
+  background: #80d5a4;
+}
+
+.planillas-estado.estado-programado {
+  background: #89c9f4;
+}
+
+.planillas-estado.estado-postergado {
+  background: #ffcc42;
+}
+
+.planillas-estado.estado-cancelado {
+  background: #ff9890;
+}
+
+/* Detalle de la planilla */
+
+.planillas-detalle {
+  margin-top: 30px;
+  padding: 24px;
+  max-width: 900px;
+  background: white;
+  border: 3px solid #191720;
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 #191720;
+}
+
+.planillas-detalle h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+/* Adaptación a pantallas pequeñas */
+
+@media (max-width: 768px) {
+  .planillas-contenedor {
+    padding: 18px;
+  }
+
+  .planillas-partido {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .planillas-equipos {
+    flex-wrap: wrap;
+  }
+
+  .planillas-estado {
+    align-self: flex-start;
+  }
+}
+
+
+/* Tipografías iguales al resto del proyecto */
+
+.planillas-contenedor {
+  font-family: var(--fuente-texto);
+}
+
+.planillas-etiqueta {
+  font-family: var(--fuente-texto);
+}
+
+.planillas-fecha {
+  font-family: var(--fuente-pixel);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.planillas-equipo {
+  font-family: var(--fuente-texto);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.planillas-equipos > strong {
+  font-family: var(--fuente-pixel);
+  font-size: 14px;
+}
+
+.planillas-estado {
+  font-family: var(--fuente-texto);
+  font-size: 11px;
+}
+
+.planillas-detalle h2 {
+  font-family: var(--fuente-pixel);
+  font-size: 22px;
+}
