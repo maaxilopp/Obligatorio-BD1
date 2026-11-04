@@ -216,8 +216,21 @@ function Jugadores() {
   const esNuevo = edicion?.modo === "nuevo";
   const errores = validar(formulario, esNuevo);
 
+  // Al editar, Guardar solo se habilita si cambió algo respecto al jugador original
+  // (se compara como se va a guardar: sin espacios sobrantes y el email en minúscula)
+  const original = jugadores.find((jugador) => jugador.ci === edicion?.ci);
+  const sinCambios =
+    Boolean(original) &&
+    formulario.nombre.trim() === original.nombre &&
+    formulario.apellido.trim() === original.apellido &&
+    formulario.email.trim().toLowerCase() === original.email &&
+    formulario.fecha_nacimiento === original.fecha_nacimiento &&
+    Number(formulario.id_facultad) === original.id_facultad &&
+    formulario.tipo === original.tipo;
+
   async function guardar(evento) {
     evento.preventDefault();
+    if (sinCambios) return;
     setIntentoGuardar(true);
     if (errores.length > 0) return;
 
@@ -597,7 +610,12 @@ function Jugadores() {
               {error && <p className="jugadores-error">{error}</p>}
 
               <div className="jugador-botones">
-                <button type="submit" className="guardar">
+                <button
+                  type="submit"
+                  className="guardar"
+                  disabled={sinCambios}
+                  title={sinCambios ? 'No hay cambios para guardar' : undefined}
+                >
                   {esNuevo ? "Crear" : "Guardar"}
                 </button>
                 <button type="button" className="cancelar" onClick={cerrar}>
