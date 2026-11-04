@@ -126,10 +126,19 @@ function EditarPartido({
     problemas.push('Esa cancha ya tiene un partido ese día en ese turno.');
   }
 
+  // Al editar, Guardar solo se habilita si cambió algo respecto al partido original
+  const sinCambios =
+    !esNuevo &&
+    Number(formulario.numero_fecha) === partido.numero_fecha &&
+    formulario.dia === partido.dia &&
+    Number(formulario.id_turno) === partido.id_turno &&
+    formulario.cancha === claveCancha(partido.id_complejo, partido.nombre_cancha) &&
+    formulario.estado === partido.estado;
+
   // Envía los datos para guardar
   function guardar(evento) {
     evento.preventDefault();
-    if (problemas.length > 0) return;
+    if (problemas.length > 0 || sinCambios) return;
 
     const [idComplejo, ...resto] = formulario.cancha.split('|');
 
@@ -338,7 +347,8 @@ function EditarPartido({
           <button
             type="submit"
             className="editar-guardar"
-            disabled={problemas.length > 0}
+            disabled={problemas.length > 0 || sinCambios}
+            title={sinCambios ? 'No hay cambios para guardar' : undefined}
           >
             {esNuevo ? 'Crear' : 'Guardar'}
           </button>

@@ -546,6 +546,13 @@
   box-shadow: 2px 2px 0 var(--tinta);
 }
 
+.jugador-botones .guardar:disabled {
+  opacity: 0.5;
+  box-shadow: 3px 3px 0 var(--tinta);
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Pantallas chicas */
 
 @media (max-width: 1100px) {

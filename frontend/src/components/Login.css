@@ -6,7 +6,13 @@
   --rojo: #c9291e;
   --amarillo: #ffc93c;
 
+  /* 1 unidad = 1px de la referencia (2000 x 1406), así todo escala parejo.
+     --u es para la cancha y --uc para la credencial, que no baja de un tamaño legible. */
+  --u: min(0.05vw, 0.1vh);
+  --uc: max(0.6px, min(0.085vh, 0.06vw, 1px));
+
   display: flex;
+  box-sizing: border-box;
   min-height: 100vh;
   width: 100%;
   background: var(--crema);
@@ -24,15 +30,15 @@
   background: repeating-linear-gradient(
     90deg,
     var(--verde-claro) 0,
-    var(--verde-claro) 85px,
-    var(--verde-oscuro) 85px,
-    var(--verde-oscuro) 170px
+    var(--verde-claro) calc(125 * var(--u)),
+    var(--verde-oscuro) calc(125 * var(--u)),
+    var(--verde-oscuro) calc(250 * var(--u))
   );
 }
 
 .login-lineas {
   position: absolute;
-  inset: 38px;
+  inset: calc(38 * var(--u));
   border: 3px solid rgba(255, 255, 255, 0.45);
   border-radius: 6px;
 }
@@ -52,7 +58,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 34%;
+  width: calc(415 * var(--u));
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border: 3px solid rgba(255, 255, 255, 0.45);
@@ -61,17 +67,17 @@
 
 .login-brand {
   position: absolute;
-  top: 72px;
-  left: 74px;
+  top: calc(75 * var(--u));
+  left: calc(75 * var(--u));
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: calc(20 * var(--u));
 }
 
 .login-brand-logo {
-  width: 86px;
-  height: 86px;
+  width: calc(88 * var(--u));
+  height: calc(88 * var(--u));
   flex-shrink: 0;
 }
 
@@ -81,23 +87,23 @@
   gap: 2px;
   color: var(--tinta);
   font-family: var(--fuente-pixel);
-  font-size: 26px;
+  font-size: calc(30 * var(--u));
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .login-frase {
   position: absolute;
   top: 43%;
-  left: 78px;
+  left: calc(78 * var(--u));
   z-index: 2;
   margin: 0;
   color: #ffffff;
   font-family: var(--fuente-pixel);
-  font-size: clamp(40px, 5.4vw, 84px);
+  font-size: calc(86 * var(--u));
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 1px;
+  line-height: 1.12;
+  letter-spacing: calc(3 * var(--u));
 }
 
 /* Mitad derecha: la credencial */
@@ -107,7 +113,7 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 2vh 4% 7vh;
   background: var(--crema);
 }
 
@@ -116,12 +122,12 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 620px;
+  max-width: calc(632 * var(--uc));
 }
 
 .login-cinta {
-  width: 50px;
-  height: 190px;
+  width: calc(52 * var(--uc));
+  height: calc(190 * var(--uc));
   border: 3px solid var(--tinta);
   border-bottom: none;
   background: linear-gradient(
@@ -135,8 +141,8 @@
 }
 
 .login-clip {
-  width: 104px;
-  height: 28px;
+  width: calc(106 * var(--uc));
+  height: calc(26 * var(--uc));
   margin-bottom: -3px;
   border: 3px solid var(--tinta);
   border-bottom: none;
@@ -145,27 +151,29 @@
 }
 
 .login-card {
+  box-sizing: border-box;
   width: 100%;
   overflow: hidden;
   background: #ffffff;
   border: 4px solid var(--tinta);
-  border-radius: 26px;
-  box-shadow: 16px 12px 0 var(--tinta);
+  border-radius: calc(32 * var(--uc));
+  /* Sombra solo a la derecha: el spread negativo la deja al ras abajo */
+  box-shadow: calc(22 * var(--uc)) calc(6 * var(--uc)) 0 calc(-6 * var(--uc)) var(--tinta);
 }
 
 .login-card-encabezado {
   position: relative;
-  padding: 58px 40px 34px;
+  padding: calc(78 * var(--uc)) calc(40 * var(--uc)) calc(34 * var(--uc));
   background: var(--rojo);
   border-bottom: 4px solid var(--tinta);
 }
 
 .login-ranura {
   position: absolute;
-  top: 16px;
+  top: calc(18 * var(--uc));
   left: 50%;
-  width: 82px;
-  height: 14px;
+  width: calc(86 * var(--uc));
+  height: calc(14 * var(--uc));
   transform: translateX(-50%);
   border: 3px solid var(--tinta);
   border-radius: 999px;
@@ -176,7 +184,9 @@
   margin: 0;
   color: #ffffff;
   font-family: var(--fuente-pixel);
-  font-size: clamp(34px, 3.4vw, 54px);
+  /* El ancho máximo hace que corte en "Ingrese sus / datos:" */
+  max-width: 8em;
+  font-size: calc(56 * var(--uc));
   font-weight: 700;
   line-height: 1.05;
 }
@@ -184,26 +194,26 @@
 .login-form-body {
   display: flex;
   flex-direction: column;
-  padding: 32px 40px 40px;
+  padding: calc(38 * var(--uc)) calc(40 * var(--uc)) calc(40 * var(--uc));
 }
 
 .login-card label {
-  margin-bottom: 10px;
-  font-size: 18px;
+  margin-bottom: calc(12 * var(--uc));
+  font-size: calc(19 * var(--uc));
   font-weight: 700;
 }
 
 .login-card input {
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 28px;
-  padding: 18px 20px;
+  margin-bottom: calc(28 * var(--uc));
+  padding: calc(20 * var(--uc));
   border: 3px solid var(--tinta);
-  border-radius: 14px;
+  border-radius: calc(16 * var(--uc));
   background: #ffffff;
   color: var(--tinta);
   font-family: var(--fuente-texto);
-  font-size: 20px;
+  font-size: calc(22 * var(--uc));
   outline: none;
 }
 
@@ -212,23 +222,23 @@
 }
 
 .login-card .error {
-  margin: -12px 0 18px;
+  margin: calc(-12 * var(--uc)) 0 calc(18 * var(--uc));
   color: var(--rojo);
-  font-size: 15px;
+  font-size: calc(17 * var(--uc));
   font-weight: 700;
 }
 
 .login-card button {
   width: 100%;
-  padding: 20px;
+  padding: calc(22 * var(--uc));
   border: 4px solid var(--tinta);
-  border-radius: 14px;
+  border-radius: calc(16 * var(--uc));
   background: var(--amarillo);
   color: var(--tinta);
   font-family: var(--fuente-pixel);
-  font-size: 26px;
-  font-weight: 600;
-  box-shadow: 8px 6px 0 var(--tinta);
+  font-size: calc(28 * var(--uc));
+  font-weight: 500;
+  box-shadow: calc(10 * var(--uc)) calc(3 * var(--uc)) 0 calc(-3 * var(--uc)) var(--tinta);
   cursor: pointer;
 }
 
@@ -238,59 +248,16 @@
 
 .login-card button:active {
   transform: translate(3px, 3px);
-  box-shadow: 5px 3px 0 var(--tinta);
-}
-
-@media (max-width: 1300px) {
-  .login-brand {
-    top: 60px;
-    left: 62px;
-  }
-
-  .login-brand-logo {
-    width: 64px;
-    height: 64px;
-  }
-
-  .login-brand-text {
-    font-size: 18px;
-  }
-
-  .login-frase {
-    left: 64px;
-  }
-
-  .login-credencial {
-    max-width: 460px;
-  }
-
-  .login-cinta {
-    height: 130px;
-  }
-
-  .login-card-encabezado {
-    padding: 48px 30px 26px;
-  }
-
-  .login-form-body {
-    padding: 26px 30px 32px;
-  }
-
-  .login-card input {
-    padding: 14px 16px;
-    font-size: 17px;
-  }
-
-  .login-card button {
-    padding: 16px;
-    font-size: 22px;
-  }
+  box-shadow: none;
 }
 
 /* Celular: la cancha arriba y la credencial abajo */
 
 @media (max-width: 900px) {
   .login-container {
+    --u: 0.09vw;
+    --uc: 0.75px;
+
     flex-direction: column;
   }
 
@@ -310,8 +277,17 @@
     left: 40px;
   }
 
+  .login-brand-logo {
+    width: 52px;
+    height: 52px;
+  }
+
   .login-brand-text {
     font-size: 14px;
+  }
+
+  .login-circulo {
+    width: 200px;
   }
 
   .login-frase {
@@ -319,6 +295,10 @@
     bottom: 50px;
     left: 40px;
     font-size: 36px;
+  }
+
+  .login-derecha {
+    padding: 24px 20px 40px;
   }
 
   .login-cinta {
