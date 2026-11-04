@@ -13,6 +13,7 @@ import Torneos from './components/Torneos';
 import Complejos from './components/Complejos';
 import Facultades from './components/Facultades';
 import Sanciones from './components/Sanciones';
+import Reportes from './components/Reportes';
 
 const SECCIONES = [
   { nombre: 'Facultades', ruta: '/facultades' },
@@ -36,27 +37,8 @@ const CATALOGOS_PROPIOS = [
   'Sanciones',
 ];
 
-const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', ...CATALOGOS_PROPIOS];
+const PANTALLAS_PROPIAS = ['Posiciones', 'Partidos', 'Reportes', ...CATALOGOS_PROPIOS];
 
-const REPORTES = [
-  { nombre: 'Posiciones', ruta: 'posiciones' },
-  { nombre: 'Goleadores', ruta: 'goleadores' },
-  { nombre: 'Fair play', ruta: 'fair-play' },
-  { nombre: 'Promedio de goles', ruta: 'promedio-goles' },
-  { nombre: 'Canchas', ruta: 'canchas' },
-  { nombre: 'Turnos', ruta: 'turnos' },
-  { nombre: 'Jugadores sin planilla', ruta: 'jugadores-sin-planilla' },
-  { nombre: 'Sanciones', ruta: 'sanciones' },
-  { nombre: 'Estado de partidos', ruta: 'estado-partidos' },
-  { nombre: 'Remontadas', ruta: 'remontadas' },
-  { nombre: 'Franjas de goles', ruta: 'franjas-goles' },
-  { nombre: 'Rachas', ruta: 'rachas' },
-  {
-    nombre: 'Jugadores por facultad',
-    ruta: 'jugadores-facultad',
-    global: true,
-  },
-];
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -75,8 +57,6 @@ function App() {
   const [turnos, setTurnos] = useState([]);
   const [complejos, setComplejos] = useState([]);
   const [partidoSeleccionado, setPartidoSeleccionado] = useState('');
-
-  const [reporteSeleccionado, setReporteSeleccionado] = useState('');
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -147,6 +127,8 @@ function App() {
 
     if (seccion.nombre === 'Posiciones') {
       cargarPosiciones(torneo.id_torneo);
+    } else if (seccion.nombre === 'Reportes') {
+      setTorneoSeleccionado(String(torneo.id_torneo));
     } else {
       cargarPartidos(String(torneo.id_torneo));
     }
@@ -193,7 +175,6 @@ function App() {
     setTorneoSeleccionado('');
     setPartidoSeleccionado('');
     setPartidos([]);
-    setReporteSeleccionado('');
 
     // Los catálogos cargan sus propios datos
     if (CATALOGOS_PROPIOS.includes(item.nombre)) return;
@@ -213,6 +194,15 @@ function App() {
         // El fixture abre directamente con el primer torneo
         if (item.nombre === 'Partidos' && lista.length > 0) {
           await cargarPartidos(String(lista[0].id_torneo));
+        }
+
+        // Los reportes también abren con el primer torneo
+        if (item.nombre === 'Reportes') {
+          if (lista.length > 0) {
+            setTorneoSeleccionado(String(lista[0].id_torneo));
+          } else {
+            setError('No hay torneos disponibles.');
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -301,42 +291,6 @@ setComplejos(
           tarjetas,
         });
       }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  async function cargarReporte(nombreReporte) {
-    setReporteSeleccionado(nombreReporte);
-    setDatos(null);
-    setError('');
-
-    const reporte = REPORTES.find(
-      (item) => item.ruta === nombreReporte
-    );
-
-    if (!reporte) return;
-
-    let ruta;
-
-    if (reporte.global) {
-      ruta = '/reportes/jugadores-facultad';
-    } else {
-      if (!torneoSeleccionado) {
-        setError('Seleccioná un torneo primero.');
-        return;
-      }
-
-      ruta = `/torneos/${torneoSeleccionado}/${reporte.ruta}`;
-    }
-
-    setCargando(true);
-
-    try {
-      const resultado = await apiRequest(ruta);
-      setDatos(resultado);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -478,8 +432,7 @@ if (!token) {
   )}
         </header>
 
-        {(seccion.nombre === 'Planillas' ||
-          seccion.nombre === 'Reportes') && (
+        {seccion.nombre === 'Planillas' && (
           <section>
 
             <select
@@ -531,26 +484,6 @@ if (!token) {
             </section>
           )}
 
-        {seccion.nombre === 'Reportes' && (
-          <section>
-            <label htmlFor="reporte">Tipo de reporte</label>
-
-            <select
-              id="reporte"
-              value={reporteSeleccionado}
-              onChange={(event) => cargarReporte(event.target.value)}
-            >
-              <option value="">Seleccioná un reporte</option>
-
-              {REPORTES.map((reporte) => (
-                <option key={reporte.ruta} value={reporte.ruta}>
-                  {reporte.nombre}
-                </option>
-              ))}
-            </select>
-          </section>
-        )}
-        
         {seccion.nombre === 'Posiciones' &&
           datos !== null &&
           !Array.isArray(datos) && (
@@ -587,6 +520,17 @@ if (!token) {
         {seccion.nombre === 'Complejos' && <Complejos />}
         {seccion.nombre === 'Facultades' && <Facultades />}
         {seccion.nombre === 'Sanciones' && <Sanciones />}
+
+        {seccion.nombre === 'Reportes' &&
+          torneoSeleccionado && (
+            <Reportes
+              key={torneoSeleccionado}
+              torneos={torneos}
+              torneoSeleccionado={torneoSeleccionado}
+              cambiarTorneo={setTorneoSeleccionado}
+              onEdicionCreada={edicionCreada}
+            />
+          )}
 
         {cargando && <p>Cargando...</p>}
         {error && <p className="error">{error}</p>}
@@ -636,9 +580,7 @@ if (!token) {
 
         {datos === null && !cargando && !error && !PANTALLAS_PROPIAS.includes(seccion.nombre) && (
           <p>
-            {seccion.nombre === 'Partidos' ||
-            seccion.nombre === 'Planillas' ||
-            seccion.nombre === 'Reportes'
+            {seccion.nombre === 'Planillas'
               ? 'Seleccioná un torneo para comenzar.'
               : 'Seleccioná una sección para consultar sus datos.'}
           </p>

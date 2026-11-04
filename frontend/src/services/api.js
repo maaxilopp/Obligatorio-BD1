@@ -16,7 +16,9 @@ export async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.detail || 'Error al comunicarse con el servidor');
+    const error = new Error(data?.detail || 'Error al comunicarse con el servidor');
+    error.status = response.status;
+    throw error;
   }
 
   return data;

@@ -1,0 +1,429 @@
+/* Pantalla de reportes (misma estética que posiciones y fixture) */
+
+.reportes-pagina {
+  --tinta: #191720;
+  --verde: #22a05b;
+  --amarillo: #ffc93c;
+  --rojo: #d42c20;
+  --borde-fila: #efe6d3;
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.reportes-pagina h1 {
+  margin: 18px 0 14px;
+  font-size: 52px;
+  line-height: 1;
+}
+
+/* App deja un encabezado vacío arriba de las pantallas propias */
+.content:has(> .reportes-pagina) > header {
+  display: none;
+}
+
+/* Resumen de la edición */
+
+.reportes-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+.reportes-resumen span {
+  padding: 6px 11px;
+  background: #ffffff;
+  border: 2px solid var(--tinta);
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.reportes-resumen strong {
+  margin-right: 2px;
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+}
+
+/* Grilla de tarjetas */
+
+.reportes-grilla {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows:
+    minmax(182px, auto) minmax(192px, auto) minmax(156px, auto)
+    minmax(156px, auto);
+  gap: 20px;
+  isolation: isolate;
+}
+
+.reporte-tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px;
+  border: 3px solid var(--tinta);
+  border-radius: 16px;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Sombra dura que asoma solo por la derecha */
+.reporte-tarjeta::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 1px;
+  right: -9px;
+  bottom: -1px;
+  width: 40px;
+  background: var(--tinta);
+}
+
+.reporte-tarjeta:hover,
+.reporte-tarjeta:focus-visible {
+  transform: translate(-1px, -1px);
+}
+
+.reporte-tarjeta:focus-visible {
+  outline: 3px solid var(--rojo);
+  outline-offset: 2px;
+}
+
+.reporte-ancha {
+  grid-column: span 2;
+}
+
+.reporte-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--fuente-pixel);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.reporte-numero {
+  font-family: var(--fuente-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.reporte-cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.reporte-cifra {
+  font-family: var(--fuente-pixel);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reporte-texto {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.reporte-texto-grande {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Líder */
+
+.reporte-lider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reporte-lider strong {
+  display: block;
+  font-size: 16px;
+}
+
+.insignia-reporte {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.reporte-insignias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reporte-insignias .insignia,
+.reporte-sancionado .insignia,
+.reporte-racha .insignia {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.reporte-sancionado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reporte-sancionado .reporte-cifra {
+  font-size: 28px;
+}
+
+/* Barras */
+
+.reporte-barras {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 5px;
+  min-width: 0;
+}
+
+.reporte-barra-columna {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 86px;
+  text-align: center;
+}
+
+.reporte-barra-valor {
+  margin-bottom: 4px;
+  font-family: var(--fuente-mono);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.reporte-barra {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 3px 3px 0 0;
+  background: var(--tinta);
+}
+
+.reporte-barra-etiqueta {
+  margin-top: 6px;
+  overflow: hidden;
+  font-family: var(--fuente-mono);
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reporte-barras-blancas .reporte-barra {
+  border: 2px solid var(--tinta);
+  border-radius: 3px;
+  background: #ffffff;
+}
+
+/* Promedio de goles */
+
+.reporte-promedio {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.reporte-promedio .reporte-cifra {
+  margin-bottom: 15px;
+}
+
+.reporte-barras-promedio {
+  justify-content: flex-end;
+}
+
+.reporte-barras-promedio .reporte-barra-columna {
+  flex: 0 1 38px;
+}
+
+/* Canchas y turnos */
+
+.reporte-canchas-turnos {
+  display: flex;
+  gap: 12px;
+}
+
+.reporte-barras-canchas {
+  flex: 1.15;
+}
+
+/* Estado de partidos */
+
+.reporte-estados {
+  display: flex;
+  height: 24px;
+  overflow: hidden;
+  border: 3px solid var(--tinta);
+  border-radius: 8px;
+  background: var(--tinta);
+  gap: 2px;
+}
+
+.reporte-estado-jugado {
+  background: var(--verde);
+}
+
+.reporte-estado-postergado {
+  background: var(--amarillo);
+}
+
+.reporte-estado-cancelado {
+  background: var(--rojo);
+}
+
+/* Rachas */
+
+.reporte-racha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reporte-racha-cuadro {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+/* Reporte completo */
+
+.reporte-detalle {
+  width: min(760px, calc(100vw - 40px));
+  max-height: calc(100vh - 80px);
+  padding: 0;
+  border: 3px solid var(--tinta);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--tinta);
+  background: #ffffff;
+  color: var(--tinta);
+}
+
+.reporte-detalle::backdrop {
+  background: #19172080;
+}
+
+.reporte-detalle-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px 20px;
+}
+
+.reporte-detalle-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.reporte-detalle-encabezado h2 {
+  font-size: 24px;
+}
+
+.reporte-detalle-encabezado button {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.reporte-detalle-encabezado button:hover {
+  background: #fff2cc;
+}
+
+.reporte-detalle-nota {
+  font-size: 12px;
+}
+
+.reporte-tabla-marco {
+  overflow-x: auto;
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+}
+
+.reporte-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.reporte-tabla th {
+  padding: 9px 10px;
+  background: var(--tinta);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.reporte-tabla td {
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--borde-fila);
+}
+
+.reporte-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive */
+
+@media (max-width: 1000px) {
+  .reportes-grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .reporte-tarjeta {
+    min-height: 170px;
+  }
+}
+
+@media (max-width: 600px) {
+  .reportes-grilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reporte-ancha {
+    grid-column: auto;
+  }
+
+  .reportes-pagina h1 {
+    font-size: 40px;
+  }
+}
