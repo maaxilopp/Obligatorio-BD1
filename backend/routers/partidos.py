@@ -39,7 +39,7 @@ def _partido(id_partido: int, usuario: dict):
 
 @router.post("", status_code=201)
 def crear_partido(datos: PartidoDatos, usuario: dict = Depends(solo_admin)):
-    _, id_partido = ejecutar(usuario, f"INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, id_turno, id_complejo, nombre_cancha) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", tuple(datos.model_dump().values()))
+    _, id_partido = ejecutar(usuario, "INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, id_turno, id_complejo, nombre_cancha) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", tuple(datos.model_dump().values()))
     return _partido(id_partido, usuario)
 
 @router.get("/{id_partido}/administracion")

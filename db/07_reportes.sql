@@ -97,7 +97,8 @@ ORDER BY equipo, camiseta;
 
 -- 8. CANTIDAD DE SANCIONES POR EQUIPO Y POR MOTIVO
 SELECT e.nombre AS equipo,
-       COALESCE(SUM(s.motivo = 'roja'), 0)                     AS roja,
+       COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%tarjeta roja%'), 0)    AS roja,
+       COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%doble amarilla%'), 0)  AS doble_amarilla,
        COALESCE(SUM(s.motivo = 'acumulacion de amarillas'), 0) AS acumulacion_amarillas,
        COALESCE(SUM(s.motivo = 'disciplinaria'), 0)            AS disciplinaria,
        COUNT(s.id_sancion)                                     AS total

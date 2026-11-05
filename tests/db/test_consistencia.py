@@ -25,6 +25,28 @@ def sanciones_por_amarillas(cur, ci):
                     "WHERE ci_jugador = %s AND motivo = 'acumulacion de amarillas'", (ci,))
 
 
+def amarillas_en_partidos(cur, n):
+    """Crea una edición pasada y le carga una amarilla al mismo jugador en cada
+    uno de n partidos distintos (fechas 1..n). Con la regla de doble amarilla no
+    se pueden cargar 3 amarillas en un mismo partido.
+
+    Devuelve (ci, [id_tarjeta, ...]) en orden de fecha.
+    """
+    t, equipos = nuevo_torneo(cur, equipos=n + 1, jugadores=5, anio=2025)
+    cur.execute("SELECT ci_jugador FROM equipo_jugador_torneo WHERE id_equipo = %s ORDER BY ci_jugador LIMIT 1",
+                (equipos[0],))
+    ci = cur.fetchone()[0]
+    partidos = [programar(cur, t, f, equipos[0], equipos[f], f"2025-03-{f:02d}") for f in range(1, n + 1)]
+    cur.execute("UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,))
+    # primero la planilla de todos los partidos: las suspensiones que generan las
+    # amarillas impedirían figurar en las fechas siguientes
+    for p in partidos:
+        cur.execute("INSERT INTO planilla_partido (id_partido, ci_jugador, id_equipo) VALUES (%s, %s, %s)",
+                    (p, ci, equipos[0]))
+    tarjetas = [amarilla(cur, ci, 10, partido=p) for p in partidos]
+    return ci, tarjetas
+
+
 def partido_pasado_con_planilla(cur):
     """Pasa el partido 11 a ayer, con un jugador de Ingenieros FC en la planilla."""
     cur.execute("UPDATE partido SET dia = CURDATE() - INTERVAL 1 DAY, id_turno = 5 WHERE id_partido = 11")
@@ -67,30 +89,28 @@ def test_ediciones_finalizadas_no_limitan_el_cambio_de_tipo(cur):
 # ---------- sanción por acumulación ----------
 
 def test_borrar_la_amarilla_que_sanciono_mantiene_la_sancion_si_quedan_tres(cur):
-    ci = uno(cur, INSCRIPTO_SIN_TARJETAS, (8,))
-    tarjetas = [amarilla(cur, ci, minuto) for minuto in (1, 2, 3, 4)]
+    ci, tarjetas = amarillas_en_partidos(cur, 4)
     assert sanciones_por_amarillas(cur, ci) == 1
 
     cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (tarjetas[2],))
 
     assert sanciones_por_amarillas(cur, ci) == 1
-    # la sanción pasa a colgar de la que ahora es la 3ra
+    # la sanción pasa a colgar de la que ahora es la 3ra (fecha 4) y empieza en la 5
     assert uno(cur, "SELECT id_tarjeta FROM sancion_jugador "
                     "WHERE ci_jugador = %s AND motivo = 'acumulacion de amarillas'", (ci,)) == tarjetas[3]
     assert uno(cur, "SELECT numero_fecha_inicio FROM sancion_jugador "
-                    "WHERE ci_jugador = %s AND motivo = 'acumulacion de amarillas'", (ci,)) == 4
+                    "WHERE ci_jugador = %s AND motivo = 'acumulacion de amarillas'", (ci,)) == 5
 
 
 def test_con_menos_de_tres_amarillas_no_queda_sancion(cur):
-    ci = uno(cur, INSCRIPTO_SIN_TARJETAS, (8,))
-    tarjetas = [amarilla(cur, ci, minuto) for minuto in (1, 2, 3)]
+    ci, tarjetas = amarillas_en_partidos(cur, 3)
+    assert sanciones_por_amarillas(cur, ci) == 1
     cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (tarjetas[0],))
     assert sanciones_por_amarillas(cur, ci) == 0
 
 
 def test_seis_amarillas_son_dos_sanciones_aunque_se_corrija_una(cur):
-    ci = uno(cur, INSCRIPTO_SIN_TARJETAS, (8,))
-    tarjetas = [amarilla(cur, ci, minuto) for minuto in range(1, 8)]
+    ci, tarjetas = amarillas_en_partidos(cur, 7)
     assert sanciones_por_amarillas(cur, ci) == 2
     cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (tarjetas[2],))
     assert sanciones_por_amarillas(cur, ci) == 2
