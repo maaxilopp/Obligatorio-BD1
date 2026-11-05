@@ -381,3 +381,18 @@
     border-top: 3px dashed var(--tinta);
   }
 }
+
+.fixture-boton-planilla {
+  align-self: flex-start;
+  padding: 5px 12px;
+  background: #ffffff;
+  color: #191720;
+  border: 2px solid #191720;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fixture-boton-planilla:hover {
+  background: #fff2cc;
+}

@@ -12,8 +12,8 @@ class SancionNueva(BaseModel):
     ci_jugador: str = Field(pattern=r"^[0-9]{7,8}$")
     id_torneo: int = Field(gt=0)
     motivo: Literal["disciplinaria"] = "disciplinaria"
-    numero_fecha_inicio: int = Field(ge=1, le=255)
-    cantidad_fechas: int = Field(ge=1, le=255)
+    numero_fecha_inicio: int = Field(ge=1, le=127)
+    cantidad_fechas: int = Field(ge=1, le=127)
     descripcion: str = Field(min_length=1, max_length=255)
 
 COLUMNAS = "id_sancion, ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas, id_tarjeta, descripcion"

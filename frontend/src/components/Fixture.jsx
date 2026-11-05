@@ -43,7 +43,8 @@ function Fixture({
   torneoSeleccionado = '',
   cambiarTorneo,
   onEdicionCreada,
-  onPartidosActualizados
+  onPartidosActualizados,
+  onAbrirPlanilla
 }) {
   // Los planilleros solo cargan planillas: el fixture lo ven pero no lo modifican
   const esAdmin = localStorage.getItem('rol') === 'administrador';
@@ -462,6 +463,16 @@ function Fixture({
                     {avisos.map((aviso) => (
                       <span key={aviso} className="fixture-aviso">{aviso}</span>
                     ))}
+
+                    {partido.estado !== 'cancelado' && onAbrirPlanilla && (
+                      <button
+                        type="button"
+                        className="fixture-boton-planilla"
+                        onClick={() => onAbrirPlanilla(partido)}
+                      >
+                        Planilla
+                      </button>
+                    )}
 
                     {editable && (
                       <div className="fixture-acciones">

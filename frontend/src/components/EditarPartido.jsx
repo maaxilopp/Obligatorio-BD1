@@ -110,6 +110,14 @@ function EditarPartido({
       .map((p) => claveCancha(p.id_complejo, p.nombre_cancha))
   );
 
+  // Un equipo tampoco puede estar en dos canchas a la misma hora
+  const ocupadosEnHorario = new Set(
+    otrosPartidos
+      .filter((p) => p.estado !== 'postergado')
+      .filter((p) => p.dia === formulario.dia && String(p.id_turno) === String(formulario.id_turno))
+      .flatMap((p) => [p.equipo_local, p.equipo_visitante])
+  );
+
   // Mismas reglas que controla la base, para avisar antes de mandar el pedido
   const problemas = [];
   const cancelando = formulario.estado === 'cancelado';
@@ -121,6 +129,12 @@ function EditarPartido({
   });
 
   const ocupaCancha = formulario.estado !== 'cancelado' && formulario.estado !== 'postergado';
+
+  [nombreLocal, nombreVisitante].forEach((nombre) => {
+    if (ocupaCancha && nombre && ocupadosEnHorario.has(nombre)) {
+      problemas.push(`${nombre} ya tiene un partido ese día en ese turno.`);
+    }
+  });
 
   if (ocupaCancha && formulario.cancha && canchasOcupadas.has(formulario.cancha)) {
     problemas.push('Esa cancha ya tiene un partido ese día en ese turno.');
@@ -247,7 +261,7 @@ function EditarPartido({
               type="number"
               name="numero_fecha"
               min="1"
-              max="255"
+              max="127"
               value={formulario.numero_fecha}
               onChange={cambiarCampo}
               required

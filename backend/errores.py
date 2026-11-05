@@ -40,6 +40,16 @@ REFERENCIAS = {
     "fk_sancion_inscripto": "Solo se puede sancionar a un jugador inscripto en esa edición del torneo",
 }
 
+# Qué impide borrar o modificar algo, según la clave foránea que lo frena
+BLOQUEOS = {
+    "fk_equipo_capitan": "Ese jugador es el capitán: elegí otro capitán antes de sacarlo del plantel",
+    "fk_ejt_jugador": "El jugador está inscripto en un plantel: no se puede eliminar ni cambiar de facultad",
+    "fk_ejt_equipo": "El equipo todavía tiene jugadores: sacalos del plantel antes de darlo de baja",
+    "fk_gol_planilla": "El jugador tiene goles en este partido: eliminalos antes de sacarlo de la planilla",
+    "fk_tarjeta_planilla": "El jugador tiene tarjetas en este partido: eliminalas antes de sacarlo de la planilla",
+    "fk_planilla_partido": "El partido tiene planilla cargada: hay que quitarla antes de eliminarlo",
+}
+
 CHECKS = {
     "chk_login_correo": "El correo no tiene un formato válido",
     "chk_jugador_ci": "La cédula debe tener 7 u 8 dígitos, sin puntos ni guión",
@@ -76,9 +86,10 @@ def traducir_error(e: Error) -> HTTPException:
                                                                   "Hace referencia a un dato que no existe"))
 
     if e.errno == 1451:
-        return HTTPException(status_code=409,
-                             detail="No se puede eliminar porque tiene datos asociados "
-                                    "(por ejemplo, partidos, planillas o planteles)")
+        return HTTPException(status_code=409, detail=_por_constraint(
+            mensaje, BLOQUEOS,
+            "No se puede eliminar porque tiene datos asociados "
+            "(por ejemplo, partidos, planillas o planteles)"))
 
     if e.errno == 3819:
         return HTTPException(status_code=400, detail=_por_constraint(mensaje, CHECKS, "Algún dato no es válido"))
@@ -86,7 +97,7 @@ def traducir_error(e: Error) -> HTTPException:
     if e.errno in (1048, 1364):
         return HTTPException(status_code=400, detail="Falta completar un campo obligatorio")
 
-    if e.errno in (1265, 1406, 1366):
+    if e.errno in (1264, 1265, 1406, 1366):
         return HTTPException(status_code=400, detail="Algún dato tiene un valor o largo no permitido")
 
     if e.errno in (1142, 1143, 1370):

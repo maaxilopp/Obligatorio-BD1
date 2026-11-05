@@ -53,3 +53,24 @@ def test_falta_de_permisos_de_mysql_es_403(errno):
 def test_error_desconocido_no_expone_detalles():
     r = traducir_error(error_mysql(2013, "Lost connection to MySQL server during query"))
     assert (r.status_code, r.detail) == (500, "Error inesperado en la base de datos")
+
+@pytest.mark.parametrize("constraint, parte", [
+    ("fk_equipo_capitan", "es el capitán"),
+    ("fk_ejt_jugador", "inscripto en un plantel"),
+    ("fk_ejt_equipo", "todavía tiene jugadores"),
+    ("fk_gol_planilla", "tiene goles"),
+    ("fk_tarjeta_planilla", "tiene tarjetas"),
+])
+def test_lo_que_impide_borrar_se_explica_segun_la_clave(constraint, parte):
+    r = traducir_error(error_mysql(1451, f"Cannot delete or update a parent row: CONSTRAINT `{constraint}`"))
+    assert r.status_code == 409 and parte in r.detail
+
+
+def test_bloqueo_desconocido_tiene_mensaje_generico():
+    r = traducir_error(error_mysql(1451, "Cannot delete or update a parent row"))
+    assert r.status_code == 409 and "datos asociados" in r.detail
+
+
+def test_valor_fuera_de_rango_no_es_un_error_interno():
+    r = traducir_error(error_mysql(1264, "Out of range value for column 'numero_fecha'"))
+    assert r.status_code == 400

@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../services/api";
+import { colorEquipo } from "./colores";
 import { InsigniaEquipo } from "./equipos";
 import {
   Acciones,
   BotonesPanel,
-  Buscador,
   Campo,
-  Catalogo,
-  FilaVacia,
+  IconoCandado,
   PanelLateral,
   Problemas,
 } from "./CatalogoBase";
+import SelectorEdicion from "./SelectorEdicion";
+import { ordenarTorneos } from "./torneo";
+import "./Equipos.css";
 
 const MAX_PLANTEL = 10;
 const MIN_PLANTEL = 5;
+const MAX_DOCENTES = 2;
 
 const ETIQUETA_TIPO = {
   grado: "Grado",
@@ -66,13 +69,47 @@ function CamisetaInput({ valor, deshabilitado, onGuardar }) {
   );
 }
 
-function CatalogoEquipos() {
+function Camiseta({ numero, color, capitan }) {
+  return (
+    <div className="camiseta">
+      <svg viewBox="0 0 92 92" aria-hidden="true">
+        <path
+          d="M28 6 L6 24 L18 40 L26 34 L26 86 L66 86 L66 34 L74 40 L86 24 L64 6 L54 14 Q46 20 38 14 Z"
+          fill={color}
+          stroke="#191720"
+          strokeWidth="3.5"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M28 6 L38 14 Q46 20 54 14 L64 6"
+          fill="none"
+          stroke="#191720"
+          strokeWidth="6"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <strong>{numero}</strong>
+      {capitan && (
+        <span className="camiseta-capitan" title="Capitán">
+          C
+        </span>
+      )}
+    </div>
+  );
+}
+
+function CatalogoEquipos({ equipoInicial = null }) {
   const [torneos, setTorneos] = useState([]);
   const [facultades, setFacultades] = useState([]);
   const [torneoId, setTorneoId] = useState("");
   const [equipos, setEquipos] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
+
+  // Equipo que se muestra debajo de las tarjetas, con su plantel
+  const [seleccionId, setSeleccionId] = useState(null);
+  const [plantelVista, setPlantelVista] = useState([]);
+  // Con partidos cargados ya no se suman equipos
+  const [hayPartidos, setHayPartidos] = useState(false);
 
   // null | { modo: 'nuevo' } | { modo: 'editar', id }
   const [edicion, setEdicion] = useState(null);
@@ -90,11 +127,34 @@ function CatalogoEquipos() {
 
   const torneo = torneos.find((t) => String(t.id_torneo) === torneoId);
   const enInscripcion = torneo?.estado === "inscripcion";
+  const motivoSinAlta = !enInscripcion
+    ? "Los equipos solo se inscriben mientras la edición está en inscripción"
+    : hayPartidos
+      ? "La edición ya tiene partidos: para sumar un equipo hay que borrarlos"
+      : undefined;
 
-  function cargarEquipos(idTorneo) {
-    return apiRequest(`/equipos?id_torneo=${idTorneo}`)
-      .then((lista) => {
+  function verPlantel(idEquipo) {
+    setSeleccionId(idEquipo);
+    if (!idEquipo) {
+      setPlantelVista([]);
+      return Promise.resolve();
+    }
+    return apiRequest(`/equipos/${idEquipo}/jugadores`)
+      .then(setPlantelVista)
+      .catch((err) => setError(err.message));
+  }
+
+  function cargarEquipos(idTorneo, idElegido = null) {
+    return Promise.all([
+      apiRequest(`/equipos?id_torneo=${idTorneo}`),
+      apiRequest(`/partidos?id_torneo=${idTorneo}`),
+    ])
+      .then(([lista, partidos]) => {
         setEquipos(lista);
+        setHayPartidos(partidos.some((p) => p.estado !== "cancelado"));
+        const elegido =
+          lista.find((e) => e.id_equipo === idElegido) || lista[0] || null;
+        verPlantel(elegido?.id_equipo ?? null);
         return lista;
       })
       .catch((err) => {
@@ -107,9 +167,7 @@ function CatalogoEquipos() {
   useEffect(() => {
     Promise.all([apiRequest("/torneos"), apiRequest("/facultades")])
       .then(([listaTorneos, listaFacultades]) => {
-        const ordenados = [...listaTorneos].sort(
-          (a, b) => b.anio - a.anio || b.semestre - a.semestre,
-        );
+        const ordenados = ordenarTorneos(listaTorneos);
         setTorneos(ordenados);
         setFacultades(listaFacultades);
 
@@ -117,16 +175,20 @@ function CatalogoEquipos() {
           setCargando(false);
           return null;
         }
-        // Abre en la edición que está en inscripción (si hay) o en la última
+        // Abre en el equipo pedido, o en la edición en inscripción, o en la última
         const inicial =
-          ordenados.find((t) => t.estado === "inscripcion") || ordenados[0];
+          ordenados.find((t) => t.id_torneo === equipoInicial?.id_torneo) ||
+          ordenados.find((t) => t.estado === "inscripcion") ||
+          ordenados[0];
         setTorneoId(String(inicial.id_torneo));
-        return cargarEquipos(inicial.id_torneo);
+        return cargarEquipos(inicial.id_torneo, equipoInicial?.id_equipo);
       })
       .catch((err) => {
         setError(err.message);
         setCargando(false);
       });
+    // Solo al abrir la pantalla
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function cambiarTorneo(idTorneo) {
@@ -137,13 +199,10 @@ function CatalogoEquipos() {
     cargarEquipos(idTorneo);
   }
 
-  const texto = busqueda.trim().toLowerCase();
-  const visibles = equipos.filter(
-    (equipo) =>
-      !texto ||
-      equipo.nombre.toLowerCase().includes(texto) ||
-      equipo.facultad.toLowerCase().includes(texto),
-  );
+  function edicionCreada(nuevo) {
+    setTorneos((anteriores) => ordenarTorneos([...anteriores, nuevo]));
+    cambiarTorneo(String(nuevo.id_torneo));
+  }
 
   // ---------- plantel ----------
 
@@ -191,7 +250,10 @@ function CatalogoEquipos() {
       });
       setNuevoJugador({ ci: "", camiseta: "" });
       setErrorPlantel("");
-      await Promise.all([cargarPlantel(equipo), cargarEquipos(torneoId)]);
+      await Promise.all([
+        cargarPlantel(equipo),
+        cargarEquipos(torneoId, equipo.id_equipo),
+      ]);
     } catch (err) {
       setErrorPlantel(err.message);
     }
@@ -216,7 +278,7 @@ function CatalogoEquipos() {
       if (nuevo && !nuevo.some((j) => j.ci === formulario.ci_capitan)) {
         setFormulario((f) => ({ ...f, ci_capitan: "" }));
       }
-      await cargarEquipos(torneoId);
+      await cargarEquipos(torneoId, equipo.id_equipo);
     } catch (err) {
       setErrorPlantel(`No se pudo quitar: ${err.message}`);
     }
@@ -229,7 +291,7 @@ function CatalogoEquipos() {
         { method: "PUT", body: JSON.stringify({ numero_camiseta: numero }) },
       );
       setErrorPlantel("");
-      await cargarPlantel(equipo);
+      await Promise.all([cargarPlantel(equipo), verPlantel(equipo.id_equipo)]);
       return true;
     } catch (err) {
       setErrorPlantel(err.message);
@@ -248,12 +310,6 @@ function CatalogoEquipos() {
 
   function abrirNuevo() {
     setMensajeExito("");
-    if (!enInscripcion) {
-      setError(
-        "Los equipos solo se pueden inscribir mientras el torneo está en etapa de inscripción.",
-      );
-      return;
-    }
     setEdicion({ modo: "nuevo" });
     setFormulario(FORMULARIO_VACIO);
     setIntentoGuardar(false);
@@ -263,6 +319,7 @@ function CatalogoEquipos() {
 
   function abrirEditar(equipo, lista = equipos) {
     setEdicion({ modo: "editar", id: equipo.id_equipo });
+    setSeleccionId(equipo.id_equipo);
     setFormulario({
       nombre: equipo.nombre,
       id_facultad: String(equipo.id_facultad),
@@ -311,7 +368,7 @@ function CatalogoEquipos() {
             id_facultad: Number(formulario.id_facultad),
           }),
         });
-        const lista = await cargarEquipos(torneoId);
+        const lista = await cargarEquipos(torneoId, creado.id_equipo);
         abrirEditar(creado, lista);
         setMensajeExito(
           `${creado.nombre} fue inscripto. Cargá su plantel y elegí al capitán.`,
@@ -327,7 +384,7 @@ function CatalogoEquipos() {
         setMensajeExito("¡Equipo guardado correctamente!");
         setEdicion(null);
         reiniciarPlantel();
-        await cargarEquipos(torneoId);
+        await cargarEquipos(torneoId, edicion.id);
       }
     } catch (err) {
       setError(err.message);
@@ -335,7 +392,7 @@ function CatalogoEquipos() {
   }
 
   async function eliminar(equipo) {
-    if (!window.confirm(`¿Dar de baja a ${equipo.nombre}? Se borra también su plantel.`)) {
+    if (!window.confirm(`¿Dar de baja a ${equipo.nombre}?`)) {
       return;
     }
 
@@ -527,99 +584,213 @@ function CatalogoEquipos() {
     </PanelLateral>
   );
 
+  const seleccionado = equipos.find((e) => e.id_equipo === seleccionId);
+  const totalJugadores = equipos.reduce(
+    (total, equipo) => total + Number(equipo.cantidad_jugadores),
+    0,
+  );
+  const docentes = plantelVista.filter(
+    (j) => j.tipo === "docente" || j.tipo === "funcionario",
+  ).length;
+  const lugaresLibres = Math.max(MAX_PLANTEL - plantelVista.length, 0);
+
   return (
-    <Catalogo
-      titulo="Equipos"
-      textoNuevo="+ Nuevo equipo"
-      onNuevo={abrirNuevo}
-      exito={mensajeExito}
-      error={error}
-      panel={panel}
-      filtros={
-        <>
-          <div className="cat-selector-torneo">
-            <label htmlFor="equipos-torneo">Edición</label>
-            <select
-              id="equipos-torneo"
-              value={torneoId}
-              onChange={(evento) => cambiarTorneo(evento.target.value)}
-            >
-              {torneos.map((t) => (
-                <option key={t.id_torneo} value={t.id_torneo}>
-                  {t.nombre} - {t.anio}
-                </option>
-              ))}
-            </select>
-            {torneo && (
-              <span
-                className={`cat-estado estado-${torneo.estado.replace(" ", "-")}`}
-              >
-                {torneo.estado === "inscripcion"
-                  ? "Inscripción"
-                  : torneo.estado === "en curso"
-                    ? "En curso"
-                    : "Finalizado"}
-              </span>
-            )}
+    <section className="jugadores-pagina equipos-pagina">
+      <SelectorEdicion
+        torneos={torneos}
+        torneoSeleccionado={torneoId}
+        cambiarTorneo={cambiarTorneo}
+        onEdicionCreada={edicionCreada}
+      />
+
+      <div className="pagina-encabezado">
+        <div>
+          <h1>Equipos</h1>
+          <div className="pastillas equipos-resumen">
+            <span className="pastilla">
+              <strong>{equipos.length}</strong> equipos
+            </span>
+            <span className="pastilla">
+              <strong>{totalJugadores}</strong> jugadores en planteles
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="boton-pixel rojo"
+          disabled={Boolean(motivoSinAlta)}
+          title={motivoSinAlta}
+          onClick={abrirNuevo}
+        >
+          + Nuevo equipo
+        </button>
+      </div>
+
+      {error && !panel && <p className="jugadores-error">{error}</p>}
+      {mensajeExito && <p className="jugadores-exito">✓ {mensajeExito}</p>}
+
+      <div
+        className={panel ? "jugadores-cuerpo con-panel" : "jugadores-cuerpo"}
+      >
+        <div>
+          {cargando && <p>Cargando…</p>}
+          {!cargando && equipos.length === 0 && (
+            <p className="equipos-vacio">
+              No hay equipos inscriptos en esta edición.
+            </p>
+          )}
+
+          <div className="equipos-tarjetas">
+            {equipos.map((equipo) => {
+              const activo = equipo.id_equipo === seleccionId;
+              return (
+                <button
+                  key={equipo.id_equipo}
+                  type="button"
+                  className={activo ? "equipo-tarjeta activo" : "equipo-tarjeta"}
+                  style={
+                    activo
+                      ? { backgroundColor: colorEquipo(equipo.id_equipo) }
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (edicion) cerrar();
+                    verPlantel(equipo.id_equipo);
+                  }}
+                >
+                  <span className="equipo-tarjeta-cabecera">
+                    <InsigniaEquipo
+                      id={equipo.id_equipo}
+                      nombre={equipo.nombre}
+                    />
+                    <span>
+                      <strong>{equipo.nombre}</strong>
+                      <small>{equipo.facultad}</small>
+                    </span>
+                  </span>
+
+                  <span
+                    className={
+                      equipo.cantidad_jugadores < MIN_PLANTEL
+                        ? "cupos incompleto"
+                        : "cupos"
+                    }
+                  >
+                    {Array.from({ length: MAX_PLANTEL }, (_, i) => (
+                      <span
+                        key={i}
+                        className={
+                          i < equipo.cantidad_jugadores ? "lleno" : ""
+                        }
+                      />
+                    ))}
+                  </span>
+
+                  <small className="equipo-capitan">
+                    Capitán: {equipo.capitan || "sin asignar"}
+                  </small>
+                </button>
+              );
+            })}
           </div>
 
-          <Buscador
-            valor={busqueda}
-            onChange={setBusqueda}
-            placeholder="Equipo o facultad"
-            etiqueta="Buscar equipo"
-          />
-        </>
-      }
-    >
-      <table className="jugadores-tabla">
-        <thead>
-          <tr>
-            <th>Equipo</th>
-            <th>Facultad</th>
-            <th>Capitán</th>
-            <th>Jugadores</th>
-            <th aria-label="Acciones" />
-          </tr>
-        </thead>
-
-        <tbody>
-          <FilaVacia
-            columnas={5}
-            cargando={cargando}
-            hayDatos={visibles.length > 0}
-            texto="No hay equipos inscriptos en esta edición."
-          />
-
-          {visibles.map((equipo) => (
-            <tr
-              key={equipo.id_equipo}
-              className={edicion?.id === equipo.id_equipo ? "seleccionado" : ""}
-            >
-              <td>
-                <span className="cat-con-color">
-                  <InsigniaEquipo id={equipo.id_equipo} nombre={equipo.nombre} />
-                  {equipo.nombre}
-                </span>
-              </td>
-              <td>{equipo.facultad}</td>
-              <td>{equipo.capitan || "Sin capitán"}</td>
-              <td className="cat-mono">
-                {equipo.cantidad_jugadores}/{MAX_PLANTEL}
-                {equipo.cantidad_jugadores < MIN_PLANTEL && " ⚠"}
-              </td>
-              <td>
-                <Acciones
-                  nombre={equipo.nombre}
-                  onEditar={() => abrirEditar(equipo)}
-                  onBorrar={() => eliminar(equipo)}
+          {seleccionado && (
+            <article className="equipo-detalle">
+              <header
+                style={{
+                  backgroundColor: colorEquipo(seleccionado.id_equipo),
+                }}
+              >
+                <InsigniaEquipo
+                  id={seleccionado.id_equipo}
+                  nombre={seleccionado.nombre}
+                  tamano="lg"
                 />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Catalogo>
+
+                <div className="equipo-detalle-nombre">
+                  <h2>{seleccionado.nombre}</h2>
+                  <span>{seleccionado.facultad}</span>
+                </div>
+
+                <span className="equipo-dato">
+                  {plantelVista.length} de {MAX_PLANTEL} jugadores
+                </span>
+                <span className="equipo-dato">
+                  Docentes y funcionarios: {docentes} de {MAX_DOCENTES}
+                </span>
+
+                <Acciones
+                  nombre={seleccionado.nombre}
+                  onEditar={() => abrirEditar(seleccionado)}
+                  onBorrar={
+                    enInscripcion ? () => eliminar(seleccionado) : undefined
+                  }
+                />
+              </header>
+
+              <div className="equipo-plantel">
+                {plantelVista.map((jugador) => (
+                  <div className="equipo-jugador" key={jugador.ci}>
+                    <Camiseta
+                      numero={jugador.numero_camiseta}
+                      color={colorEquipo(seleccionado.id_equipo)}
+                      capitan={jugador.es_capitan}
+                    />
+                    <strong>
+                      {jugador.nombre}
+                      <br />
+                      {jugador.apellido}
+                    </strong>
+                    {(jugador.tipo === "docente" ||
+                      jugador.tipo === "funcionario") && (
+                      <span className={`jugador-tipo tipo-${jugador.tipo}`}>
+                        {ETIQUETA_TIPO[jugador.tipo]}
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {Array.from({ length: lugaresLibres }, (_, i) => (
+                  <div className="equipo-jugador" key={`libre-${i}`}>
+                    <button
+                      type="button"
+                      className="equipo-libre"
+                      disabled={!enInscripcion}
+                      aria-label="Agregar jugador"
+                      onClick={() => abrirEditar(seleccionado)}
+                    >
+                      +
+                    </button>
+                    <small>Libre</small>
+                  </div>
+                ))}
+              </div>
+
+              <footer className="equipo-pie">
+                {enInscripcion ? (
+                  <strong>
+                    Plantel abierto: se puede modificar hasta iniciar la edición.
+                  </strong>
+                ) : (
+                  <>
+                    <IconoCandado />
+                    <strong>
+                      Plantel cerrado:{" "}
+                      {torneo?.estado === "en curso"
+                        ? "el torneo está en curso."
+                        : "el torneo finalizó."}
+                    </strong>
+                  </>
+                )}
+              </footer>
+            </article>
+          )}
+        </div>
+
+        {panel}
+      </div>
+    </section>
   );
 }
 

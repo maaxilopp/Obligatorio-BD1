@@ -3,21 +3,31 @@ import { apiRequest } from "../services/api";
 import {
   Acciones,
   BotonesPanel,
-  Buscador,
   Campo,
-  Catalogo,
-  Chips,
   FilaVacia,
-  IconoCandado,
   PanelLateral,
   Problemas,
 } from "./CatalogoBase";
+import { colorEquipo } from "./colores";
+import SelectorEdicion from "./SelectorEdicion";
+import {
+  diaCorto,
+  fechaPendiente,
+  formatearCi,
+  ordenarTorneos,
+} from "./torneo";
+import "./Sanciones.css";
 
-const MOTIVOS = [
-  { valor: "roja", etiqueta: "Roja" },
-  { valor: "acumulacion de amarillas", etiqueta: "Acumulación de amarillas" },
-  { valor: "disciplinaria", etiqueta: "Disciplinaria" },
-];
+const ETIQUETA_MOTIVO = {
+  roja: "Roja",
+  "acumulacion de amarillas": "Acumulación",
+  disciplinaria: "Disciplinaria",
+};
+
+const MAX_FECHA = 127;
+
+// Orden de las cartas de la próxima fecha
+const ORDEN_MOTIVO = ["roja", "acumulacion de amarillas", "disciplinaria"];
 
 const FORMULARIO_VACIO = {
   ci_jugador: "",
@@ -25,14 +35,6 @@ const FORMULARIO_VACIO = {
   cantidad_fechas: "1",
   descripcion: "",
 };
-
-function etiquetaMotivo(motivo) {
-  return MOTIVOS.find((m) => m.valor === motivo)?.etiqueta || motivo;
-}
-
-function claseMotivo(motivo) {
-  return `motivo-${motivo.replaceAll(" ", "-")}`;
-}
 
 function enteroEntre(valor, minimo, maximo) {
   const numero = Number(valor);
@@ -42,17 +44,82 @@ function enteroEntre(valor, minimo, maximo) {
 function validar(f) {
   const errores = [];
   if (!f.ci_jugador) errores.push("Elegí un jugador.");
-  if (!enteroEntre(f.numero_fecha_inicio, 1, 255)) {
-    errores.push("La fecha de inicio tiene que ser un número entre 1 y 255.");
+  if (!enteroEntre(f.numero_fecha_inicio, 1, MAX_FECHA)) {
+    errores.push(`La fecha de inicio tiene que estar entre 1 y ${MAX_FECHA}.`);
   }
-  if (!enteroEntre(f.cantidad_fechas, 1, 255)) {
-    errores.push("La cantidad de fechas tiene que ser un número entre 1 y 255.");
+  if (!enteroEntre(f.cantidad_fechas, 1, MAX_FECHA)) {
+    errores.push(`La cantidad de fechas tiene que estar entre 1 y ${MAX_FECHA}.`);
   }
   if (!f.descripcion.trim()) errores.push("Escribí el motivo de la sanción.");
   if (f.descripcion.trim().length > 255) {
-    errores.push("La descripción no puede tener más de 255 caracteres.");
+    errores.push("El motivo no puede tener más de 255 caracteres.");
   }
   return errores;
+}
+
+// 3, 2 -> "3 y 4" | 3, 3 -> "3, 4 y 5" | 3, 6 -> "3 a 8"
+function textoFechas(inicio, cantidad) {
+  if (cantidad === 1) return String(inicio);
+  if (cantidad > 3) return `${inicio} a ${inicio + cantidad - 1}`;
+  const fechas = Array.from({ length: cantidad }, (_, i) => inicio + i);
+  return `${fechas.slice(0, -1).join(", ")} y ${fechas.at(-1)}`;
+}
+
+function cumpleEnFecha(sancion, fecha) {
+  return (
+    fecha >= sancion.numero_fecha_inicio &&
+    fecha < sancion.numero_fecha_inicio + sancion.cantidad_fechas
+  );
+}
+
+// Lo que se ve sobre la carta según el motivo de la sanción
+function encabezadoCarta(sancion) {
+  if (sancion.motivo === "roja") return "Roja directa";
+  if (sancion.motivo === "disciplinaria") return "Disciplinaria";
+  const amarillas = sancion.descripcion?.match(/\d+/)?.[0] || "3";
+  return `${amarillas} amarillas`;
+}
+
+function CartaSancion({ sancion, jugador }) {
+  const tipo =
+    sancion.motivo === "roja"
+      ? "roja"
+      : sancion.motivo === "disciplinaria"
+        ? "disciplinaria"
+        : "amarilla";
+  const cantidad = sancion.cantidad_fechas;
+  const fechas = textoFechas(sancion.numero_fecha_inicio, cantidad);
+
+  return (
+    <article className="sancion-item">
+      <div className={`carta-marco ${tipo}`}>
+        {tipo === "amarilla" && (
+          <>
+            <span className="carta-fondo uno" />
+            <span className="carta-fondo dos" />
+          </>
+        )}
+
+        <div className="carta">
+          <small>{encabezadoCarta(sancion)}</small>
+          <strong>
+            {jugador?.nombre}
+            <br />
+            {jugador?.apellido}
+          </strong>
+          {tipo === "disciplinaria" && <p>{sancion.descripcion}</p>}
+          <small>
+            {cantidad === 1 ? "Fecha" : "Fechas"} {fechas}
+          </small>
+        </div>
+      </div>
+
+      <span className="sancion-facultad">
+        <i style={{ backgroundColor: colorEquipo(jugador?.id_equipo) }} />
+        {jugador?.facultad}
+      </span>
+    </article>
+  );
 }
 
 function Sanciones() {
@@ -62,12 +129,13 @@ function Sanciones() {
   const [torneos, setTorneos] = useState([]);
   const [torneoId, setTorneoId] = useState("");
   const [sanciones, setSanciones] = useState([]);
-  // Jugadores inscriptos en la edición, con el nombre de su equipo
+  const [partidos, setPartidos] = useState([]);
+  // Jugadores inscriptos en la edición, con su equipo y facultad
   const [inscriptos, setInscriptos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  const [busqueda, setBusqueda] = useState("");
-  const [motivoFiltro, setMotivoFiltro] = useState("");
+  // "" | "tarjetas" | "disciplinarias"
+  const [filtro, setFiltro] = useState("");
 
   // null | { modo: 'nuevo' } | { modo: 'editar', id }
   const [edicion, setEdicion] = useState(null);
@@ -81,16 +149,23 @@ function Sanciones() {
     return Promise.all([
       apiRequest(`/sanciones?id_torneo=${idTorneo}`),
       apiRequest(`/equipos?id_torneo=${idTorneo}`),
+      apiRequest(`/partidos?id_torneo=${idTorneo}`),
     ])
-      .then(async ([listaSanciones, equipos]) => {
+      .then(async ([listaSanciones, equipos, listaPartidos]) => {
         const planteles = await Promise.all(
           equipos.map((equipo) =>
             apiRequest(`/equipos/${equipo.id_equipo}/jugadores`).then((js) =>
-              js.map((j) => ({ ...j, equipo: equipo.nombre })),
+              js.map((j) => ({
+                ...j,
+                equipo: equipo.nombre,
+                id_equipo: equipo.id_equipo,
+                facultad: equipo.facultad,
+              })),
             ),
           ),
         );
         setSanciones(listaSanciones);
+        setPartidos(listaPartidos);
         setInscriptos(planteles.flat());
       })
       .catch((err) => setError(err.message))
@@ -100,9 +175,7 @@ function Sanciones() {
   useEffect(() => {
     apiRequest("/torneos")
       .then((lista) => {
-        const ordenados = [...lista].sort(
-          (a, b) => b.anio - a.anio || b.semestre - a.semestre,
-        );
+        const ordenados = ordenarTorneos(lista);
         setTorneos(ordenados);
         if (ordenados.length === 0) {
           setCargando(false);
@@ -129,33 +202,53 @@ function Sanciones() {
     cargarTorneo(idTorneo);
   }
 
+  function edicionCreada(torneo) {
+    setTorneos((anteriores) => ordenarTorneos([...anteriores, torneo]));
+    cambiarTorneo(String(torneo.id_torneo));
+  }
+
   const jugadorPorCi = new Map(inscriptos.map((j) => [j.ci, j]));
   const nombreJugador = (ci) => {
     const jugador = jugadorPorCi.get(ci);
     return jugador ? `${jugador.nombre} ${jugador.apellido}` : ci;
   };
 
-  const texto = busqueda.trim().toLowerCase();
-  const encontradas = sanciones.filter((sancion) => {
-    if (!texto) return true;
-    const jugador = jugadorPorCi.get(sancion.ci_jugador);
-    return (
-      nombreJugador(sancion.ci_jugador).toLowerCase().includes(texto) ||
-      sancion.ci_jugador.includes(texto) ||
-      (jugador?.equipo || "").toLowerCase().includes(texto)
-    );
-  });
-  const visibles = motivoFiltro
-    ? encontradas.filter((s) => s.motivo === motivoFiltro)
-    : encontradas;
-  const cantidad = (motivo) =>
-    encontradas.filter((s) => s.motivo === motivo).length;
+  // Las sanciones por tarjeta las genera la base; las disciplinarias se cargan acá
+  const porTarjeta = sanciones.filter((s) => s.id_tarjeta !== null);
+  const disciplinarias = sanciones.filter((s) => s.id_tarjeta === null);
+  const visibles =
+    filtro === "tarjetas"
+      ? porTarjeta
+      : filtro === "disciplinarias"
+        ? disciplinarias
+        : sanciones;
+
+  // Quiénes no pueden jugar la próxima fecha
+  const proximaFecha = fechaPendiente(partidos);
+  const diaProximaFecha = partidos
+    .filter(
+      (p) => p.numero_fecha === proximaFecha && p.estado !== "cancelado",
+    )
+    .map((p) => p.dia)
+    .sort()[0];
+  const suspendidos =
+    proximaFecha === null
+      ? []
+      : sanciones
+          .filter((s) => cumpleEnFecha(s, proximaFecha))
+          .sort(
+            (a, b) =>
+              ORDEN_MOTIVO.indexOf(a.motivo) - ORDEN_MOTIVO.indexOf(b.motivo),
+          );
 
   // ---------- alta, edición y baja ----------
 
   function abrirNueva() {
     setEdicion({ modo: "nuevo" });
-    setFormulario(FORMULARIO_VACIO);
+    setFormulario({
+      ...FORMULARIO_VACIO,
+      numero_fecha_inicio: String(proximaFecha ?? 1),
+    });
     setIntentoGuardar(false);
     setError("");
     setMensajeExito("");
@@ -216,9 +309,7 @@ function Sanciones() {
           method: "POST",
           body: JSON.stringify(datos),
         });
-        setMensajeExito(
-          `Se sancionó a ${nombreJugador(datos.ci_jugador)}.`,
-        );
+        setMensajeExito(`Se sancionó a ${nombreJugador(datos.ci_jugador)}.`);
       } else {
         await apiRequest(`/sanciones/${edicion.id}`, {
           method: "PUT",
@@ -259,14 +350,19 @@ function Sanciones() {
   // Jugadores agrupados por equipo para el selector
   const equiposConJugadores = [...new Set(inscriptos.map((j) => j.equipo))];
 
-  const panel = esAdmin && edicion && (
-    <PanelLateral titulo={esNueva ? "Nueva sanción" : "Editar sanción"}>
-      <form onSubmit={guardar} noValidate>
-        <p className="cat-aviso">
-          Acá se cargan las sanciones disciplinarias. Las de tarjeta roja y las
-          de acumulación de amarillas se generan solas.
-        </p>
+  const filtros = [
+    { valor: "", etiqueta: "Todas", cantidad: sanciones.length },
+    { valor: "tarjetas", etiqueta: "Tarjetas", cantidad: porTarjeta.length },
+    {
+      valor: "disciplinarias",
+      etiqueta: "Disciplinarias",
+      cantidad: disciplinarias.length,
+    },
+  ];
 
+  const panel = esAdmin && edicion && (
+    <PanelLateral titulo="Sanción disciplinaria" className="sanciones-panel">
+      <form onSubmit={guardar} noValidate>
         <Campo id="sancion-jugador" etiqueta="Jugador">
           <select
             id="sancion-jugador"
@@ -281,7 +377,8 @@ function Sanciones() {
                   .filter((j) => j.equipo === equipo)
                   .map((jugador) => (
                     <option key={jugador.ci} value={jugador.ci}>
-                      {jugador.nombre} {jugador.apellido}
+                      {jugador.nombre} {jugador.apellido} -{" "}
+                      {formatearCi(jugador.ci)}
                     </option>
                   ))}
               </optgroup>
@@ -296,27 +393,27 @@ function Sanciones() {
               name="numero_fecha_inicio"
               type="number"
               min={1}
-              max={255}
+              max={MAX_FECHA}
               value={formulario.numero_fecha_inicio}
               onChange={cambiarCampo}
             />
           </Campo>
 
-          <Campo id="sancion-cantidad" etiqueta="Cantidad de fechas">
+          <Campo id="sancion-cantidad" etiqueta="Fechas">
             <input
               id="sancion-cantidad"
               name="cantidad_fechas"
               type="number"
               min={1}
-              max={255}
+              max={MAX_FECHA}
               value={formulario.cantidad_fechas}
               onChange={cambiarCampo}
             />
           </Campo>
         </div>
 
-        <Campo id="sancion-descripcion" etiqueta="Descripción">
-          <input
+        <Campo id="sancion-descripcion" etiqueta="Motivo">
+          <textarea
             id="sancion-descripcion"
             name="descripcion"
             maxLength={255}
@@ -330,7 +427,7 @@ function Sanciones() {
         {error && <p className="jugadores-error">{error}</p>}
 
         <BotonesPanel
-          textoGuardar={esNueva ? "Crear" : "Guardar"}
+          textoGuardar="Guardar"
           sinCambios={sinCambios}
           onCancelar={cerrar}
         />
@@ -339,123 +436,170 @@ function Sanciones() {
   );
 
   return (
-    <Catalogo
-      titulo="Sanciones"
-      textoNuevo="+ Nueva sanción"
-      onNuevo={esAdmin ? abrirNueva : undefined}
-      exito={mensajeExito}
-      error={error}
-      panel={panel}
-      filtros={
-        <>
-          <div className="cat-selector-torneo">
-            <label htmlFor="sanciones-torneo">Edición</label>
-            <select
-              id="sanciones-torneo"
-              value={torneoId}
-              onChange={(evento) => cambiarTorneo(evento.target.value)}
-            >
-              {torneos.map((t) => (
-                <option key={t.id_torneo} value={t.id_torneo}>
-                  {t.nombre} - {t.anio}
-                </option>
+    <section className="jugadores-pagina sanciones-pagina">
+      <SelectorEdicion
+        torneos={torneos}
+        torneoSeleccionado={torneoId}
+        cambiarTorneo={cambiarTorneo}
+        onEdicionCreada={edicionCreada}
+      />
+
+      <div className="pagina-encabezado">
+        <h1>Sanciones</h1>
+
+        {esAdmin && (
+          <button
+            type="button"
+            className="boton-pixel lila"
+            onClick={abrirNueva}
+          >
+            + Sanción disciplinaria
+          </button>
+        )}
+      </div>
+
+      {error && !panel && <p className="jugadores-error">{error}</p>}
+      {mensajeExito && <p className="jugadores-exito">✓ {mensajeExito}</p>}
+
+      {proximaFecha !== null && !cargando && (
+        <section className="sanciones-proxima">
+          <header>
+            <h2>No juegan la Fecha {proximaFecha}</h2>
+            <span>{diaCorto(diaProximaFecha)}</span>
+          </header>
+
+          {suspendidos.length === 0 ? (
+            <p className="sanciones-sin-suspendidos">
+              Nadie está suspendido para esta fecha.
+            </p>
+          ) : (
+            <div className="sanciones-cartas">
+              {suspendidos.map((sancion) => (
+                <CartaSancion
+                  key={sancion.id_sancion}
+                  sancion={sancion}
+                  jugador={jugadorPorCi.get(sancion.ci_jugador)}
+                />
               ))}
-            </select>
+            </div>
+          )}
+        </section>
+      )}
+
+      <div
+        className={panel ? "jugadores-cuerpo con-panel" : "jugadores-cuerpo"}
+      >
+        <div className="jugadores-tarjeta">
+          <div className="sanciones-historial-cabecera">
+            <h2>Historial</h2>
+
+            <div className="jugadores-chips">
+              {filtros.map((opcion) => (
+                <button
+                  key={opcion.valor}
+                  type="button"
+                  className={filtro === opcion.valor ? "activo" : ""}
+                  onClick={() => setFiltro(opcion.valor)}
+                >
+                  {opcion.etiqueta} <span>{opcion.cantidad}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <Buscador
-            valor={busqueda}
-            onChange={setBusqueda}
-            placeholder="Jugador, cédula o equipo"
-            etiqueta="Buscar sanción"
-          />
+          <div className="jugadores-tabla-contenedor">
+            <table className="jugadores-tabla">
+              <thead>
+                <tr>
+                  <th>Jugador</th>
+                  <th>Motivo</th>
+                  <th>Fechas</th>
+                  <th aria-label="Acciones" />
+                </tr>
+              </thead>
 
-          <Chips
-            valor={motivoFiltro}
-            onChange={setMotivoFiltro}
-            opciones={[
-              { valor: "", etiqueta: "Todas", cantidad: encontradas.length },
-              ...MOTIVOS.map((m) => ({
-                valor: m.valor,
-                etiqueta: m.etiqueta,
-                cantidad: cantidad(m.valor),
-              })),
-            ]}
-          />
-        </>
-      }
-    >
-      <table className="jugadores-tabla">
-        <thead>
-          <tr>
-            <th>Jugador</th>
-            <th>Motivo</th>
-            <th>Desde</th>
-            <th>Fechas</th>
-            <th>Origen</th>
-            <th aria-label="Acciones" />
-          </tr>
-        </thead>
+              <tbody>
+                <FilaVacia
+                  columnas={4}
+                  cargando={cargando}
+                  hayDatos={visibles.length > 0}
+                  texto="No hay sanciones en esta edición."
+                />
 
-        <tbody>
-          <FilaVacia
-            columnas={6}
-            cargando={cargando}
-            hayDatos={visibles.length > 0}
-            texto="No hay sanciones que coincidan en esta edición."
-          />
+                {visibles.map((sancion) => {
+                  const porTarjeta = sancion.id_tarjeta !== null;
+                  const jugador = jugadorPorCi.get(sancion.ci_jugador);
 
-          {visibles.map((sancion) => {
-            const automatica = sancion.id_tarjeta !== null;
-            return (
-              <tr
-                key={sancion.id_sancion}
-                className={edicion?.id === sancion.id_sancion ? "seleccionado" : ""}
-              >
-                <td>
-                  <strong className="cat-principal">
-                    {nombreJugador(sancion.ci_jugador)}
-                  </strong>
-                  <small className="cat-secundario">
-                    {jugadorPorCi.get(sancion.ci_jugador)?.equipo ||
-                      sancion.ci_jugador}
-                  </small>
-                </td>
-                <td>
-                  <span className={`cat-estado ${claseMotivo(sancion.motivo)}`}>
-                    {etiquetaMotivo(sancion.motivo)}
-                  </span>
-                </td>
-                <td className="cat-mono">Fecha {sancion.numero_fecha_inicio}</td>
-                <td className="cat-mono">{sancion.cantidad_fechas}</td>
-                <td>
-                  {automatica ? (
-                    <span className="cat-candado" title="Se corrige desde la tarjeta">
-                      <IconoCandado /> Automática
-                    </span>
-                  ) : (
-                    <span title={sancion.descripcion || undefined}>
-                      <small className="cat-secundario">
-                        {sancion.descripcion || "Manual"}
-                      </small>
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {esAdmin && !automatica && (
-                    <Acciones
-                      nombre="la sanción"
-                      onEditar={() => abrirEditar(sancion)}
-                      onBorrar={() => eliminar(sancion)}
-                    />
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </Catalogo>
+                  return (
+                    <tr
+                      key={sancion.id_sancion}
+                      className={
+                        edicion?.id === sancion.id_sancion ? "seleccionado" : ""
+                      }
+                    >
+                      <td>
+                        <div className="jugador-celda">
+                          <span
+                            className="jugador-facultad-color"
+                            style={{
+                              backgroundColor: colorEquipo(jugador?.id_equipo),
+                            }}
+                          />
+                          <div>
+                            <strong>{nombreJugador(sancion.ci_jugador)}</strong>
+                            <small>{jugador?.facultad}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="sancion-motivo">
+                          {porTarjeta && (
+                            <i
+                              className={
+                                sancion.motivo === "roja"
+                                  ? "tarjetita roja"
+                                  : "tarjetita amarilla"
+                              }
+                            />
+                          )}
+                          <span
+                            className={`cat-estado motivo-${sancion.motivo.replaceAll(" ", "-")}`}
+                            title={
+                              porTarjeta
+                                ? `${sancion.descripcion}. Se corrige desde la planilla.`
+                                : sancion.descripcion || undefined
+                            }
+                          >
+                            {ETIQUETA_MOTIVO[sancion.motivo] || sancion.motivo}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="cat-mono">
+                        {textoFechas(
+                          sancion.numero_fecha_inicio,
+                          sancion.cantidad_fechas,
+                        )}
+                      </td>
+                      <td>
+                        {esAdmin && !porTarjeta && (
+                          <Acciones
+                            nombre="la sanción"
+                            onEditar={() => abrirEditar(sancion)}
+                            onBorrar={() => eliminar(sancion)}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {panel}
+      </div>
+    </section>
   );
 }
 

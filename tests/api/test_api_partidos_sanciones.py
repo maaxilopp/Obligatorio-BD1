@@ -88,3 +88,30 @@ def test_sancion_a_jugador_no_inscripto(admin):
                                                      "numero_fecha_inicio": 5, "cantidad_fechas": 1,
                                                      "descripcion": "Prueba"})
     assert r.status_code == 400 and "inscripto" in r.json()["detail"]
+
+def test_los_limites_de_fecha_coinciden_con_la_columna(admin):
+    r = api.post("/sanciones", headers=admin, json={
+        "ci_jugador": "41100048", "id_torneo": 1, "numero_fecha_inicio": 5,
+        "cantidad_fechas": 200, "descripcion": "fuera de rango"})
+    assert r.status_code == 422
+    assert api.post("/partidos", headers=admin, json={**partido_nuevo(), "numero_fecha": 200}).status_code == 422
+
+
+def test_el_capitan_no_sale_del_plantel_sin_reemplazo(admin):
+    t = api.post("/torneos", headers=admin, json={
+        "nombre": "Capitán", "anio": 2033, "semestre": 1,
+        "fecha_inicio": "2033-03-01", "fecha_fin": "2033-07-01"}).json()["id_torneo"]
+    e = api.post("/equipos", headers=admin, json={"nombre": "Con capitán", "id_torneo": t, "id_facultad": 1}).json()
+    ruta = f"/equipos/{e['id_equipo']}"
+    try:
+        assert api.post(f"{ruta}/jugadores", headers=admin,
+                        json={"ci_jugador": "41100048", "numero_camiseta": 8}).status_code == 201
+        assert api.put(ruta, headers=admin, json={"nombre": "Con capitán", "ci_capitan": "41100048"}).status_code == 200
+
+        r = api.delete(f"{ruta}/jugadores/41100048", headers=admin)
+        assert r.status_code == 409 and "capitán" in r.json()["detail"]
+    finally:
+        api.put(ruta, headers=admin, json={"nombre": "Con capitán", "ci_capitan": None})
+        api.delete(f"{ruta}/jugadores/41100048", headers=admin)
+        api.delete(ruta, headers=admin)
+        api.delete(f"/torneos/{t}", headers=admin)
