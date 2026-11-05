@@ -30,7 +30,7 @@ def test_tarjeta_nueva_genera_sancion_y_al_borrarla_se_borra(cur):
 def test_una_sola_roja_por_jugador_y_partido(cur):
     ci = ci_de(cur, "Lautaro", "Medina")
     cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 40, 'roja')", (ci,))
-    falla(cur, "INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 45, 'roja')",
+    falla(cur, "INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 40, 'roja')",
           (ci,), errno=1062)
 
 

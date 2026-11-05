@@ -142,6 +142,37 @@ BEGIN
     END IF;
 END //
 
+-- Un expulsado no vuelve a la cancha: después del minuto de su roja no puede
+-- tener goles ni tarjetas, sin importar en qué orden se carguen.
+CREATE PROCEDURE validar_expulsion(
+    IN p_id_partido INT, IN p_ci VARCHAR(8), IN p_minuto TINYINT,
+    IN p_color VARCHAR(10), IN p_id_tarjeta INT)
+BEGIN
+    IF EXISTS (SELECT 1 FROM tarjeta
+               WHERE id_partido = p_id_partido
+                 AND ci_jugador = p_ci
+                 AND color = 'roja'
+                 AND minuto < p_minuto
+                 AND id_tarjeta <> IFNULL(p_id_tarjeta, 0)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El jugador fue expulsado antes de ese minuto';
+    END IF;
+
+    IF p_color = 'roja'
+       AND (EXISTS (SELECT 1 FROM gol
+                    WHERE id_partido = p_id_partido
+                      AND ci_jugador = p_ci
+                      AND minuto > p_minuto)
+            OR EXISTS (SELECT 1 FROM tarjeta
+                       WHERE id_partido = p_id_partido
+                         AND ci_jugador = p_ci
+                         AND minuto > p_minuto
+                         AND id_tarjeta <> IFNULL(p_id_tarjeta, 0))) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El jugador tiene goles o tarjetas después de ese minuto: la roja no puede ser anterior';
+    END IF;
+END //
+
 -- PLANTELES
 --   - Solo se modifican los planteles en etapa de inscripción
 --   - Máximo 10 jugadores y máximo 2 docentes/funcionarios
@@ -376,13 +407,18 @@ END //
 --    y corrección solo dentro de las 48 horas una vez marcado jugado)
 
 CREATE TRIGGER trg_gol_bi BEFORE INSERT ON gol
-FOR EACH ROW CALL validar_carga_planilla(NEW.id_partido) //
+FOR EACH ROW
+BEGIN
+    CALL validar_carga_planilla(NEW.id_partido);
+    CALL validar_expulsion(NEW.id_partido, NEW.ci_jugador, NEW.minuto, NULL, NULL);
+END //
 
 CREATE TRIGGER trg_gol_bu BEFORE UPDATE ON gol
 FOR EACH ROW
 BEGIN
     CALL validar_carga_planilla(OLD.id_partido);
     CALL validar_carga_planilla(NEW.id_partido);
+    CALL validar_expulsion(NEW.id_partido, NEW.ci_jugador, NEW.minuto, NULL, NULL);
 END //
 
 CREATE TRIGGER trg_gol_bd BEFORE DELETE ON gol
@@ -403,6 +439,7 @@ BEGIN
     END IF;
 
     CALL validar_carga_planilla(NEW.id_partido);
+    CALL validar_expulsion(NEW.id_partido, NEW.ci_jugador, NEW.minuto, NEW.color, NULL);
 END//
 
 CREATE TRIGGER trg_tarjeta_bu BEFORE UPDATE ON tarjeta
@@ -419,6 +456,7 @@ BEGIN
     END IF;
     CALL validar_carga_planilla(OLD.id_partido);
     CALL validar_carga_planilla(NEW.id_partido);
+    CALL validar_expulsion(NEW.id_partido, NEW.ci_jugador, NEW.minuto, NEW.color, OLD.id_tarjeta);
 END //
 
 CREATE TRIGGER trg_tarjeta_bd BEFORE DELETE ON tarjeta
