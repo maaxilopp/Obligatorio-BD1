@@ -61,9 +61,9 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 - Usuarios de MySQL con permisos diferenciados por rol.
 - Auditoría de las correcciones de resultados.
 
-**Backend.** Valida los datos de entrada, autentica a los usuarios y se conecta a MySQL con el usuario que corresponde al rol de quien inició sesión. Los errores de la base (por ejemplo, el mensaje de un trigger) se devuelven al usuario en español.
+**Backend.** Valida los datos de entrada, autentica a los usuarios y se conecta a MySQL con el usuario que corresponde al rol de quien inició sesión. Los errores de la base  se devuelven al usuario con un mensaje descriptivo.
 
-**Validación en las tres capas:** el frontend valida los formularios, el backend valida cada campo con Pydantic y la base vuelve a controlar todo con constraints y triggers.
+**Validación en las tres capas:** el frontend valida los formularios, el backend valida cada campo con Pydantic y la base vuelve a controlar todo con restricciones y triggers.
 
 ## Estructura del repositorio
 
@@ -87,7 +87,7 @@ Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 docker compose up --build
 ```
 
-- MySQL: `localhost:3307`, usuario `root`, contraseña `root` (puerto 3307 para no chocar con un MySQL instalado). Sirve para conectarse desde DataGrip.
+- MySQL: `localhost:3307`, usuario `root`, contraseña `root`, puerto 3307 para no chocar con un MySQL instalado. Sirve para conectarse desde DataGrip.
 - API: http://localhost:8000 (documentación en http://localhost:8000/docs).
 
 El frontend no corre en Docker: se levanta igual que en la opción 2, paso 3.
@@ -109,18 +109,18 @@ Los scripts de `db/` se ejecutan **en orden**:
 
 | Script                  | Qué hace                                                                          |
 | ----------------------- | --------------------------------------------------------------------------------- |
-| `01_schema.sql`         | Crea la base `torneo_futbol5` (la borra si existe), las tablas y los turnos       |
-| `02_triggers.sql`       | Reglas de negocio que no entran en constraints, sanciones automáticas y auditoría |
+| `01_schema.sql`         | Crea la base `torneo_futbol5`, si ya existía la borra, las tablas y los turnos       |
+| `02_triggers.sql`       | Reglas de negocio que no entran en restricciones, sanciones automáticas y auditoría |
 | `03_procedimientos.sql` | `marcar_jugado` y `generar_fixture`                                               |
 | `04_vistas.sql`         | Resultado de cada partido, tabla de posiciones, goleadores, fair play, sanciones  |
 | `05_usuarios.sql`       | Usuarios con permisos diferenciados                                               |
-| `06_datos.sql`          | Datos de prueba (6 equipos, 3 fechas jugadas, fecha 4 a futuro)                   |
-| `07_reportes.sql`       | Las consultas de los reportes (no modifica nada)                                  |
+| `06_datos.sql`          | Datos de prueba               |
+| `07_reportes.sql`       | Las consultas de los reportes                                |
 
 **Con DataGrip**
 
 1. Crear una conexión MySQL como `root`.
-2. Clic derecho en la conexión → _SQL Scripts_ → _Run SQL Script..._ y ejecutar los scripts `01` a `06`, uno por uno y en orden.
+2. Clic derecho en la conexión SQL Scripts,  Run SQL Script... y ejecutar los scripts `01` a `06`, uno por uno y en orden.
 3. Marcar el schema `torneo_futbol5` para que aparezca en el explorador.
 4. Abrir `07_reportes.sql`, ejecutar `SET time_zone = '-03:00';` y `SET @torneo = 1;`, y después cualquier consulta con Ctrl+Enter.
 
@@ -132,7 +132,7 @@ python db/setup_db.py --password <contraseña de root>
 ```
 
 
-Los datos de prueba usan fechas relativas al día en que se cargan: la fecha 3 se jugó "ayer" (todavía se puede corregir, ventana de 48 h) y la fecha 4 queda a futuro. Si pasan más de dos días, conviene volver a cargarlos.
+Los datos de prueba usan fechas relativas al día en que se cargan; la fecha 3 se jugó "ayer", todavía se pueden corregir las planillas, y la fecha 4 queda a futuro. esta fue una decisión de diseño para poder mostrar correctamente el funcionamiento de nuestra entrega en la defensa, y que los profesores puedan jugar con ella. Si pasan más de dos dias, es recomendable volver a iniciar todo nuevamente.
 
 #### 2. Levantar el backend
 
