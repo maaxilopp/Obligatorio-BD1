@@ -569,7 +569,11 @@ BEGIN
           AND t.color = 'amarilla'
           AND p.id_torneo = v_torneo;
 
-        IF MOD(v_amarillas, 3) = 0 THEN
+        -- Si esta misma amarilla ya generó la sanción por doble amarilla, esa
+        -- sanción ya la cubre (id_tarjeta es UNIQUE): no se inserta otra.
+        IF MOD(v_amarillas, 3) = 0
+           AND NOT EXISTS (SELECT 1 FROM sancion_jugador
+                           WHERE id_tarjeta = NEW.id_tarjeta) THEN
             INSERT INTO sancion_jugador
                 (ci_jugador, id_torneo, motivo, numero_fecha_inicio,
                  cantidad_fechas, id_tarjeta, descripcion)
@@ -668,9 +672,22 @@ END //
 --   El cupo de docentes y funcionarios se controla al inscribir, pero un
 --   jugador inscripto también puede cambiar de tipo después. Las ediciones
 --   finalizadas no cuentan: un estudiante de ayer puede ser docente hoy.
+CREATE TRIGGER trg_jugador_bi BEFORE INSERT ON jugador
+FOR EACH ROW
+BEGIN
+    IF NEW.fecha_nacimiento > CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+    END IF;
+END //
+
 CREATE TRIGGER trg_jugador_bu BEFORE UPDATE ON jugador
 FOR EACH ROW
 BEGIN
+    IF NEW.fecha_nacimiento > CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+    END IF;
     IF NEW.tipo IN ('docente', 'funcionario')
        AND OLD.tipo NOT IN ('docente', 'funcionario')
        AND EXISTS (SELECT 1
@@ -789,6 +806,18 @@ CREATE TRIGGER trg_tarjeta_ad AFTER DELETE ON tarjeta
 FOR EACH ROW
 BEGIN
     IF OLD.color = 'amarilla' THEN
+        -- Si borrar esta amarilla deja al jugador con menos de 2 en el partido,
+        -- la sanción por doble amarilla (colgada de la otra amarilla) ya no corresponde.
+        DELETE s FROM sancion_jugador s
+        JOIN tarjeta t ON t.id_tarjeta = s.id_tarjeta
+        WHERE s.motivo = 'roja'
+          AND t.color = 'amarilla'
+          AND t.id_partido = OLD.id_partido
+          AND t.ci_jugador = OLD.ci_jugador
+          AND (SELECT COUNT(*) FROM tarjeta x
+               WHERE x.id_partido = OLD.id_partido
+                 AND x.ci_jugador = OLD.ci_jugador
+                 AND x.color = 'amarilla') < 2;
         CALL recalcular_sanciones_amarillas(OLD.ci_jugador, OLD.id_partido);
     END IF;
     CALL registrar_auditoria(OLD.id_partido, 'tarjeta', 'baja',

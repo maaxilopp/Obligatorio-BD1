@@ -91,7 +91,7 @@ def test_inscriptos_que_nunca_jugaron(r):
 
 def test_sanciones_por_equipo_y_motivo(r):
     assert r["sanciones_equipo"][0][0] == "Vilardebo FC"
-    assert tuple(int(x) for x in r["sanciones_equipo"][0][1:]) == (1, 0, 1, 2)
+    assert tuple(int(x) for x in r["sanciones_equipo"][0][1:]) == (1, 0, 0, 1, 2)   # roja, doble amarilla, acumulación, disciplinaria, total
 
 
 def test_porcentaje_jugados_vs_postergados_cancelados(r):

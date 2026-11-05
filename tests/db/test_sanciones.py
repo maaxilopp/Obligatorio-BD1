@@ -88,3 +88,32 @@ def test_torneo_no_arranca_con_menos_de_5_jugadores(cur):
 def test_torneo_no_arranca_con_un_solo_equipo(cur):
     t, _ = nuevo_torneo(cur, equipos=1, jugadores=5)
     falla(cur, "UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,), mensaje="al menos 2 equipos")
+
+def test_segunda_amarilla_que_es_tercera_acumulada_no_duplica_la_sancion(cur):
+    # Mateo Rodríguez ya tiene 2 amarillas (una en el partido 8). La nueva, en el
+    # mismo partido, es su doble amarilla Y su 3ra acumulada: antes fallaba con
+    # "Duplicate entry for key sancion_jugador.id_tarjeta".
+    ci = ci_de(cur, "Mateo", "Rodríguez")
+    cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 50, 'amarilla')", (ci,))
+    id_tarjeta = cur.lastrowid
+    cur.execute("SELECT motivo FROM sancion_jugador WHERE id_tarjeta = %s", (id_tarjeta,))
+    assert cur.fetchall() == (("roja",),)
+
+
+def test_borrar_una_amarilla_de_una_doble_amarilla_quita_la_sancion(cur):
+    ci = ci_de(cur, "Lautaro", "Medina")   # jugó el partido 8
+    cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 10, 'amarilla')", (ci,))
+    primera = cur.lastrowid
+    cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 20, 'amarilla')", (ci,))
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 1
+    cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (primera,))
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 0
+
+
+def test_fecha_de_nacimiento_no_puede_ser_futura(cur):
+    falla(cur, "INSERT INTO jugador (ci, nombre, apellido, email, fecha_nacimiento, id_facultad, tipo) "
+               "VALUES ('69999999', 'A', 'B', 'ab@correo.ucu.edu.uy', CURDATE() + INTERVAL 1 DAY, 1, 'grado')",
+          mensaje="no puede ser futura")
+    ci = ci_de(cur, "Lautaro", "Medina")
+    falla(cur, "UPDATE jugador SET fecha_nacimiento = CURDATE() + INTERVAL 1 DAY WHERE ci = %s", (ci,),
+          mensaje="no puede ser futura")

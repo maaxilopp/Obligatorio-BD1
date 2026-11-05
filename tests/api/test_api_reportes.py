@@ -50,3 +50,11 @@ def test_los_dos_roles_ven_la_lista_de_torneos():
         token = api.post("/login", json={"correo": correo, "contrasena": clave}).json()["token"]
         r = api.get("/torneos", headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 200 and len(r.json()) >= 1
+
+def test_sanciones_cuenta_rojas_y_dobles_amarillas(admin):
+    # antes contaba motivos que no existen en el ENUM y 'roja' daba siempre 0
+    filas = api.get("/torneos/1/sanciones", headers=admin).json()
+    assert sum(int(f["roja"]) for f in filas) == 2
+    assert sum(int(f["doble_amarilla"]) for f in filas) == 0
+    assert all(int(f["total"]) == int(f["roja"]) + int(f["doble_amarilla"])
+               + int(f["acumulacion_amarillas"]) + int(f["disciplinaria"]) for f in filas)
