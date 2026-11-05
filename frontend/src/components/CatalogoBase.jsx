@@ -196,9 +196,9 @@ export function Acciones({ onEditar, onBorrar, nombre, extra }) {
   );
 }
 
-export function PanelLateral({ titulo, children }) {
+export function PanelLateral({ titulo, children, className = "" }) {
   return (
-    <aside className="jugador-panel">
+    <aside className={`jugador-panel ${className}`}>
       <div className="jugador-panel-titulo">
         <h2>{titulo}</h2>
       </div>

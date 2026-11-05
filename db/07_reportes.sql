@@ -152,7 +152,7 @@ SELECT CONCAT(LPAD(franja * 10, 2, '0'), '-', IF(franja = 5, '60', LPAD(franja *
        COUNT(*) AS goles,
        ROUND(100 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) AS porcentaje
 FROM (SELECT LEAST(FLOOR(minuto / 10), 5) AS franja   -- el 60' cae en la última franja
-      FROM v_gol_detalle WHERE id_torneo = @torneo) x
+      FROM v_gol_detalle WHERE id_torneo = @torneo AND estado_partido = 'jugado') x
 GROUP BY franja
 ORDER BY franja;
 

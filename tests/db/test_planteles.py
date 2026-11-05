@@ -46,9 +46,9 @@ def test_plantel_no_se_modifica_con_el_torneo_en_curso(cur):
     # el torneo 1 de los datos de prueba está 'en curso'
     falla(cur, "INSERT INTO equipo_jugador_torneo VALUES (1, '51234567', 1, 1, 30)",
           mensaje="etapa de inscripción")
-    falla(cur, "DELETE FROM equipo_jugador_torneo WHERE id_equipo = 1 AND numero_camiseta = 11",
+    falla(cur, "DELETE FROM equipo_jugador_torneo WHERE id_equipo = 1 AND numero_camiseta = 14",
           mensaje="etapa de inscripción")
-    falla(cur, "UPDATE equipo_jugador_torneo SET numero_camiseta = 99 WHERE id_equipo = 1 AND numero_camiseta = 11",
+    falla(cur, "UPDATE equipo_jugador_torneo SET numero_camiseta = 99 WHERE id_equipo = 1 AND numero_camiseta = 14",
           mensaje="etapa de inscripción")
 
 

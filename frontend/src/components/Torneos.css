@@ -1,0 +1,469 @@
+/* Pantalla de Torneos */
+
+.torneo-tarjeta,
+.torneos-lista {
+  margin-bottom: 30px;
+}
+
+.torneo-tarjeta {
+  overflow: hidden;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 8px 8px 0 var(--tinta);
+}
+
+.torneo-tarjeta header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  background: var(--amarillo);
+  border-bottom: 3px solid var(--tinta);
+}
+
+.torneo-tarjeta header small,
+.torneo-nueva small {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.torneo-tarjeta h2,
+.torneo-nueva h2 {
+  margin: 4px 0 8px;
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.torneo-tarjeta header p,
+.torneo-nueva p {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: 14px;
+}
+
+.torneo-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 26px;
+}
+
+.torneo-cuerpo h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+/* Estados */
+
+.torneo-estados {
+  display: flex;
+  justify-content: space-around;
+  gap: 24px;
+  margin: 0;
+  padding: 18px 20px;
+  background: #fff7e4;
+  border: 2px solid var(--tinta);
+  border-radius: 14px;
+  list-style: none;
+}
+
+.torneo-estados li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.torneo-estados span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 50%;
+  font-family: var(--fuente-pixel);
+  font-size: 16px;
+}
+
+.torneo-estados .hecho span {
+  background: var(--verde);
+  color: #ffffff;
+}
+
+.torneo-estados .actual span {
+  background: var(--amarillo);
+  box-shadow: 4px 4px 0 var(--tinta);
+}
+
+.torneo-estados .pendiente {
+  color: #6d6a73;
+}
+
+.torneo-estados .pendiente span {
+  color: var(--tinta);
+}
+
+/* Fechas */
+
+.torneo-fechas {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+}
+
+.torneo-fechas span {
+  display: block;
+  height: 16px;
+  background: #ffffff;
+  border: 2px solid var(--tinta);
+  border-radius: 5px;
+}
+
+.torneo-fechas span.hecha {
+  background: var(--verde);
+}
+
+.torneo-fechas span.actual {
+  background: var(--amarillo);
+}
+
+.torneo-fechas small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.torneo-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.torneo-numeros div {
+  padding: 12px 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.torneo-numeros strong {
+  display: block;
+  font-family: var(--fuente-pixel);
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.torneo-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 2px dashed #e6d8b8;
+}
+
+.torneo-pie small {
+  color: #6d6a73;
+  font-size: 13px;
+}
+
+/* Listado de ediciones */
+
+.torneos-abrir {
+  display: block;
+  padding: 0;
+  background: none;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+  text-align: left;
+}
+
+.torneos-abrir:hover .cat-principal {
+  text-decoration: underline;
+}
+
+/* Formulario */
+
+.torneos-panel .jugador-panel-titulo {
+  background: #5db8f2;
+}
+
+.torneos-panel .jugador-tipos {
+  gap: 6px;
+}
+
+.torneos-arranca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Asistente de edición nueva */
+
+.torneo-asistente {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 28px;
+}
+
+.torneo-asistente > .planilla-volver {
+  align-self: flex-start;
+}
+
+.torneo-asistente .jugadores-error {
+  margin: 0;
+}
+
+.torneo-nueva {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 28px;
+  background: #5db8f2;
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 8px 8px 0 var(--tinta);
+}
+
+.torneo-nueva > div:first-child {
+  flex: 1;
+  min-width: 260px;
+}
+
+.torneo-nueva .torneo-estados {
+  background: #ffffff;
+}
+
+.torneo-paso {
+  overflow: hidden;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--tinta);
+}
+
+.torneo-paso.inactivo {
+  box-shadow: none;
+}
+
+.torneo-paso.inactivo > header {
+  opacity: 0.7;
+}
+
+.torneo-paso > header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  background: #fff7e4;
+  border-bottom: 3px solid var(--tinta);
+}
+
+.torneo-paso-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  background: var(--amarillo);
+  border: 3px solid var(--tinta);
+  border-radius: 50%;
+  font-family: var(--fuente-pixel);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.torneo-paso.inactivo .torneo-paso-numero {
+  background: #ffffff;
+}
+
+.torneo-paso h2 {
+  margin: 0;
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.torneo-paso header p {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.torneo-equipos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneo-equipos li {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.1fr) minmax(200px, 1.4fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 2px solid var(--borde-fila);
+}
+
+.torneo-equipo-nombre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.torneo-equipo-nombre strong {
+  display: block;
+  font-size: 15px;
+}
+
+.torneo-equipo-nombre small {
+  display: block;
+  color: #6d6a73;
+  font-size: 12px;
+}
+
+.torneo-equipo-plantel strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.torneo-equipo-estado {
+  padding: 4px 12px;
+  background: #ffb3ad;
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.torneo-equipo-estado.listo {
+  background: #d3f0df;
+}
+
+.torneo-boton-plantel {
+  padding: 6px 12px;
+  background: #ffffff;
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  font-family: var(--fuente-texto);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.torneo-boton-plantel:hover {
+  background: #fff2cc;
+}
+
+.torneo-inscribir {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+  padding: 18px 24px 22px;
+  background: #fff7e4;
+}
+
+.torneo-fixture {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px;
+}
+
+.torneo-fixture-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.torneo-fixture-fila .jugador-campo {
+  width: 230px;
+}
+
+.torneo-fixture-fila .boton-pixel {
+  margin-left: auto;
+}
+
+.torneo-alerta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  background: #ffe1de;
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.torneo-nota {
+  margin: 0;
+  padding: 16px 24px;
+  font-weight: 700;
+}
+
+.torneo-nota.listo {
+  background: #d3f0df;
+}
+
+.torneo-iniciar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.torneo-iniciar small {
+  color: #6d6a73;
+  font-size: 13px;
+}
+
+@media (max-width: 1000px) {
+  .torneo-equipos li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .torneo-equipo-plantel {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .torneo-inscribir {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .torneo-numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.content .torneo-paso > header {
+  justify-content: flex-start;
+}

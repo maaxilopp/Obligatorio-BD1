@@ -16,6 +16,7 @@ SELECT g.id_gol,
        g.ci_jugador,
        g.minuto,
        g.autogol,
+       p.estado AS estado_partido,
        pp.id_equipo AS id_equipo_jugador,
        IF(g.autogol,
           IF(pp.id_equipo = p.id_equipo_local, p.id_equipo_visitante, p.id_equipo_local),
@@ -76,7 +77,8 @@ JOIN facultad f ON f.id_facultad = e.id_facultad
 LEFT JOIN v_partido_equipo pe ON pe.id_equipo = e.id_equipo
 GROUP BY e.id_torneo, e.id_equipo, e.nombre, f.nombre;
 
--- REPORTE 2: goleadores sin contar autogoles.
+-- REPORTE 2: goleadores sin contar autogoles. Igual que la tabla de
+-- posiciones, solo cuenta partidos ya marcados como jugados.
 CREATE OR REPLACE VIEW v_goleadores AS
 SELECT gd.id_torneo,
        j.ci,
@@ -86,11 +88,11 @@ SELECT gd.id_torneo,
 FROM v_gol_detalle gd
 JOIN jugador j ON j.ci = gd.ci_jugador
 JOIN equipo e  ON e.id_equipo = gd.id_equipo_jugador
-WHERE NOT gd.autogol
+WHERE NOT gd.autogol AND gd.estado_partido = 'jugado'
 GROUP BY gd.id_torneo, j.ci, j.nombre, j.apellido, e.nombre;
 
 -- REPORTE 3: fair play (1 punto por amarilla, 3 por roja; menor es mejor).
--- Incluye a los equipos sin tarjetas
+-- Incluye a los equipos sin tarjetas. Solo cuenta partidos jugados.
 CREATE OR REPLACE VIEW v_fair_play AS
 SELECT e.id_torneo,
        e.id_equipo,
@@ -101,7 +103,8 @@ SELECT e.id_torneo,
                                  WHEN 'roja'     THEN 3 END), 0) AS puntaje
 FROM equipo e
 LEFT JOIN planilla_partido pp ON pp.id_equipo = e.id_equipo
-LEFT JOIN tarjeta t           ON t.id_partido = pp.id_partido AND t.ci_jugador = pp.ci_jugador
+LEFT JOIN partido p           ON p.id_partido = pp.id_partido AND p.estado = 'jugado'
+LEFT JOIN tarjeta t           ON t.id_partido = p.id_partido AND t.ci_jugador = pp.ci_jugador
 GROUP BY e.id_torneo, e.id_equipo, e.nombre;
 
 -- Sanciones con el rango de fechas que abarcan y el equipo del jugador.

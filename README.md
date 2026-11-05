@@ -180,7 +180,7 @@ pytest -v
 
 Con la base de Docker, agregar también `DB_PORT=3307` y usar `DB_PASSWORD=root`.
 
-**Última ejecución:** 144 tests aprobados.
+**Última ejecución:** 175 tests aprobados.
 
 ## Organización
 

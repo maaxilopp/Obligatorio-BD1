@@ -269,7 +269,7 @@ def obtener_franjas_goles(id_torneo: int, usuario: dict = Depends(solo_admin)):
         FROM (
             SELECT LEAST(FLOOR(minuto / 10), 5) AS franja
             FROM v_gol_detalle
-            WHERE id_torneo = %s
+            WHERE id_torneo = %s AND estado_partido = 'jugado'
         ) x
         GROUP BY franja
         ORDER BY franja

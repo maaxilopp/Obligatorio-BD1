@@ -1,0 +1,224 @@
+/* Pantalla de Sanciones */
+
+.sanciones-proxima {
+  margin-bottom: 34px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 8px 8px 0 var(--tinta);
+}
+
+.sanciones-proxima header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  background: var(--tinta);
+  color: #ffffff;
+}
+
+.sanciones-proxima h2 {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--fuente-pixel);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.sanciones-proxima header span {
+  font-family: var(--fuente-mono);
+  font-size: 14px;
+}
+
+.sanciones-sin-suspendidos {
+  margin: 0;
+  padding: 28px 24px;
+  font-weight: 700;
+}
+
+.sanciones-cartas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  padding: 36px 24px 20px;
+}
+
+.sancion-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Cartas */
+
+.carta-marco {
+  position: relative;
+  width: 190px;
+  height: 256px;
+}
+
+.carta,
+.carta-fondo {
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--tinta);
+  border-radius: 14px;
+}
+
+.carta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 20px 18px;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 var(--tinta);
+  transform: rotate(-4deg);
+}
+
+.carta small {
+  font-family: var(--fuente-pixel);
+  font-size: 14px;
+}
+
+.carta strong {
+  font-family: var(--fuente-pixel);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.carta-marco.roja .carta {
+  background: #c9281a;
+  color: #ffffff;
+}
+
+.carta-marco.amarilla .carta {
+  background: var(--amarillo);
+  color: var(--tinta);
+  transform: rotate(3deg);
+}
+
+.carta-fondo {
+  background: var(--amarillo);
+}
+
+.carta-fondo.uno {
+  transform: rotate(-14deg) translateX(-14px);
+}
+
+.carta-fondo.dos {
+  transform: rotate(-6deg) translateX(-6px);
+}
+
+/* La disciplinaria es una hoja de cuaderno */
+.carta-marco.disciplinaria .carta {
+  border-radius: 6px 44px 6px 6px;
+  background-color: #e3d9fb;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 25px,
+    rgba(25, 23, 32, 0.14) 25px 26px
+  );
+  color: var(--tinta);
+  transform: rotate(4deg);
+}
+
+.carta-marco.disciplinaria .carta strong {
+  font-size: 25px;
+}
+
+.carta-marco.disciplinaria .carta p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.sancion-facultad {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 240px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sancion-facultad i {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 2px solid var(--tinta);
+  border-radius: 4px;
+}
+
+/* Historial */
+
+.sanciones-historial-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+}
+
+.sanciones-historial-cabecera h2 {
+  margin: 0;
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.sancion-motivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tarjetita {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 13px;
+  height: 18px;
+  border: 2px solid var(--tinta);
+  border-radius: 3px;
+  transform: rotate(6deg);
+}
+
+.tarjetita.roja {
+  background: #c9281a;
+}
+
+.tarjetita.amarilla {
+  background: var(--amarillo);
+}
+
+/* Formulario */
+
+.sanciones-panel .jugador-panel-titulo {
+  background: #e3d9fb;
+}
+
+.sanciones-panel .jugador-botones .guardar {
+  background: #c5a0eb;
+  color: var(--tinta);
+}
+
+@media (max-width: 768px) {
+  .pagina-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

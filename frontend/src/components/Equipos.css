@@ -1,0 +1,218 @@
+/* Pantalla de Equipos */
+
+.equipos-resumen {
+  margin-top: 14px;
+}
+
+.equipos-vacio {
+  padding: 24px;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.equipos-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 22px;
+  margin-bottom: 34px;
+}
+
+.equipo-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: #ffffff;
+  color: var(--tinta);
+  border: 3px solid var(--tinta);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--tinta);
+  font-family: var(--fuente-texto);
+  text-align: left;
+}
+
+.equipo-tarjeta:hover:not(.activo) {
+  background: #fff5da;
+}
+
+.equipo-tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.equipo-tarjeta-cabecera > span:last-child {
+  min-width: 0;
+}
+
+.equipo-tarjeta strong {
+  display: block;
+  font-family: var(--fuente-pixel);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.equipo-tarjeta small {
+  display: block;
+  font-size: 13px;
+}
+
+.equipo-capitan {
+  font-weight: 700;
+}
+
+/* Detalle del equipo */
+
+.equipo-detalle {
+  overflow: hidden;
+  background: #ffffff;
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 8px 8px 0 var(--tinta);
+}
+
+.equipo-detalle header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 3px solid var(--tinta);
+}
+
+.equipo-detalle-nombre {
+  flex: 1;
+  min-width: 180px;
+}
+
+.equipo-detalle-nombre h2 {
+  margin: 0;
+  color: var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.equipo-detalle-nombre span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.equipo-dato {
+  padding: 6px 13px;
+  background: #ffffff;
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.equipo-plantel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 22px 10px;
+  padding: 26px 24px;
+}
+
+.equipo-jugador {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.equipo-jugador > strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.equipo-jugador > small {
+  color: #6d6a73;
+  font-size: 14px;
+}
+
+.camiseta {
+  position: relative;
+  width: 92px;
+  height: 92px;
+}
+
+.camiseta svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.camiseta > strong {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  width: 100%;
+  font-family: var(--fuente-pixel);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.camiseta-capitan {
+  position: absolute;
+  right: 16px;
+  bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--tinta);
+  color: #ffffff;
+  border-radius: 5px;
+  font-family: var(--fuente-texto);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.equipo-libre {
+  width: 92px;
+  height: 92px;
+  padding: 0;
+  background: transparent;
+  color: #8c8675;
+  border: 3px dashed #b9b19b;
+  border-radius: 12px;
+  font-family: var(--fuente-pixel);
+  font-size: 28px;
+}
+
+.equipo-libre:hover:not(:disabled) {
+  background: #fff5da;
+  color: var(--tinta);
+  border-color: var(--tinta);
+}
+
+.equipo-libre:disabled {
+  cursor: default;
+}
+
+.equipo-pie {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fff7e4;
+  border-top: 3px solid var(--tinta);
+  font-size: 16px;
+}
+
+.equipo-pie svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}

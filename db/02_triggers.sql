@@ -35,18 +35,21 @@ BEGIN
     END IF;
 END //
 
--- Al borrar una amarilla (corrección), el jugador puede quedar con menos
--- amarillas de las que justifican sus sanciones por acumulación. Ejemplo:
--- tenía 2, se le cargan 2 más por error (la 3ra genera sanción) y se borra la
--- equivocada: queda con 3... o con 2 si se borra otra. Debe tener exactamente
--- FLOOR(amarillas / 3) sanciones por acumulación; si sobran, se borran las
--- más recientes. (Si se borra justo la tarjeta que originó la sanción, el
--- ON DELETE CASCADE ya la borró y acá no sobra nada.)
+-- Al borrar una amarilla (corrección), el jugador tiene que seguir con
+-- exactamente FLOOR(amarillas / 3) sanciones por acumulación.
+--   - Si sobran, se borran las más recientes.
+--   - Si faltan, se crean. Pasa cuando se borra justo la tarjeta que originó la
+--     sanción (el ON DELETE CASCADE se la lleva) y al jugador le quedan 3:
+--     tenía 4, la 3ra generó la sanción y se corrigió esa. La sanción pasa a
+--     colgar de la tarjeta que ahora es la 3ra, en orden de partido y minuto.
 CREATE PROCEDURE recalcular_sanciones_amarillas(IN p_ci VARCHAR(8), IN p_id_partido INT)
 BEGIN
     DECLARE v_torneo    INT;
     DECLARE v_amarillas INT;
     DECLARE v_sobrantes INT;
+    DECLARE v_posicion  INT DEFAULT 2;   -- la 3ra amarilla, contando desde 0
+    DECLARE v_tarjeta   INT;
+    DECLARE v_fecha     TINYINT;
 
     SELECT id_torneo INTO v_torneo FROM partido WHERE id_partido = p_id_partido;
 
@@ -64,6 +67,25 @@ BEGIN
         ORDER BY id_sancion DESC
         LIMIT v_sobrantes;
     END IF;
+
+    WHILE v_sobrantes < 0 AND v_posicion < v_amarillas DO
+        SELECT t.id_tarjeta, p.numero_fecha INTO v_tarjeta, v_fecha
+        FROM tarjeta t JOIN partido p ON p.id_partido = t.id_partido
+        WHERE t.ci_jugador = p_ci AND t.color = 'amarilla' AND p.id_torneo = v_torneo
+        ORDER BY p.numero_fecha, t.minuto, t.id_tarjeta
+        LIMIT v_posicion, 1;
+
+        IF NOT EXISTS (SELECT 1 FROM sancion_jugador WHERE id_tarjeta = v_tarjeta) THEN
+            INSERT INTO sancion_jugador
+                (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas, id_tarjeta, descripcion)
+            VALUES
+                (p_ci, v_torneo, 'acumulacion de amarillas', v_fecha + 1, 1, v_tarjeta,
+                 CONCAT('Sanción automática por acumular ', v_posicion + 1, ' amarillas'));
+            SET v_sobrantes = v_sobrantes + 1;
+        END IF;
+
+        SET v_posicion = v_posicion + 3;
+    END WHILE;
 END //
 
 -- Los planteles solo se modifican mientras el torneo está en inscripción
@@ -100,9 +122,11 @@ CREATE PROCEDURE validar_carga_planilla(IN p_id_partido INT)
 BEGIN
     DECLARE v_estado VARCHAR(20);
     DECLARE v_fin    DATETIME;
+    DECLARE v_torneo VARCHAR(20);
 
-    SELECT estado, fin_partido(dia, id_turno) INTO v_estado, v_fin
-    FROM partido WHERE id_partido = p_id_partido;
+    SELECT p.estado, fin_partido(p.dia, p.id_turno), t.estado INTO v_estado, v_fin, v_torneo
+    FROM partido p JOIN torneo t ON t.id_torneo = p.id_torneo
+    WHERE p.id_partido = p_id_partido;
 
     IF v_estado IN ('cancelado', 'postergado') THEN
         SIGNAL SQLSTATE '45000'
@@ -112,6 +136,11 @@ BEGIN
     IF v_fin > NOW() THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El partido todavía no se disputó: la planilla se registra después de su día y turno';
+    END IF;
+
+    IF v_torneo = 'inscripcion' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La edición todavía está en inscripción: la planilla se registra cuando está en curso';
     END IF;
 
     IF v_estado = 'jugado' AND NOW() > v_fin + INTERVAL 48 HOUR THEN
@@ -196,6 +225,21 @@ BEGIN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Uno de los equipos ya tiene un partido en esa fecha del torneo';
         END IF;
+
+        -- Distinta fecha del torneo no alcanza: tampoco puede estar en dos
+        -- canchas a la misma hora.
+        IF p_estado <> 'postergado'
+           AND EXISTS (SELECT 1 FROM partido p
+                       WHERE p.id_torneo = p_id_torneo
+                         AND p.dia = p_dia
+                         AND p.id_turno = p_id_turno
+                         AND p.estado NOT IN ('cancelado', 'postergado')
+                         AND p.id_partido <> IFNULL(p_id_partido, 0)
+                         AND (p.id_equipo_local     IN (p_local, p_visitante)
+                           OR p.id_equipo_visitante IN (p_local, p_visitante))) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Uno de los equipos ya tiene un partido ese día en ese turno';
+        END IF;
     END IF;
 
     IF p_estado = 'jugado' AND fin_partido(p_dia, p_id_turno) > NOW() THEN
@@ -244,6 +288,27 @@ BEGIN
        AND NEW.nombre_cancha       <=> OLD.nombre_cancha) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Un partido jugado no puede modificarse (equipos, fecha, día, turno ni cancha)';
+    END IF;
+
+    -- Con la planilla cargada, cambiar los equipos dejaría en ella a jugadores
+    -- de un equipo que no juega el partido, y moverlo a futuro dejaría goles de
+    -- un partido sin disputar. Cancelarlo tampoco: sus goles y tarjetas quedarían
+    -- sin partido. Para hacer cualquiera de esas cosas, primero se quita la planilla.
+    IF EXISTS (SELECT 1 FROM planilla_partido WHERE id_partido = OLD.id_partido) THEN
+        IF NEW.estado IN ('cancelado', 'postergado') THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'El partido tiene planilla cargada: para cancelarlo o postergarlo primero hay que quitarla';
+        END IF;
+
+        IF NOT (NEW.id_torneo           <=> OLD.id_torneo
+            AND NEW.numero_fecha        <=> OLD.numero_fecha
+            AND NEW.id_equipo_local     <=> OLD.id_equipo_local
+            AND NEW.id_equipo_visitante <=> OLD.id_equipo_visitante
+            AND NEW.dia                 <=> OLD.dia
+            AND NEW.id_turno            <=> OLD.id_turno) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'El partido tiene planilla cargada: para cambiar equipos, fecha, día o turno primero hay que quitarla';
+        END IF;
     END IF;
 
     CALL validar_partido(OLD.id_partido, NEW.id_torneo, NEW.numero_fecha,
@@ -448,6 +513,105 @@ BEGIN
                               '" necesita capitán y al menos 5 jugadores para iniciar el torneo');
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_msg;
         END IF;
+    END IF;
+
+    -- Un torneo finalizado no admite partidos programados: los que queden
+    -- pendientes se juegan o se cancelan antes de cerrarlo.
+    IF OLD.estado = 'en curso' AND NEW.estado = 'finalizado'
+       AND EXISTS (SELECT 1 FROM partido
+                   WHERE id_torneo = NEW.id_torneo
+                     AND estado IN ('programado', 'postergado')) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Quedan partidos sin jugar: hay que jugarlos o cancelarlos antes de finalizar el torneo';
+    END IF;
+
+    -- Los partidos validan sus días contra el torneo al guardarse; esto cubre
+    -- el camino inverso, cuando el que cambia es el torneo.
+    IF (NEW.fecha_inicio <> OLD.fecha_inicio OR NEW.fecha_fin <> OLD.fecha_fin)
+       AND EXISTS (SELECT 1 FROM partido
+                   WHERE id_torneo = NEW.id_torneo
+                     AND estado <> 'cancelado'
+                     AND dia NOT BETWEEN NEW.fecha_inicio AND NEW.fecha_fin) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Hay partidos fuera de esas fechas: el torneo tiene que incluir a todos sus partidos';
+    END IF;
+END //
+
+
+-- JUGADORES
+--   El cupo de docentes y funcionarios se controla al inscribir, pero un
+--   jugador inscripto también puede cambiar de tipo después. Las ediciones
+--   finalizadas no cuentan: un estudiante de ayer puede ser docente hoy.
+CREATE TRIGGER trg_jugador_bu BEFORE UPDATE ON jugador
+FOR EACH ROW
+BEGIN
+    IF NEW.tipo IN ('docente', 'funcionario')
+       AND OLD.tipo NOT IN ('docente', 'funcionario')
+       AND EXISTS (SELECT 1
+                   FROM equipo_jugador_torneo mio
+                   JOIN torneo t ON t.id_torneo = mio.id_torneo
+                   WHERE mio.ci_jugador = NEW.ci
+                     AND t.estado <> 'finalizado'
+                     AND (SELECT COUNT(*)
+                          FROM equipo_jugador_torneo ejt
+                          JOIN jugador j ON j.ci = ejt.ci_jugador
+                          WHERE ejt.id_equipo = mio.id_equipo
+                            AND j.tipo IN ('docente', 'funcionario')) >= 2) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El plantel del jugador ya tiene 2 docentes/funcionarios (máximo permitido)';
+    END IF;
+END //
+
+
+-- EQUIPOS
+--   El fixture es todos contra todos: un equipo que entra después quedaría
+--   sin partidos. Para sumarlo hay que borrar los partidos y generarlo de nuevo.
+CREATE TRIGGER trg_equipo_bi BEFORE INSERT ON equipo
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM partido
+               WHERE id_torneo = NEW.id_torneo AND estado <> 'cancelado') THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La edición ya tiene partidos: para sumar un equipo hay que borrarlos y generar el fixture de nuevo';
+    END IF;
+END //
+
+
+-- SANCIONES DISCIPLINARIAS
+--   Un suspendido no puede figurar en la planilla de las fechas que abarca su
+--   sanción. La planilla lo controla al cargarla; esto cubre el orden inverso,
+--   cuando el jugador ya estaba en la planilla y la sanción llega después.
+--   Las automáticas no pasan por acá: nacen de una tarjeta que ya ocurrió.
+CREATE PROCEDURE validar_sancion_disciplinaria(
+    IN p_ci VARCHAR(8), IN p_id_torneo INT, IN p_inicio INT, IN p_cantidad INT)
+BEGIN
+    IF EXISTS (SELECT 1
+               FROM planilla_partido pp
+               JOIN partido p ON p.id_partido = pp.id_partido
+               WHERE pp.ci_jugador = p_ci
+                 AND p.id_torneo = p_id_torneo
+                 AND p.estado <> 'cancelado'
+                 AND p.numero_fecha BETWEEN p_inicio AND p_inicio + p_cantidad - 1) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El jugador ya figura en la planilla de una de esas fechas: la sanción tiene que empezar después';
+    END IF;
+END //
+
+CREATE TRIGGER trg_sancion_bi BEFORE INSERT ON sancion_jugador
+FOR EACH ROW
+BEGIN
+    IF NEW.id_tarjeta IS NULL THEN
+        CALL validar_sancion_disciplinaria(NEW.ci_jugador, NEW.id_torneo,
+                                           NEW.numero_fecha_inicio, NEW.cantidad_fechas);
+    END IF;
+END //
+
+CREATE TRIGGER trg_sancion_bu BEFORE UPDATE ON sancion_jugador
+FOR EACH ROW
+BEGIN
+    IF NEW.id_tarjeta IS NULL THEN
+        CALL validar_sancion_disciplinaria(NEW.ci_jugador, NEW.id_torneo,
+                                           NEW.numero_fecha_inicio, NEW.cantidad_fechas);
     END IF;
 END //
 

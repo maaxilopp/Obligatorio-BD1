@@ -11,7 +11,7 @@ EstadoEditable = Literal["programado", "cancelado", "postergado"]
 
 class PartidoDatos(BaseModel):
     id_torneo: int = Field(gt=0)
-    numero_fecha: int = Field(ge=1, le=255)
+    numero_fecha: int = Field(ge=1, le=127)
     id_equipo_local: int = Field(gt=0)
     id_equipo_visitante: int = Field(gt=0)
     dia: date
