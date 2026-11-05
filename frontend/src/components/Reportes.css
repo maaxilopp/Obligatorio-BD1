@@ -80,17 +80,6 @@
   cursor: pointer;
 }
 
-/* Sombra dura que asoma solo por la derecha */
-.reporte-tarjeta::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 1px;
-  right: -9px;
-  bottom: -1px;
-  width: 40px;
-  background: var(--tinta);
-}
 
 .reporte-tarjeta:hover,
 .reporte-tarjeta:focus-visible {
