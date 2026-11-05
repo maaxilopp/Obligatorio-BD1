@@ -28,11 +28,11 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 
 ### Funcionalidades
 
-- **Gestión de torneos:** administración de las ediciones semestrales y sus estados: inscripción, en curso y finalizado.
+- **Gestión de torneos:** administración de las ediciones semestrales y sus estados: inscripción, en curso y finalizado. Una vez iniciada la edición no se pueden sumar equipos ni dejar uno sin capitán.
 - **Gestión de jugadores y equipos:** registro de jugadores, facultades, capitanes y planteles, con validaciones sobre la cantidad y el tipo de integrantes.
 - **Gestión de complejos y canchas:** administración de las instalaciones deportivas y sus características.
 - **Organización del fixture:** generación y administración de partidos, con controles para evitar enfrentamientos duplicados, equipos asignados a más de un partido en una misma fecha y superposición de partidos en una cancha.
-- **Registro de planillas:** inscripción de los jugadores participantes, goles y tarjetas de cada partido.
+- **Registro de planillas:** inscripción de los jugadores participantes, goles y tarjetas de cada partido. Un expulsado no puede tener goles ni tarjetas después de su roja.
 - **Gestión de sanciones:** aplicación automática de suspensiones por tarjetas rojas o acumulación de amarillas, además de sanciones disciplinarias.
 - **Control de resultados:** cálculo del marcador a partir de los goles registrados, validación del momento en que se puede marcar un partido como jugado y restricciones para corregir resultados.
 - **Control de acceso:** diferenciación de permisos entre administradores y planilleros, tanto en la aplicación como en la base de datos.
@@ -73,7 +73,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 | `backend/`  | API en FastAPI: conexión por rol, login, traducción de errores y un archivo por grupo de endpoints en `routers/`       |
 | `frontend/` | Aplicación en React + Vite: login, menú por rol, catálogos, partidos, planillas y reportes                             |
 | `tests/`    | Tests automáticos (pytest) contra MySQL real: `db/` reglas de la base (triggers, permisos) y `api/` endpoints del backend |
-| `docs/`     | Diagrama, planilla diseñada con figma del front, informe y bitácora                                                                                           |
+| `docs/`     | Diagrama y planilla diseñada con figma del front                                                                                           |
 
 ## Cómo correrlo
 
@@ -88,8 +88,11 @@ docker compose up --build
 ```
 
 - MySQL: `localhost:3307`, usuario `root`, contraseña `root` (puerto 3307 para no chocar con un MySQL instalado). Sirve para conectarse desde DataGrip.
+- API: http://localhost:8000 (documentación en http://localhost:8000/docs).
 
-La base se crea **solo la primera vez**, con los scripts `01` a `06`. Como los datos de prueba usan fechas relativas al día de carga, para recrearla desde cero.
+El frontend no corre en Docker: se levanta igual que en la opción 2, paso 3.
+
+La base se crea **solo la primera vez**, con los scripts `01` a `06`. Como los datos de prueba usan fechas relativas al día de carga, conviene recrearla desde cero cada tanto:
 
 ```bash
 docker compose down -v
@@ -98,7 +101,7 @@ docker compose up --build
 
 ### Opción 2: sin Docker
 
-Requisitos: MySQL 8.0 o superior, Python 3.10 o superior y, opcionalmente, DataGrip.
+Requisitos: MySQL 8.0 o superior, Python 3.10 o superior, Node.js 20.19 o superior y, opcionalmente, DataGrip.
 
 #### 1. Crear la base de datos
 
@@ -119,7 +122,7 @@ Los scripts de `db/` se ejecutan **en orden**:
 1. Crear una conexión MySQL como `root`.
 2. Clic derecho en la conexión → _SQL Scripts_ → _Run SQL Script..._ y ejecutar los scripts `01` a `06`, uno por uno y en orden.
 3. Marcar el schema `torneo_futbol5` para que aparezca en el explorador.
-4. Abrir `07_reportes.sql`, ejecutar `SET @torneo = 1;` y después cualquier consulta con Ctrl+Enter.
+4. Abrir `07_reportes.sql`, ejecutar `SET time_zone = '-03:00';` y `SET @torneo = 1;`, y después cualquier consulta con Ctrl+Enter.
 
 **Con un comando**
 
@@ -145,7 +148,7 @@ uvicorn backend.main:app --reload
 
 #### 3. Levantar el frontend
 
-Requiere [Node.js](https://nodejs.org/) 20 o superior. Con el backend corriendo, en otra terminal:
+Requiere [Node.js](https://nodejs.org/) 20.19 o superior. Con el backend corriendo, en otra terminal:
 
 ```bash
 cd frontend
