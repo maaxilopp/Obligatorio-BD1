@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import { IconoCandado } from "./CatalogoBase";
 import { colorEquipo } from "./colores";
@@ -620,8 +621,8 @@ function Planillas({
     );
   }
 
-  function eliminarRegistro(tipo, id) {
-    if (!window.confirm("¿Eliminar este registro?")) return;
+  async function eliminarRegistro(tipo, id) {
+    if (!(await confirmar("¿Eliminar este registro?"))) return;
 
     ejecutar(
       () =>
@@ -634,9 +635,9 @@ function Planillas({
 
   async function cerrarPartido() {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Marcar el partido como jugado? Después solo se podrá corregir durante ${HORAS_CORRECCION} horas.`,
-      )
+      ))
     ) {
       return;
     }

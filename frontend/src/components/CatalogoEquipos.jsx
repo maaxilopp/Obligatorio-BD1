@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import { colorEquipo } from "./colores";
 import { InsigniaEquipo } from "./equipos";
@@ -257,9 +258,9 @@ function CatalogoEquipos({ equipoInicial = null }) {
 
   async function quitarJugador(equipo, jugador) {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Sacar a ${jugador.nombre} ${jugador.apellido} del plantel de ${equipo.nombre}?`,
-      )
+      ))
     ) {
       return;
     }
@@ -387,7 +388,7 @@ function CatalogoEquipos({ equipoInicial = null }) {
   }
 
   async function eliminar(equipo) {
-    if (!window.confirm(`¿Dar de baja a ${equipo.nombre}?`)) {
+    if (!(await confirmar(`¿Dar de baja a ${equipo.nombre}?`))) {
       return;
     }
 

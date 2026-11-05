@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import { colorEquipo } from "./colores";
 import {
@@ -107,7 +108,7 @@ function Facultades() {
   }
 
   async function eliminar(facultad) {
-    if (!window.confirm(`¿Eliminar la facultad ${facultad.nombre}?`)) return;
+    if (!(await confirmar(`¿Eliminar la facultad ${facultad.nombre}?`))) return;
 
     setError("");
     setMensajeExito("");

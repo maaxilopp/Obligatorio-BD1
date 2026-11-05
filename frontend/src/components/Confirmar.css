@@ -1,0 +1,56 @@
+.confirmar {
+  --tinta: #191720;
+  width: min(440px, calc(100vw - 40px));
+  padding: 0;
+  border: 3px solid var(--tinta);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--tinta);
+  background: #ffffff;
+  color: var(--tinta);
+  font-family: var(--fuente-texto);
+}
+
+.confirmar::backdrop {
+  background: #19172080;
+}
+
+.confirmar-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+
+.confirmar-contenido p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.confirmar-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirmar-acciones button {
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.confirmar-acciones button:hover {
+  background: #fff2cc;
+}
+
+.confirmar-acciones .confirmar-aceptar {
+  background: var(--tinta);
+  color: #ffffff;
+}
+
+.confirmar-acciones .confirmar-aceptar:hover {
+  background: #36323f;
+}

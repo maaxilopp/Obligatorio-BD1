@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import "./Jugadores.css";
 import { colorEquipo } from "./colores";
 import { apiRequest } from "../services/api";
@@ -266,7 +267,7 @@ function Jugadores() {
   }
 
   async function eliminar(jugador) {
-    const confirmado = window.confirm(
+    const confirmado = await confirmar(
       `¿Eliminar a ${jugador.nombre} ${jugador.apellido} (${formatearCedula(jugador.ci)})?`,
     );
     if (!confirmado) return;

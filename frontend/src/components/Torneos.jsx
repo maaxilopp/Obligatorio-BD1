@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import {
   Acciones,
@@ -90,7 +91,6 @@ function validar(f, torneos, idActual, partidos) {
   return errores;
 }
 
-// "2027-04-11" + 14 días -> "2027-04-25"
 function sumarDias(iso, dias) {
   const [anio, mes, dia] = iso.split("-").map(Number);
   const fecha = new Date(anio, mes - 1, dia + dias);
@@ -98,7 +98,6 @@ function sumarDias(iso, dias) {
   return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
 }
 
-// Todos contra todos a una rueda, igual que el procedimiento generar_fixture
 function tamanoFixture(cantidadEquipos) {
   if (cantidadEquipos < 2) return { fechas: 0, partidos: 0 };
   return {
@@ -363,9 +362,9 @@ function AsistenteEdicion({
 
   async function iniciar() {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Iniciar "${torneo.nombre}"? Los planteles quedan cerrados y el estado no vuelve atrás.`,
-      )
+      ))
     ) {
       return;
     }
@@ -448,9 +447,7 @@ function AsistenteEdicion({
                     {Array.from({ length: MAX_PLANTEL }, (_, i) => (
                       <span
                         key={i}
-                        className={
-                          i < equipo.cantidad_jugadores ? "lleno" : ""
-                        }
+                        className={i < equipo.cantidad_jugadores ? "lleno" : ""}
                       />
                     ))}
                   </span>
@@ -600,7 +597,9 @@ function AsistenteEdicion({
       <Paso
         numero={3}
         titulo="Iniciar la edición"
-        texto={'Pasa a "En curso". Desde ese momento los planteles quedan cerrados y el estado ya no vuelve atrás.'}
+        texto={
+          'Pasa a "En curso". Desde ese momento los planteles quedan cerrados y el estado ya no vuelve atrás.'
+        }
         activo={!motivoInicio}
       >
         <div className="torneo-iniciar">
@@ -726,8 +725,7 @@ function Torneos({ onVerPlantel }) {
   function cambiarDatos(cambios) {
     const siguiente = { ...formulario, ...cambios };
     if (
-      formulario.nombre ===
-      nombreSugerido(formulario.anio, formulario.semestre)
+      formulario.nombre === nombreSugerido(formulario.anio, formulario.semestre)
     ) {
       siguiente.nombre = nombreSugerido(siguiente.anio, siguiente.semestre);
     }
@@ -799,9 +797,9 @@ function Torneos({ onVerPlantel }) {
 
   async function finalizar() {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Pasar "${torneo.nombre}" a Finalizado? Este cambio no se puede deshacer.`,
-      )
+      ))
     ) {
       return;
     }
@@ -823,9 +821,9 @@ function Torneos({ onVerPlantel }) {
 
   async function eliminar(elegido) {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Eliminar la edición "${elegido.nombre}"? No se puede deshacer.`,
-      )
+      ))
     ) {
       return;
     }
@@ -882,9 +880,7 @@ function Torneos({ onVerPlantel }) {
                 <button
                   key={semestre}
                   type="button"
-                  className={
-                    formulario.semestre === semestre ? "elegido" : ""
-                  }
+                  className={formulario.semestre === semestre ? "elegido" : ""}
                   onClick={() => cambiarDatos({ semestre })}
                 >
                   {semestre}º
@@ -1034,7 +1030,7 @@ function Torneos({ onVerPlantel }) {
                             </button>
                           </td>
                           <td className="cat-mono">
-                            {fechaCompleta(fila.fecha_inicio)} →{" "}
+                            Desde: {fechaCompleta(fila.fecha_inicio)} Hasta:{" "}
                             {fechaCompleta(fila.fecha_fin)}
                           </td>
                           <td>

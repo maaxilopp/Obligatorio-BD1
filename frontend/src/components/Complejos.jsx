@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import { colorEquipo } from "./colores";
 import {
@@ -185,9 +186,9 @@ function Complejos() {
 
   async function eliminar(complejo) {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Eliminar el complejo ${complejo.nombre}? Se borran también sus canchas.`,
-      )
+      ))
     ) {
       return;
     }
@@ -263,7 +264,7 @@ function Complejos() {
   }
 
   async function eliminarCancha(c) {
-    if (!window.confirm(`¿Eliminar la cancha ${c.nombre_cancha}?`)) return;
+    if (!(await confirmar(`¿Eliminar la cancha ${c.nombre_cancha}?`))) return;
 
     try {
       await apiRequest(

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import "./Fixture.css";
 import { InsigniaEquipo } from "./equipos";
 import EditarPartido from "./EditarPartido";
@@ -248,7 +249,7 @@ function Fixture({
   }
 
   async function eliminarPartido(partido) {
-    const confirmado = window.confirm(
+    const confirmado = await confirmar(
       `¿Eliminar ${partido.equipo_local} vs ${partido.equipo_visitante}?`,
     );
     if (!confirmado) return;

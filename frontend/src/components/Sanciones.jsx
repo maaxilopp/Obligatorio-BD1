@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmar } from "./confirmar";
 import { apiRequest } from "../services/api";
 import {
   Acciones,
@@ -327,9 +328,9 @@ function Sanciones() {
 
   async function eliminar(sancion) {
     if (
-      !window.confirm(
+      !(await confirmar(
         `¿Eliminar la sanción de ${nombreJugador(sancion.ci_jugador)}?`,
-      )
+      ))
     ) {
       return;
     }
