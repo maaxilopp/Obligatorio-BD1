@@ -115,3 +115,22 @@ def test_el_capitan_no_sale_del_plantel_sin_reemplazo(admin):
         api.delete(f"{ruta}/jugadores/41100048", headers=admin)
         api.delete(ruta, headers=admin)
         api.delete(f"/torneos/{t}", headers=admin)
+
+
+def test_editar_un_equipo_sin_mandar_capitan_lo_conserva(admin):
+    equipo = api.get("/equipos/1", headers=admin).json()
+    r = api.put("/equipos/1", headers=admin, json={"nombre": equipo["nombre"]})
+    assert r.status_code == 200 and r.json()["ci_capitan"] == equipo["ci_capitan"]
+
+
+def test_con_el_torneo_iniciado_no_se_saca_el_capitan(admin):
+    equipo = api.get("/equipos/1", headers=admin).json()
+    r = api.put("/equipos/1", headers=admin, json={"nombre": equipo["nombre"], "ci_capitan": None})
+    assert r.status_code == 400 and "sin capitán" in r.json()["detail"]
+
+
+def test_tarjeta_fuera_de_planilla_da_un_mensaje_claro(admin):
+    ausente = next(j for j in api.get("/partidos/8/plantel", headers=admin).json() if not j["en_planilla"])
+    r = api.post("/partidos/8/tarjetas", headers=admin,
+                 json={"ci_jugador": ausente["ci"], "minuto": 10, "color": "amarilla"})
+    assert r.status_code == 400 and "figure en la planilla" in r.json()["detail"]

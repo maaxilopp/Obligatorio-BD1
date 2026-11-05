@@ -1,18 +1,16 @@
-import { useEffect, useState } from 'react';
-import './Fixture.css';
-import { InsigniaEquipo } from './equipos';
-import EditarPartido from './EditarPartido';
-import SelectorEdicion from './SelectorEdicion';
-import { apiRequest } from '../services/api';
+import { useEffect, useState } from "react";
+import "./Fixture.css";
+import { InsigniaEquipo } from "./equipos";
+import EditarPartido from "./EditarPartido";
+import SelectorEdicion from "./SelectorEdicion";
+import { apiRequest } from "../services/api";
 
-const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-
-// "2026-11-08" -> "dom 08/11"
+const DIAS_SEMANA = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 function diaCorto(dia) {
-  if (!dia) return '';
-  const [anio, mes, numero] = dia.split('-').map(Number);
+  if (!dia) return "";
+  const [anio, mes, numero] = dia.split("-").map(Number);
   const fecha = new Date(anio, mes - 1, numero);
-  return `${DIAS_SEMANA[fecha.getDay()]} ${String(numero).padStart(2, '0')}/${String(mes).padStart(2, '0')}`;
+  return `${DIAS_SEMANA[fecha.getDay()]} ${String(numero).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
 }
 
 function plural(cantidad, singular, varios) {
@@ -22,7 +20,12 @@ function plural(cantidad, singular, varios) {
 function IconoLapiz() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M3 13l1-4 7-7 3 3-7 7-4 1zM9.5 3.5l3 3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M3 13l1-4 7-7 3 3-7 7-4 1zM9.5 3.5l3 3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
     </svg>
   );
 }
@@ -30,7 +33,12 @@ function IconoLapiz() {
 function IconoTacho() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M3 4h10M6 4V2.5h4V4M4.5 4l.7 9.5h5.6l.7-9.5M7 6.5v5M9 6.5v5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M3 4h10M6 4V2.5h4V4M4.5 4l.7 9.5h5.6l.7-9.5M7 6.5v5M9 6.5v5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
     </svg>
   );
 }
@@ -40,44 +48,36 @@ function Fixture({
   turnos = [],
   complejos = [],
   torneos = [],
-  torneoSeleccionado = '',
+  torneoSeleccionado = "",
   cambiarTorneo,
   onEdicionCreada,
   onPartidosActualizados,
-  onAbrirPlanilla
+  onAbrirPlanilla,
 }) {
-  // Los planilleros solo cargan planillas: el fixture lo ven pero no lo modifican
-  const esAdmin = localStorage.getItem('rol') === 'administrador';
-
-  // null = se elige sola la próxima fecha a jugar
+  const esAdmin = localStorage.getItem("rol") === "administrador";
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
-
-  // null | { modo: 'editar', partido } | { modo: 'nuevo', numero_fecha }
   const [formulario, setFormulario] = useState(null);
 
-  const [errorEdicion, setErrorEdicion] = useState('');
-  const [mensajeExito, setMensajeExito] = useState('');
+  const [errorEdicion, setErrorEdicion] = useState("");
+  const [mensajeExito, setMensajeExito] = useState("");
 
   const [canchas, setCanchas] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [suspendidos, setSuspendidos] = useState({});
-
-  // Todas las canchas de todos los complejos, para el selector del formulario
   useEffect(() => {
     if (complejos.length === 0) return;
 
     Promise.all(
       complejos.map((complejo) =>
         apiRequest(`/complejos/${complejo.id_complejo}/canchas`).then((lista) =>
-          lista.map((cancha) => ({ ...cancha, complejo: complejo.nombre }))
-        )
-      )
+          lista.map((cancha) => ({ ...cancha, complejo: complejo.nombre })),
+        ),
+      ),
     )
       .then((listas) => setCanchas(listas.flat()))
       .catch(() => setCanchas([]));
   }, [complejos]);
 
-  // Equipos inscriptos en el torneo, para crear partidos nuevos
   useEffect(() => {
     if (!torneoSeleccionado) return;
 
@@ -86,33 +86,30 @@ function Fixture({
       .catch(() => setEquipos([]));
   }, [torneoSeleccionado]);
 
-  // Id de cada equipo por nombre, para que el escudo tenga el mismo color que en posiciones
   const idPorNombre = Object.fromEntries(
-    equipos.map((equipo) => [equipo.nombre, equipo.id_equipo])
+    equipos.map((equipo) => [equipo.nombre, equipo.id_equipo]),
   );
 
-  // Contamos los partidos según su estado
   const total = partidos.length;
   const contar = (estado) =>
     partidos.filter((partido) => partido.estado === estado).length;
 
-  const jugados = contar('jugado');
-  const programados = contar('programado');
-  const postergados = contar('postergado');
-  const cancelados = contar('cancelado');
+  const jugados = contar("jugado");
+  const programados = contar("programado");
+  const postergados = contar("postergado");
+  const cancelados = contar("cancelado");
 
-  // Obtenemos las fechas del torneo
-  const fechas = [...new Set(
-    partidos.map((partido) => partido.numero_fecha)
-  )].sort((a, b) => a - b);
+  const fechas = [
+    ...new Set(partidos.map((partido) => partido.numero_fecha)),
+  ].sort((a, b) => a - b);
 
   const partidosDe = (fecha) =>
     partidos.filter((partido) => partido.numero_fecha === fecha);
 
-  // Una fecha está terminada cuando todo lo que no se canceló ya se jugó
+  // Una fecha está terminada si y solo si todo lo que no se canceló ya se jugó
   const fechaTerminada = (fecha) => {
-    const vigentes = partidosDe(fecha).filter((p) => p.estado !== 'cancelado');
-    return vigentes.length > 0 && vigentes.every((p) => p.estado === 'jugado');
+    const vigentes = partidosDe(fecha).filter((p) => p.estado !== "cancelado");
+    return vigentes.length > 0 && vigentes.every((p) => p.estado === "jugado");
   };
 
   const proximaFecha = fechas.length > 0 ? fechas[fechas.length - 1] + 1 : 1;
@@ -123,26 +120,23 @@ function Fixture({
     1;
 
   const fechaActiva = fechaSeleccionada ?? fechaPorDefecto;
-
-  // Rango de días válido para los partidos (lo controla también la base)
   const torneoActual = torneos.find(
-    (t) => String(t.id_torneo) === String(torneoSeleccionado)
+    (t) => String(t.id_torneo) === String(torneoSeleccionado),
   );
-
-  // Para un partido nuevo se sugiere el día que ya tiene esa fecha del torneo
-  const diaDeFecha = (fecha) => partidosDe(fecha).map((p) => p.dia).sort()[0] || '';
+  const diaDeFecha = (fecha) =>
+    partidosDe(fecha)
+      .map((p) => p.dia)
+      .sort()[0] || "";
   const partidosFecha = partidosDe(fechaActiva);
-
-  // Cuántos suspendidos lleva cada equipo a los partidos pendientes de la fecha
   const pendientes = partidosFecha
-    .filter((p) => p.estado === 'programado' || p.estado === 'postergado')
+    .filter((p) => p.estado === "programado" || p.estado === "postergado")
     .map((p) => p.id_partido);
-  const clavePendientes = pendientes.join(',');
+  const clavePendientes = pendientes.join(",");
 
   useEffect(() => {
     if (!clavePendientes) return;
 
-    const ids = clavePendientes.split(',');
+    const ids = clavePendientes.split(",");
 
     Promise.all(
       ids.map((id) =>
@@ -154,14 +148,14 @@ function Fixture({
               porEquipo[jugador.equipo] = (porEquipo[jugador.equipo] || 0) + 1;
             });
           return [id, porEquipo];
-        })
-      )
+        }),
+      ),
     )
       .then((resultados) =>
         setSuspendidos((anteriores) => ({
           ...anteriores,
-          ...Object.fromEntries(resultados)
-        }))
+          ...Object.fromEntries(resultados),
+        })),
       )
       .catch(() => {});
   }, [clavePendientes]);
@@ -172,27 +166,29 @@ function Fixture({
   }
 
   function abrirNuevo(numeroFecha) {
-    setErrorEdicion('');
-    setMensajeExito('');
-    setFormulario({ modo: 'nuevo', numero_fecha: numeroFecha });
+    setErrorEdicion("");
+    setMensajeExito("");
+    setFormulario({ modo: "nuevo", numero_fecha: numeroFecha });
   }
 
   function abrirEditar(partido) {
-    setErrorEdicion('');
-    setMensajeExito('');
+    setErrorEdicion("");
+    setMensajeExito("");
     setFormulario({
-      modo: 'editar',
+      modo: "editar",
       partido: {
         ...partido,
-        id_equipo_local: partido.id_equipo_local ?? idPorNombre[partido.equipo_local],
-        id_equipo_visitante: partido.id_equipo_visitante ?? idPorNombre[partido.equipo_visitante]
-      }
+        id_equipo_local:
+          partido.id_equipo_local ?? idPorNombre[partido.equipo_local],
+        id_equipo_visitante:
+          partido.id_equipo_visitante ?? idPorNombre[partido.equipo_visitante],
+      },
     });
   }
 
   async function guardarPartido(datos) {
-    setErrorEdicion('');
-    setMensajeExito('');
+    setErrorEdicion("");
+    setMensajeExito("");
 
     const cuerpo = {
       id_torneo: Number(torneoSeleccionado),
@@ -202,16 +198,16 @@ function Fixture({
       dia: datos.dia,
       id_turno: datos.id_turno,
       id_complejo: datos.id_complejo,
-      nombre_cancha: datos.nombre_cancha
+      nombre_cancha: datos.nombre_cancha,
     };
 
     try {
-      if (formulario.modo === 'nuevo') {
-        await apiRequest('/partidos', {
-          method: 'POST',
-          body: JSON.stringify(cuerpo)
+      if (formulario.modo === "nuevo") {
+        await apiRequest("/partidos", {
+          method: "POST",
+          body: JSON.stringify(cuerpo),
         });
-        setMensajeExito('¡Partido creado correctamente!');
+        setMensajeExito("¡Partido creado correctamente!");
       } else {
         const partido = formulario.partido;
         const id = partido.id_partido;
@@ -225,19 +221,19 @@ function Fixture({
 
         if (camposModificados) {
           await apiRequest(`/partidos/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(cuerpo)
+            method: "PUT",
+            body: JSON.stringify(cuerpo),
           });
         }
 
         if (datos.estado !== partido.estado) {
           await apiRequest(`/partidos/${id}/estado`, {
-            method: 'PATCH',
-            body: JSON.stringify({ estado: datos.estado })
+            method: "PATCH",
+            body: JSON.stringify({ estado: datos.estado }),
           });
         }
 
-        setMensajeExito('¡Partido guardado correctamente!');
+        setMensajeExito("¡Partido guardado correctamente!");
       }
 
       setFormulario(null);
@@ -253,16 +249,16 @@ function Fixture({
 
   async function eliminarPartido(partido) {
     const confirmado = window.confirm(
-      `¿Eliminar ${partido.equipo_local} vs ${partido.equipo_visitante}?`
+      `¿Eliminar ${partido.equipo_local} vs ${partido.equipo_visitante}?`,
     );
     if (!confirmado) return;
 
-    setErrorEdicion('');
-    setMensajeExito('');
+    setErrorEdicion("");
+    setMensajeExito("");
 
     try {
-      await apiRequest(`/partidos/${partido.id_partido}`, { method: 'DELETE' });
-      setMensajeExito('Partido eliminado.');
+      await apiRequest(`/partidos/${partido.id_partido}`, { method: "DELETE" });
+      setMensajeExito("Partido eliminado.");
 
       if (formulario?.partido?.id_partido === partido.id_partido) {
         setFormulario(null);
@@ -278,7 +274,6 @@ function Fixture({
 
   return (
     <section className="fixture-contenedor">
-
       <SelectorEdicion
         torneos={torneos}
         torneoSeleccionado={torneoSeleccionado}
@@ -292,19 +287,22 @@ function Fixture({
         {/* Resumen de los partidos */}
         <div className="fixture-resumen">
           <span>
-            <strong>{total}</strong> {plural(total, 'partido', 'partidos')}
+            <strong>{total}</strong> {plural(total, "partido", "partidos")}
           </span>
           <span className="resumen-jugado">
-            <strong>{jugados}</strong> {plural(jugados, 'jugado', 'jugados')}
+            <strong>{jugados}</strong> {plural(jugados, "jugado", "jugados")}
           </span>
           <span className="resumen-programado">
-            <strong>{programados}</strong> {plural(programados, 'programado', 'programados')}
+            <strong>{programados}</strong>{" "}
+            {plural(programados, "programado", "programados")}
           </span>
           <span className="resumen-postergado">
-            <strong>{postergados}</strong> {plural(postergados, 'postergado', 'postergados')}
+            <strong>{postergados}</strong>{" "}
+            {plural(postergados, "postergado", "postergados")}
           </span>
           <span className="resumen-cancelado">
-            <strong>{cancelados}</strong> {plural(cancelados, 'cancelado', 'cancelados')}
+            <strong>{cancelados}</strong>{" "}
+            {plural(cancelados, "cancelado", "cancelados")}
           </span>
         </div>
 
@@ -325,14 +323,16 @@ function Fixture({
           const terminada = fechaTerminada(fecha);
           const delaFecha = partidosDe(fecha);
           const primerDia = delaFecha.map((p) => p.dia).sort()[0];
-          const jugadosFecha = delaFecha.filter((p) => p.estado === 'jugado').length;
+          const jugadosFecha = delaFecha.filter(
+            (p) => p.estado === "jugado",
+          ).length;
 
           return (
             <button
               key={fecha}
               type="button"
               className={
-                fechaActiva === fecha ? 'fixture-fecha activa' : 'fixture-fecha'
+                fechaActiva === fecha ? "fixture-fecha activa" : "fixture-fecha"
               }
               onClick={() => elegirFecha(fecha)}
             >
@@ -342,7 +342,7 @@ function Fixture({
               </strong>
               <small>
                 {terminada
-                  ? `${jugadosFecha} ${plural(jugadosFecha, 'jugado', 'jugados')}`
+                  ? `${jugadosFecha} ${plural(jugadosFecha, "jugado", "jugados")}`
                   : diaCorto(primerDia)}
               </small>
             </button>
@@ -375,50 +375,60 @@ function Fixture({
           ) : (
             partidosFecha.map((partido) => {
               const turno = turnos.find(
-                (t) => Number(t.id_turno) === Number(partido.id_turno)
+                (t) => Number(t.id_turno) === Number(partido.id_turno),
               );
 
               const complejo = complejos.find(
-                (c) => Number(c.id_complejo) === Number(partido.id_complejo)
+                (c) => Number(c.id_complejo) === Number(partido.id_complejo),
               );
 
               const avisos = [];
 
-              if (partido.estado === 'postergado') {
-                avisos.push('Falta reprogramar');
+              if (partido.estado === "postergado") {
+                avisos.push("Falta reprogramar");
               }
 
               Object.entries(suspendidos[partido.id_partido] || {}).forEach(
                 ([equipo, cantidad]) => {
-                  if (partido.estado === 'programado' || partido.estado === 'postergado') {
+                  if (
+                    partido.estado === "programado" ||
+                    partido.estado === "postergado"
+                  ) {
                     avisos.push(
-                      `${equipo} llega con ${cantidad} ${plural(cantidad, 'suspendido', 'suspendidos')}`
+                      `${equipo} llega con ${cantidad} ${plural(cantidad, "suspendido", "suspendidos")}`,
                     );
                   }
-                }
+                },
               );
 
-              const editable = esAdmin && partido.estado !== 'jugado';
+              const editable = esAdmin && partido.estado !== "jugado";
               const seleccionado =
                 formulario?.partido?.id_partido === partido.id_partido;
 
               return (
                 <article
                   className={
-                    seleccionado ? 'fixture-tarjeta seleccionado' : 'fixture-tarjeta'
+                    seleccionado
+                      ? "fixture-tarjeta seleccionado"
+                      : "fixture-tarjeta"
                   }
                   key={partido.id_partido}
                 >
                   <div className="fixture-enfrentamiento">
                     <div className="fixture-equipo-con-escudo">
                       <InsigniaEquipo
-                        id={partido.id_equipo_local ?? idPorNombre[partido.equipo_local]}
+                        id={
+                          partido.id_equipo_local ??
+                          idPorNombre[partido.equipo_local]
+                        }
                         nombre={partido.equipo_local}
                       />
-                      <span className="fixture-equipo">{partido.equipo_local}</span>
+                      <span className="fixture-equipo">
+                        {partido.equipo_local}
+                      </span>
                     </div>
 
-                    {partido.estado === 'jugado' ? (
+                    {partido.estado === "jugado" ? (
                       <span className="fixture-vs fixture-marcador">
                         {partido.goles_local} - {partido.goles_visitante}
                       </span>
@@ -427,9 +437,14 @@ function Fixture({
                     )}
 
                     <div className="fixture-equipo-con-escudo visitante">
-                      <span className="fixture-equipo">{partido.equipo_visitante}</span>
+                      <span className="fixture-equipo">
+                        {partido.equipo_visitante}
+                      </span>
                       <InsigniaEquipo
-                        id={partido.id_equipo_visitante ?? idPorNombre[partido.equipo_visitante]}
+                        id={
+                          partido.id_equipo_visitante ??
+                          idPorNombre[partido.equipo_visitante]
+                        }
                         nombre={partido.equipo_visitante}
                       />
                     </div>
@@ -439,32 +454,37 @@ function Fixture({
                     <div className="fixture-detalles-fila">
                       <strong
                         className={
-                          partido.estado === 'postergado' || partido.estado === 'cancelado'
-                            ? 'fixture-horario tachado'
-                            : 'fixture-horario'
+                          partido.estado === "postergado" ||
+                          partido.estado === "cancelado"
+                            ? "fixture-horario tachado"
+                            : "fixture-horario"
                         }
                       >
-                        {turno?.hora_inicio || '--:--'}
+                        {turno?.hora_inicio || "--:--"}
                       </strong>
 
-                      <span className={`fixture-estado estado-${partido.estado}`}>
+                      <span
+                        className={`fixture-estado estado-${partido.estado}`}
+                      >
                         {partido.estado}
                       </span>
                     </div>
 
                     <span className="fixture-lugar">
                       {diaCorto(partido.dia)}
-                      {' · '}
-                      {complejo?.nombre || 'Complejo no disponible'}
-                      {' - '}
+                      {" · "}
+                      {complejo?.nombre || "Complejo no disponible"}
+                      {" - "}
                       {partido.nombre_cancha}
                     </span>
 
                     {avisos.map((aviso) => (
-                      <span key={aviso} className="fixture-aviso">{aviso}</span>
+                      <span key={aviso} className="fixture-aviso">
+                        {aviso}
+                      </span>
                     ))}
 
-                    {partido.estado !== 'cancelado' && onAbrirPlanilla && (
+                    {partido.estado !== "cancelado" && onAbrirPlanilla && (
                       <button
                         type="button"
                         className="fixture-boton-planilla"
@@ -504,7 +524,10 @@ function Fixture({
 
         {formulario && (
           <EditarPartido
-            key={formulario.partido?.id_partido ?? `nuevo-${formulario.numero_fecha}`}
+            key={
+              formulario.partido?.id_partido ??
+              `nuevo-${formulario.numero_fecha}`
+            }
             partido={formulario.partido}
             numeroFecha={formulario.numero_fecha}
             diaSugerido={diaDeFecha(formulario.numero_fecha)}
@@ -514,7 +537,7 @@ function Fixture({
             canchas={canchas}
             equipos={equipos}
             partidos={partidos}
-            onCambio={() => setErrorEdicion('')}
+            onCambio={() => setErrorEdicion("")}
             onCancelar={() => setFormulario(null)}
             onGuardar={guardarPartido}
           />

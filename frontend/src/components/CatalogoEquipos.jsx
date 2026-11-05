@@ -37,7 +37,6 @@ function validar(f, esNuevo) {
   return errores;
 }
 
-// Número de camiseta editable: se guarda al salir del campo o con Enter
 function CamisetaInput({ valor, deshabilitado, onGuardar }) {
   const [texto, setTexto] = useState(String(valor));
 
@@ -175,7 +174,6 @@ function CatalogoEquipos({ equipoInicial = null }) {
           setCargando(false);
           return null;
         }
-        // Abre en el equipo pedido, o en la edición en inscripción, o en la última
         const inicial =
           ordenados.find((t) => t.id_torneo === equipoInicial?.id_torneo) ||
           ordenados.find((t) => t.estado === "inscripcion") ||
@@ -187,8 +185,6 @@ function CatalogoEquipos({ equipoInicial = null }) {
         setError(err.message);
         setCargando(false);
       });
-    // Solo al abrir la pantalla
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function cambiarTorneo(idTorneo) {
@@ -269,10 +265,9 @@ function CatalogoEquipos({ equipoInicial = null }) {
     }
 
     try {
-      await apiRequest(
-        `/equipos/${equipo.id_equipo}/jugadores/${jugador.ci}`,
-        { method: "DELETE" },
-      );
+      await apiRequest(`/equipos/${equipo.id_equipo}/jugadores/${jugador.ci}`, {
+        method: "DELETE",
+      });
       setErrorPlantel("");
       const nuevo = await cargarPlantel(equipo);
       if (nuevo && !nuevo.some((j) => j.ci === formulario.ci_capitan)) {
@@ -286,10 +281,10 @@ function CatalogoEquipos({ equipoInicial = null }) {
 
   async function cambiarCamiseta(equipo, jugador, numero) {
     try {
-      await apiRequest(
-        `/equipos/${equipo.id_equipo}/jugadores/${jugador.ci}`,
-        { method: "PUT", body: JSON.stringify({ numero_camiseta: numero }) },
-      );
+      await apiRequest(`/equipos/${equipo.id_equipo}/jugadores/${jugador.ci}`, {
+        method: "PUT",
+        body: JSON.stringify({ numero_camiseta: numero }),
+      });
       setErrorPlantel("");
       await Promise.all([cargarPlantel(equipo), verPlantel(equipo.id_equipo)]);
       return true;
@@ -456,7 +451,7 @@ function CatalogoEquipos({ equipoInicial = null }) {
               value={formulario.ci_capitan}
               onChange={cambiarCampo}
             >
-              <option value="">Sin capitán</option>
+              {enInscripcion && <option value="">Sin capitán</option>}
               {plantel.map((jugador) => (
                 <option key={jugador.ci} value={jugador.ci}>
                   {jugador.nombre} {jugador.apellido}
@@ -536,7 +531,10 @@ function CatalogoEquipos({ equipoInicial = null }) {
                   aria-label="Jugador a agregar"
                   value={nuevoJugador.ci}
                   onChange={(evento) =>
-                    setNuevoJugador({ ...nuevoJugador, ci: evento.target.value })
+                    setNuevoJugador({
+                      ...nuevoJugador,
+                      ci: evento.target.value,
+                    })
                   }
                 >
                   <option value="">
@@ -648,7 +646,9 @@ function CatalogoEquipos({ equipoInicial = null }) {
                 <button
                   key={equipo.id_equipo}
                   type="button"
-                  className={activo ? "equipo-tarjeta activo" : "equipo-tarjeta"}
+                  className={
+                    activo ? "equipo-tarjeta activo" : "equipo-tarjeta"
+                  }
                   style={
                     activo
                       ? { backgroundColor: colorEquipo(equipo.id_equipo) }
@@ -680,9 +680,7 @@ function CatalogoEquipos({ equipoInicial = null }) {
                     {Array.from({ length: MAX_PLANTEL }, (_, i) => (
                       <span
                         key={i}
-                        className={
-                          i < equipo.cantidad_jugadores ? "lleno" : ""
-                        }
+                        className={i < equipo.cantidad_jugadores ? "lleno" : ""}
                       />
                     ))}
                   </span>
@@ -770,7 +768,8 @@ function CatalogoEquipos({ equipoInicial = null }) {
               <footer className="equipo-pie">
                 {enInscripcion ? (
                   <strong>
-                    Plantel abierto: se puede modificar hasta iniciar la edición.
+                    Plantel abierto: se puede modificar hasta iniciar la
+                    edición.
                   </strong>
                 ) : (
                   <>

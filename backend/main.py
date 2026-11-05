@@ -44,6 +44,7 @@ app.include_router(reportes.router)
 app.include_router(partidos.router)
 app.include_router(sanciones.router)
 
+# mensajes de error personalizados para mejorar legibilidad.
 MENSAJES = {
     "missing": "es obligatorio",
     "string_too_short": "no puede estar vacío",

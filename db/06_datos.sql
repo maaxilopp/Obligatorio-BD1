@@ -1,27 +1,22 @@
 -- DATOS DE PRUEBA DEL OBLIGATORIO
 --
---   * 6 facultades, 6 equipos de 7 jugadores, 3 jugadores sin equipo
---   * docentes, funcionarios y posgrado (máx. 2 docentes/funcionarios por equipo)
---   * 3 fechas disputadas (9 partidos jugados), fecha 4 programada a futuro
---   * 1 partido cancelado (y reprogramado) y 1 postergado
---   * desempates en la tabla: Derecho al Gol e Ingenieros FC empatan en puntos
---     y diferencia (gana Derecho por goles a favor); Psico Team y Balance FC
---     empatan en puntos (gana Psico Team por diferencia de goles)
---   * 1 autogol, 1 hat-trick, 2 rojas, 1 jugador con 3 amarillas,
---     1 sanción disciplinaria de 2 fechas, 2 remontadas
---   * 2 jugadores inscriptos que nunca figuraron en una planilla
+--   6 facultades, 6 equipos de 7 jugadores, 3 jugadores sin equipo
+--   docentes, funcionarios y posgrado, fecha 4 programada a futuro
+--   1 partido cancelado y 1 postergado
+--   desempates en la tabla: Derecho al Gol e Ingenieros FC empatan en puntos
+--     y diferencia, gana Derecho por goles a favor, Psico Team y Balance FC
+--     empatan en puntos.
+--   1 autogol, 1 hat-trick, 2 rojas, 1 jugador con 3 amarillas,
+--   1 sanción disciplinaria de 2 fechas, 2 remontadas
+--   2 jugadores inscriptos que nunca figuraron en una planilla
 --
 -- Las fechas son RELATIVAS al día en que se corre,
 -- así la fecha 4 siempre queda a futuro y la fecha 3 todavía está
 -- dentro de la ventana de 48 h para corregir resultados.
 --
--- Orden de carga
---   torneo en 'inscripcion',  planteles ,torneo 'en curso', partidos
---   'programado', planilla, goles y tarjetas, partidos 'jugado'.
---
 -- Usuarios de la aplicación:
---   admin@ucu.edu.uy       / admin123       
---   planillero@ucu.edu.uy  / planillero123 
+--   admin@ucu.edu.uy       | contra: admin123       
+--   planillero@ucu.edu.uy  | contra: planillero123 
 
 SET NAMES utf8mb4;
 SET time_zone = '-03:00';
@@ -108,7 +103,7 @@ INSERT INTO equipo (id_equipo, nombre, id_torneo, id_facultad) VALUES
     (5, 'Vilardebo FC', 1, 5),
     (6, 'Dando clase', 1, 6);
 
--- Planteles: 7 jugadores por equipo
+-- Planteles
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, id_facultad, numero_camiseta) VALUES
     (1, '41100048', 1, 1, 10),
     (1, '41200065', 1, 1, 3),
@@ -153,7 +148,7 @@ INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, id_facultad
     (6, '46600288', 1, 6, 27),
     (6, '46700305', 1, 6, 99);
 
--- Capitanes
+-- Capitanes, se eligen despues de cargar los planteles 
 UPDATE equipo SET ci_capitan = '41100048' WHERE id_equipo = 1;
 UPDATE equipo SET ci_capitan = '42100079' WHERE id_equipo = 2;
 UPDATE equipo SET ci_capitan = '43100110' WHERE id_equipo = 3;
@@ -173,13 +168,13 @@ INSERT INTO cancha (id_complejo, nombre_cancha, superficie, techada) VALUES
     (2, 'Cancha A', 'sintetico', TRUE),
     (3, 'Cancha Norte', 'sintetico', FALSE);
 
--- Cierra la inscripción,  planteles quedan fijos
+-- Cierra la inscripción y los planteles quedan fijos
 UPDATE torneo SET estado = 'en curso' WHERE id_torneo = 1;
 
--- Partidos. Se cargan como 'programado' y se marcan 'jugado' al final,
+-- Partidos. Se cargan como "programado" y se marcan "jugado" al final,
 -- después de cargar la planilla
--- El 6 se canceló (lluvia) y se reprogramó como el 7. El 13 está postergado.
--- La fecha 5 todavía no se programó.
+-- El 6 se canceló  y se reprogramó como el 7. El 13 está postergado.
+-- La fecha 5 esta para programar.
 INSERT INTO partido (id_partido, id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, id_turno, id_complejo, nombre_cancha, estado) VALUES
     (1, 1, 1, 1, 2, @f1, 1, 1, 'Cancha 1', 'programado'),
     (2, 1, 1, 3, 4, @f1, 1, 1, 'Cancha 2', 'programado'),
@@ -195,7 +190,7 @@ INSERT INTO partido (id_partido, id_torneo, numero_fecha, id_equipo_local, id_eq
     (12, 1, 4, 2, 4, @f4, 1, 1, 'Cancha 2', 'programado'),
     (13, 1, 4, 3, 6, @f4, 2, 1, 'Cancha 1', 'postergado');
 
--- Sanción disciplinaria (cargada por la organización antes de la fecha 3):
+-- Sanción disciplinaria, precargada por la organización antes de la fecha 3:
 -- el jugador no puede jugar las fechas 3 y 4.
 INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas, descripcion) VALUES
     ('45200189', 1, 'disciplinaria', 3, 2, 'Agresión verbal al árbitro en la fecha 2');

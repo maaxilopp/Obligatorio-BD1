@@ -224,3 +224,28 @@ def test_un_partido_postergado_no_bloquea_el_horario(cur):
     p = programar(cur, t, 1, a, b, "2031-04-10", turno=1)
     cur.execute("UPDATE partido SET estado = 'postergado' WHERE id_partido = %s", (p,))
     programar(cur, t, 2, a, c, "2031-04-10", turno=1, cancha=(2, "Cancha A"))
+
+
+def test_equipo_no_queda_sin_capitan_con_el_torneo_iniciado(cur):
+    falla(cur, "UPDATE equipo SET ci_capitan = NULL WHERE id_equipo = 1", mensaje="sin capitán")
+    # cambiarlo por otro jugador del plantel sí
+    cur.execute("UPDATE equipo SET ci_capitan = %s WHERE id_equipo = 1", (ci_de(cur, "Mateo", "Rodríguez"),))
+
+
+def test_en_inscripcion_el_capitan_puede_faltar(cur):
+    t, (eq,) = nuevo_torneo(cur, equipos=1, jugadores=1)
+    cur.execute("UPDATE equipo SET ci_capitan = NULL WHERE id_equipo = %s", (eq,))
+
+
+def test_no_se_inscribe_un_equipo_con_el_torneo_iniciado(cur):
+    t, _ = nuevo_torneo(cur, equipos=2)
+    cur.execute("UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,))
+    falla(cur, "INSERT INTO equipo (nombre, id_torneo, id_facultad) VALUES ('Tarde', %s, 1)",
+          (t,), mensaje="etapa de inscripción")
+
+
+def test_toda_edicion_empieza_en_inscripcion(cur):
+    for estado in ("en curso", "finalizado"):
+        falla(cur, "INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin, estado) "
+                   "VALUES ('x', 2032, 1, '2032-03-01', '2032-07-01', %s)", (estado,),
+              mensaje="etapa de inscripción")

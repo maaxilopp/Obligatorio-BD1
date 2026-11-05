@@ -37,6 +37,7 @@ REFERENCIAS = {
     "fk_planilla_plantel": "El jugador no está en el plantel de ese equipo",
     "fk_gol_planilla": "Solo puede convertir goles un jugador que figure en la planilla del partido",
     "fk_tarjeta_planilla": "Solo puede recibir tarjetas un jugador que figure en la planilla del partido",
+    "no figura en la planilla": "Solo puede recibir tarjetas un jugador que figure en la planilla del partido",
     "fk_sancion_inscripto": "Solo se puede sancionar a un jugador inscripto en esa edición del torneo",
 }
 

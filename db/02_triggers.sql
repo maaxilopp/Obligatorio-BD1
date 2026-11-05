@@ -35,13 +35,6 @@ BEGIN
     END IF;
 END //
 
--- Al borrar una amarilla (corrección), el jugador tiene que seguir con
--- exactamente FLOOR(amarillas / 3) sanciones por acumulación.
---   - Si sobran, se borran las más recientes.
---   - Si faltan, se crean. Pasa cuando se borra justo la tarjeta que originó la
---     sanción (el ON DELETE CASCADE se la lleva) y al jugador le quedan 3:
---     tenía 4, la 3ra generó la sanción y se corrigió esa. La sanción pasa a
---     colgar de la tarjeta que ahora es la 3ra, en orden de partido y minuto.
 CREATE PROCEDURE recalcular_sanciones_amarillas(IN p_ci VARCHAR(8), IN p_id_partido INT)
 BEGIN
     DECLARE v_torneo    INT;
@@ -479,6 +472,15 @@ END //
 --   Solo avanza: inscripcion -> en curso -> finalizado.
 --   Sin esto, se podía volver a 'inscripcion' con partidos jugados y
 --   modificar los planteles (lo probamos: un equipo quedaba con 4 jugadores).
+CREATE TRIGGER trg_torneo_bi BEFORE INSERT ON torneo
+FOR EACH ROW
+BEGIN
+    IF NEW.estado <> 'inscripcion' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Toda edición del torneo empieza en etapa de inscripción';
+    END IF;
+END //
+
 CREATE TRIGGER trg_torneo_bu BEFORE UPDATE ON torneo
 FOR EACH ROW
 BEGIN
@@ -566,13 +568,29 @@ END //
 -- EQUIPOS
 --   El fixture es todos contra todos: un equipo que entra después quedaría
 --   sin partidos. Para sumarlo hay que borrar los partidos y generarlo de nuevo.
+--   El capitán puede faltar mientras se arma el plantel, pero no después.
 CREATE TRIGGER trg_equipo_bi BEFORE INSERT ON equipo
 FOR EACH ROW
 BEGIN
+    IF (SELECT estado FROM torneo WHERE id_torneo = NEW.id_torneo) <> 'inscripcion' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Los equipos solo pueden inscribirse mientras el torneo está en etapa de inscripción';
+    END IF;
+
     IF EXISTS (SELECT 1 FROM partido
                WHERE id_torneo = NEW.id_torneo AND estado <> 'cancelado') THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'La edición ya tiene partidos: para sumar un equipo hay que borrarlos y generar el fixture de nuevo';
+    END IF;
+END //
+
+CREATE TRIGGER trg_equipo_bu BEFORE UPDATE ON equipo
+FOR EACH ROW
+BEGIN
+    IF NEW.ci_capitan IS NULL
+       AND (SELECT estado FROM torneo WHERE id_torneo = NEW.id_torneo) <> 'inscripcion' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El equipo no puede quedar sin capitán una vez iniciado el torneo';
     END IF;
 END //
 
