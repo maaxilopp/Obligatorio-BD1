@@ -88,3 +88,41 @@ def test_autogol_suma_al_rival(cur):
     # partido 1: Ingenieros FC 3-0 Balance FC, con un autogol de Federico López (Balance FC)
     cur.execute("SELECT goles_local, goles_visitante FROM v_resultado_partido WHERE id_partido = 1")
     assert cur.fetchone() == (3, 0)
+
+
+SIN_EVENTOS = """
+    SELECT pp.ci_jugador FROM planilla_partido pp
+    WHERE pp.id_partido = 8
+      AND NOT EXISTS (SELECT 1 FROM tarjeta t WHERE t.ci_jugador = pp.ci_jugador)
+      AND NOT EXISTS (SELECT 1 FROM gol g WHERE g.ci_jugador = pp.ci_jugador)
+    ORDER BY pp.ci_jugador LIMIT 1
+"""
+GOL = "INSERT INTO gol (id_partido, ci_jugador, minuto) VALUES (8, %s, %s)"
+TARJETA = "INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, %s, %s)"
+
+
+def test_expulsado_no_convierte_ni_recibe_tarjetas_despues(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(TARJETA, (ci, 18, "roja"))
+    falla(cur, GOL, (ci, 20), mensaje="expulsado antes")
+    falla(cur, TARJETA, (ci, 25, "amarilla"), mensaje="expulsado antes")
+
+
+def test_la_roja_no_es_anterior_a_lo_ya_cargado(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(GOL, (ci, 20))
+    falla(cur, TARJETA, (ci, 18, "roja"), mensaje="la roja no puede ser anterior")
+    # en el mismo minuto, o después, sí
+    cur.execute(TARJETA, (ci, 20, "roja"))
+
+
+def test_corregir_minutos_respeta_la_expulsion(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(GOL, (ci, 10))
+    id_gol = cur.lastrowid
+    cur.execute(TARJETA, (ci, 18, "roja"))
+    id_roja = cur.lastrowid
+    falla(cur, "UPDATE gol SET minuto = 30 WHERE id_gol = %s", (id_gol,), mensaje="expulsado antes")
+    falla(cur, "UPDATE tarjeta SET minuto = 5 WHERE id_tarjeta = %s", (id_roja,),
+          mensaje="la roja no puede ser anterior")
+    cur.execute("UPDATE tarjeta SET minuto = 25 WHERE id_tarjeta = %s", (id_roja,))

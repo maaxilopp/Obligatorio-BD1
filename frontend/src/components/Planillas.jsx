@@ -119,7 +119,33 @@ const FORMULARIO_INICIAL = {
   color: "amarilla",
 };
 
-function FormularioEvento({ tipo, jugadores, guardando, onGuardar, onCancelar }) {
+// Misma regla que validar_expulsion en la base
+function problemaExpulsion(tipo, valores, minuto, goles, tarjetas) {
+  const propias = tarjetas.filter((t) => t.ci_jugador === valores.ci);
+  const roja = propias.find((t) => t.color === "roja" && t.minuto < minuto);
+  if (roja) return `El jugador fue expulsado en el minuto ${roja.minuto}.`;
+
+  if (tipo === "tarjeta" && valores.color === "roja") {
+    const posterior = [
+      ...goles.filter((g) => g.ci_jugador === valores.ci),
+      ...propias,
+    ].find((evento) => evento.minuto > minuto);
+    if (posterior) {
+      return `El jugador tiene un gol o una tarjeta en el minuto ${posterior.minuto}: la roja no puede ser anterior.`;
+    }
+  }
+  return "";
+}
+
+function FormularioEvento({
+  tipo,
+  jugadores,
+  goles,
+  tarjetas,
+  guardando,
+  onGuardar,
+  onCancelar,
+}) {
   const [valores, setValores] = useState(FORMULARIO_INICIAL);
   const [problema, setProblema] = useState("");
 
@@ -145,6 +171,13 @@ function FormularioEvento({ tipo, jugadores, guardando, onGuardar, onCancelar })
     ) {
       setProblema(`El minuto tiene que estar entre 0 y ${DURACION}.`);
       return;
+    }
+    if (tipo !== "jugador") {
+      const expulsion = problemaExpulsion(tipo, valores, minuto, goles, tarjetas);
+      if (expulsion) {
+        setProblema(expulsion);
+        return;
+      }
     }
     onGuardar({ ...valores, minuto });
   }
@@ -363,6 +396,8 @@ function TarjetaEquipo({
               key={tipoAbierto}
               tipo={tipoAbierto}
               jugadores={tipoAbierto === "jugador" ? disponibles : presentes}
+              goles={goles}
+              tarjetas={tarjetas}
               guardando={guardando}
               onCancelar={cerrarFormulario}
               onGuardar={(valores) => onGuardarEvento(tipoAbierto, valores)}
