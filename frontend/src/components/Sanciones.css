@@ -107,6 +107,12 @@
   background: var(--amarillo);
 }
 
+/* Doble amarilla: dos cartas en total */
+.carta-marco.amarilla:has(.carta-fondo.uno):not(:has(.carta-fondo.dos)) .carta-fondo.uno {
+  transform: rotate(-8deg) translateX(-8px);
+}
+
+/* Tres amarillas: tres cartas en total */
 .carta-fondo.uno {
   transform: rotate(-14deg) translateX(-14px);
 }

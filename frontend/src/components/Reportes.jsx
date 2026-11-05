@@ -142,7 +142,8 @@ const DETALLES = {
         filas: d.sanciones,
         columnas: [
           ["equipo", "Equipo"],
-          ["roja", "Roja"],
+          ["roja", "Roja directa"],
+          ["doble_amarilla", "Doble amarilla"],
           ["acumulacion_amarillas", "Acum. amarillas"],
           ["disciplinaria", "Disciplinaria"],
           ["total", "Total"],
@@ -493,6 +494,7 @@ function Tarjetas({ datos, abrir }) {
     enumerar(
       [
         [masSancionado.roja, "roja"],
+        [masSancionado.doble_amarilla, "por doble amarilla", "por doble amarilla"],
         [masSancionado.acumulacion_amarillas, "por amarillas", "por amarillas"],
         [masSancionado.disciplinaria, "disciplinaria"],
       ]

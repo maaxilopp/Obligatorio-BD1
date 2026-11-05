@@ -73,8 +73,20 @@ function cumpleEnFecha(sancion, fecha) {
   );
 }
 
-// Lo que se ve sobre la carta según el motivo de la sanción
+function esDobleAmarilla(sancion) {
+  return (
+    sancion.motivo === "roja" &&
+    /doble amarilla/i.test(sancion.descripcion || "")
+  );
+}
+
+function etiquetaMotivo(sancion) {
+  if (esDobleAmarilla(sancion)) return "Doble amarilla";
+  return ETIQUETA_MOTIVO[sancion.motivo] || sancion.motivo;
+}
+
 function encabezadoCarta(sancion) {
+  if (esDobleAmarilla(sancion)) return "Doble amarilla";
   if (sancion.motivo === "roja") return "Roja directa";
   if (sancion.motivo === "disciplinaria") return "Disciplinaria";
   const amarillas = sancion.descripcion?.match(/\d+/)?.[0] || "3";
@@ -83,7 +95,9 @@ function encabezadoCarta(sancion) {
 
 function CartaSancion({ sancion, jugador }) {
   const tipo =
-    sancion.motivo === "roja"
+  esDobleAmarilla(sancion)
+    ? "amarilla"
+    : sancion.motivo === "roja"
       ? "roja"
       : sancion.motivo === "disciplinaria"
         ? "disciplinaria"
@@ -95,11 +109,15 @@ function CartaSancion({ sancion, jugador }) {
     <article className="sancion-item">
       <div className={`carta-marco ${tipo}`}>
         {tipo === "amarilla" && (
-          <>
-            <span className="carta-fondo uno" />
-            <span className="carta-fondo dos" />
-          </>
-        )}
+  <>
+    <span className="carta-fondo uno" />
+    {!esDobleAmarilla(sancion) && (
+      <>
+        <span className="carta-fondo dos" />
+      </>
+    )}
+  </>
+)}
 
         <div className="carta">
           <small>{encabezadoCarta(sancion)}</small>
@@ -557,10 +575,10 @@ function Sanciones() {
                           {porTarjeta && (
                             <i
                               className={
-                                sancion.motivo === "roja"
+                                sancion.motivo === "roja" && !esDobleAmarilla(sancion)
                                   ? "tarjetita roja"
                                   : "tarjetita amarilla"
-                              }
+}
                             />
                           )}
                           <span
@@ -571,7 +589,7 @@ function Sanciones() {
                                 : sancion.descripcion || undefined
                             }
                           >
-                            {ETIQUETA_MOTIVO[sancion.motivo] || sancion.motivo}
+                            {etiquetaMotivo(sancion)}
                           </span>
                         </span>
                       </td>

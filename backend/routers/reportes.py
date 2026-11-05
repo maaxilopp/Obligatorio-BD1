@@ -165,10 +165,12 @@ def obtener_jugadores_sin_planilla(id_torneo: int, usuario: dict = Depends(solo_
 
 
 @router.get("/torneos/{id_torneo}/sanciones")
+@router.get("/torneos/{id_torneo}/sanciones")
 def obtener_sanciones(id_torneo: int, usuario: dict = Depends(solo_admin)):
     return consultar(usuario, """
         SELECT e.nombre AS equipo,
-               COALESCE(SUM(s.motivo = 'roja'), 0) AS roja,
+               COALESCE(SUM(s.motivo = 'roja directa'), 0) AS roja,
+               COALESCE(SUM(s.motivo = 'doble amarilla'), 0) AS doble_amarilla,
                COALESCE(
                    SUM(s.motivo = 'acumulacion de amarillas'), 0
                ) AS acumulacion_amarillas,
