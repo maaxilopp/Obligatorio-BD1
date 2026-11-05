@@ -122,8 +122,10 @@ def crear_equipo(equipo: EquipoNuevo, usuario: dict = Depends(solo_admin)):
 
 @router.put("/{id_equipo}")
 def modificar_equipo(id_equipo: int, equipo: EquipoDatos, usuario: dict = Depends(solo_admin)):
+    capitan = (equipo.ci_capitan if "ci_capitan" in equipo.model_fields_set
+               else _equipo(id_equipo, usuario)["ci_capitan"])
     ejecutar(usuario, "UPDATE equipo SET nombre = %s, ci_capitan = %s WHERE id_equipo = %s",
-             (equipo.nombre, equipo.ci_capitan, id_equipo))
+             (equipo.nombre, capitan, id_equipo))
     return _equipo(id_equipo, usuario)   # también verifica que exista
 
 

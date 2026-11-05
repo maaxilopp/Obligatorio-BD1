@@ -74,3 +74,8 @@ def test_bloqueo_desconocido_tiene_mensaje_generico():
 def test_valor_fuera_de_rango_no_es_un_error_interno():
     r = traducir_error(error_mysql(1264, "Out of range value for column 'numero_fecha'"))
     assert r.status_code == 400
+
+
+def test_tarjeta_a_quien_no_esta_en_la_planilla_explica_el_motivo():
+    r = traducir_error(error_mysql(1452, "El jugador no figura en la planilla del partido"))
+    assert r.status_code == 400 and "figure en la planilla" in r.detail

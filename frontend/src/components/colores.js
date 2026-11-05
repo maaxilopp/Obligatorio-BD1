@@ -1,5 +1,3 @@
-// Paleta de colores de equipos y facultades (se elige por id)
-
 const coloresEquipos = [
   "#ff801f",
   "#80d5a4",
