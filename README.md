@@ -101,7 +101,7 @@ docker compose up --build
 
 ### Opción 2: sin Docker
 
-Requisitos: MySQL 8.0 o superior, Python 3.10 o superior, Node.js 20.19 o superior y, opcionalmente, DataGrip.
+Requisitos: MySQL 8.0.16 o superior, Python 3.10 o superior, Node.js 20.19 o superior y, opcionalmente, DataGrip.
 
 #### 1. Crear la base de datos
 
@@ -120,13 +120,15 @@ Los scripts de `db/` se ejecutan **en orden**:
 **Con DataGrip**
 
 1. Crear una conexión MySQL como `root`.
-2. Clic derecho en la conexión SQL Scripts,  Run SQL Script... y ejecutar los scripts `01` a `06`, uno por uno y en orden.
+2. Clic derecho en la conexión → SQL Scripts → Run SQL Script... y ejecutar los scripts `01` a `06`, uno por uno y en orden.
 3. Marcar el schema `torneo_futbol5` para que aparezca en el explorador.
 4. Abrir `07_reportes.sql`, ejecutar `SET time_zone = '-03:00';` y `SET @torneo = 1;`, y después cualquier consulta con Ctrl+Enter.
 
 **Con un comando**
 
 ```bash
+python -m venv .venv
+# Windows (PowerShell): .venv\Scripts\Activate.ps1   |   Linux/Mac: source .venv/bin/activate
 pip install -r requirements-dev.txt
 python db/setup_db.py --password <contraseña de root>
 ```
