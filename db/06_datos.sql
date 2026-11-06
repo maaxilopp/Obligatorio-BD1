@@ -27,6 +27,8 @@ SET @f2 = CURDATE() - INTERVAL 14 DAY;   -- fecha 2
 SET @f3 = CURDATE() - INTERVAL 1 DAY;    -- fecha 3 (ayer)
 SET @f4 = CURDATE() + INTERVAL 6 DAY;    -- fecha 4 (a futuro)
 SET @inicio = CURDATE() - INTERVAL 30 DAY;
+SET @fin = LEAST(CURDATE() + INTERVAL 60 DAY,
+                 DATE(CONCAT(YEAR(@inicio), IF(MONTH(@inicio) <= 6, '-07-31', '-12-31'))));
 
 -- Usuarios de la aplicación
 INSERT INTO login (correo, contrasena, rol) VALUES
@@ -93,7 +95,7 @@ INSERT INTO jugador (ci, nombre, apellido, email, fecha_nacimiento, id_facultad,
 -- Edición del torneo 
 INSERT INTO torneo (id_torneo, nombre, anio, semestre, fecha_inicio, fecha_fin, estado) VALUES
     (1, CONCAT('Torneo Interfacultades ', YEAR(@inicio), ' - ', IF(MONTH(@inicio) <= 6, 1, 2), 'º semestre'),
-     YEAR(@inicio), IF(MONTH(@inicio) <= 6, 1, 2), @inicio, CURDATE() + INTERVAL 60 DAY, 'inscripcion');
+     YEAR(@inicio), IF(MONTH(@inicio) <= 6, 1, 2), @inicio, @fin, 'inscripcion');
 
 INSERT INTO equipo (id_equipo, nombre, id_torneo, id_facultad) VALUES
     (1, 'Ingenieros FC', 1, 1),

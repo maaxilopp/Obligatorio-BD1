@@ -4,6 +4,7 @@ import "./Fixture.css";
 import { InsigniaEquipo } from "./equipos";
 import EditarPartido from "./EditarPartido";
 import SelectorEdicion from "./SelectorEdicion";
+import { totalFechas } from "./torneo";
 import { apiRequest } from "../services/api";
 
 const DIAS_SEMANA = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
@@ -114,6 +115,7 @@ function Fixture({
   };
 
   const proximaFecha = fechas.length > 0 ? fechas[fechas.length - 1] + 1 : 1;
+  const maxFecha = totalFechas(equipos.length);
 
   const fechaPorDefecto =
     fechas.find((fecha) => !fechaTerminada(fecha)) ??
@@ -220,6 +222,16 @@ function Fixture({
           datos.id_complejo !== partido.id_complejo ||
           datos.nombre_cancha !== partido.nombre_cancha;
 
+        const cambiaEstado = datos.estado !== partido.estado;
+        const estadoPrimero = cambiaEstado && datos.estado !== "programado";
+        const guardarEstado = () =>
+          apiRequest(`/partidos/${id}/estado`, {
+            method: "PATCH",
+            body: JSON.stringify({ estado: datos.estado }),
+          });
+
+        if (estadoPrimero) await guardarEstado();
+
         if (camposModificados) {
           await apiRequest(`/partidos/${id}`, {
             method: "PUT",
@@ -227,12 +239,7 @@ function Fixture({
           });
         }
 
-        if (datos.estado !== partido.estado) {
-          await apiRequest(`/partidos/${id}/estado`, {
-            method: "PATCH",
-            body: JSON.stringify({ estado: datos.estado }),
-          });
-        }
+        if (cambiaEstado && !estadoPrimero) await guardarEstado();
 
         setMensajeExito("¡Partido guardado correctamente!");
       }
@@ -350,7 +357,7 @@ function Fixture({
           );
         })}
 
-        {esAdmin && (
+        {esAdmin && proximaFecha <= maxFecha && (
           <button
             type="button"
             className="fixture-fecha sin-programar"
@@ -534,6 +541,7 @@ function Fixture({
             diaSugerido={diaDeFecha(formulario.numero_fecha)}
             diaMinimo={torneoActual?.fecha_inicio}
             diaMaximo={torneoActual?.fecha_fin}
+            maxFecha={maxFecha}
             turnos={turnos}
             canchas={canchas}
             equipos={equipos}

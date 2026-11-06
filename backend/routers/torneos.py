@@ -40,6 +40,10 @@ class TorneoDatos(BaseModel):
             raise ValueError("La fecha de fin no puede ser anterior a la de inicio")
         if self.fecha_inicio.year != self.anio:
             raise ValueError("El año del torneo debe coincidir con el de su fecha de inicio")
+        semestre_inicio = 1 if self.fecha_inicio.month <= 6 else 2
+        termina_a_tiempo = self.fecha_fin.year == self.anio and (self.semestre == 2 or self.fecha_fin.month <= 7)
+        if self.semestre != semestre_inicio or not termina_a_tiempo:
+            raise ValueError("Las fechas no corresponden al semestre: el 1º empieza de enero a junio y termina hasta julio; el 2º empieza de julio a diciembre y termina ese año")
         return self
 
 

@@ -1,5 +1,5 @@
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -24,7 +24,8 @@ def planillero():
 def partido_nuevo(**cambios):
     # fecha 5: Ingenieros FC vs Psico Team todavía no se programó
     datos = {"id_torneo": 1, "numero_fecha": 5, "id_equipo_local": 1, "id_equipo_visitante": 6,
-             "dia": date.today().isoformat(), "id_turno": 5, "id_complejo": 1, "nombre_cancha": "Cancha 1"}
+             "dia": (date.today() + timedelta(days=8)).isoformat(), "id_turno": 5, "id_complejo": 1,
+             "nombre_cancha": "Cancha 1"}
     return {**datos, **cambios}
 
 
@@ -40,6 +41,26 @@ def test_programar_postergar_reprogramar_y_eliminar(admin):
                          json={"estado": "programado"}).json()["estado"] == "programado"
     finally:
         assert api.delete(f"/partidos/{id_partido}", headers=admin).status_code == 204
+
+
+def test_fecha_inexistente_y_fuera_de_orden_las_frena_la_base(admin):
+    r = api.post("/partidos", headers=admin, json=partido_nuevo(numero_fecha=40))
+    assert r.status_code == 400 and "no existe la fecha 40" in r.json()["detail"]
+    r = api.post("/partidos", headers=admin, json=partido_nuevo(dia=date.today().isoformat()))
+    assert r.status_code == 400 and "van en orden" in r.json()["detail"]
+
+
+def test_sancion_de_una_fecha_jugada_la_frena_la_base(admin):
+    r = api.post("/sanciones", headers=admin, json={"ci_jugador": "41700150", "id_torneo": 1,
+                                                     "numero_fecha_inicio": 1, "cantidad_fechas": 1,
+                                                     "descripcion": "Prueba"})
+    assert r.status_code == 400 and "ya se jugó" in r.json()["detail"]
+
+
+def test_el_backend_valida_que_las_fechas_correspondan_al_semestre(admin):
+    r = api.post("/torneos", headers=admin, json={"nombre": "Fuera de semestre", "anio": 2096, "semestre": 1,
+                                                   "fecha_inicio": "2096-10-01", "fecha_fin": "2096-12-15"})
+    assert r.status_code == 422
 
 
 def test_equipos_iguales_lo_frena_el_backend(admin):

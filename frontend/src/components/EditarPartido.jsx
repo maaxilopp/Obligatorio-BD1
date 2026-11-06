@@ -18,6 +18,7 @@ function EditarPartido({
   diaSugerido = "",
   diaMinimo,
   diaMaximo,
+  maxFecha = 0,
   turnos = [],
   canchas = [],
   equipos = [],
@@ -151,6 +152,31 @@ function EditarPartido({
     problemas.push("Esa cancha ya tiene un partido ese día en ese turno.");
   }
 
+  const numeroFormulario = Number(formulario.numero_fecha);
+
+  if (!cancelando && maxFecha > 0 && numeroFormulario > maxFecha) {
+    problemas.push(
+      `La edición tiene ${maxFecha} ${maxFecha === 1 ? "fecha" : "fechas"}: no existe la fecha ${numeroFormulario}.`,
+    );
+  }
+
+  const seAtrasa = partido?.reprogramado || partido?.estado === "postergado";
+  const fueraDeOrden = otrosPartidos
+    .filter((p) => p.estado !== "postergado" && !p.reprogramado)
+    .find(
+      (p) =>
+        (p.numero_fecha < numeroFormulario && p.dia > formulario.dia) ||
+        (!seAtrasa &&
+          p.numero_fecha > numeroFormulario &&
+          p.dia < formulario.dia),
+    );
+
+  if (ocupaCancha && formulario.dia && fueraDeOrden) {
+    problemas.push(
+      `Las fechas van en orden: ese día choca con la fecha ${fueraDeOrden.numero_fecha}. Si el partido se atrasa, primero hay que postergarlo.`,
+    );
+  }
+
   // al editar, guardar solo se habilita si cambió algo respecto al partido original
   const sinCambios =
     !esNuevo &&
@@ -273,7 +299,7 @@ function EditarPartido({
               type="number"
               name="numero_fecha"
               min="1"
-              max="127"
+              max={maxFecha || 127}
               value={formulario.numero_fecha}
               onChange={cambiarCampo}
               required

@@ -1,21 +1,13 @@
 -- USUARIOS DE BASE DE DATOS CON PERMISOS DIFERENCIADOS
 --
---   torneo_admin     : el backend lo usa cuando el usuario logueado es administrador.
---                       Lee y modifica todas las tablas de negocio.
---   torneo_planillero : el backend lo usa cuando el usuario logueado es planillero.
+--   torneo_admin     :  cuando el usuario logueado es administrador.
+--                       Lee y modifica todas las tablas de la base de datos.
+--   torneo_planillero : cuando el usuario logueado es planillero.
 --                       Lee todo (menos login y auditoría), y solo escribe en
 --                       planilla_partido, gol y tarjeta. Cierra el partido con
---                       CALL marcar_jugado(id), no con UPDATE.
+--                       CALL marcar_jugado(id).
 --   torneo_auth       : solo lee la tabla login, para validar el inicio de sesión
 --                       antes de saber el rol.
---
---   Nadie (salvo root) puede modificar auditoria_resultado: la escriben los
---   triggers, que se ejecutan con los permisos correspondientes.
---   Las sanciones automáticas también las inserta un trigger, por eso el
---   planillero no necesita permiso sobre sancion_jugador.
---
---   Las contraseñas son de desarrollo
-
 
 USE torneo_futbol5;
 
@@ -24,8 +16,7 @@ DROP USER IF EXISTS 'torneo_admin'@'%', 'torneo_planillero'@'%', 'torneo_auth'@'
 CREATE USER 'torneo_admin'@'%'      IDENTIFIED BY 'Admin.Torneo2026';
 CREATE USER 'torneo_planillero'@'%' IDENTIFIED BY 'Planillero.Torneo2026';
 CREATE USER 'torneo_auth'@'%'       IDENTIFIED BY 'Auth.Torneo2026';
-
--- Administrador: ABM completo sobre las tablas de negocio
+-- Otorgamos permisos a los usuarios de base de datos. El backend se conecta con el usuario correspondiente al rol del usuario logueado.
 GRANT SELECT, INSERT, UPDATE, DELETE ON torneo_futbol5.login                 TO 'torneo_admin'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON torneo_futbol5.facultad              TO 'torneo_admin'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON torneo_futbol5.jugador               TO 'torneo_admin'@'%';
@@ -50,10 +41,9 @@ GRANT SELECT ON torneo_futbol5.v_fair_play         TO 'torneo_admin'@'%';
 GRANT SELECT ON torneo_futbol5.v_sanciones         TO 'torneo_admin'@'%';
 GRANT EXECUTE ON PROCEDURE torneo_futbol5.marcar_jugado   TO 'torneo_admin'@'%';
 GRANT EXECUTE ON PROCEDURE torneo_futbol5.generar_fixture TO 'torneo_admin'@'%';
--- generar_fixture usa una tabla temporal
+
 GRANT CREATE TEMPORARY TABLES ON torneo_futbol5.* TO 'torneo_admin'@'%';
 
--- Planillero: lee lo necesario para armar la planilla, escribe solo la planilla
 GRANT SELECT ON torneo_futbol5.facultad              TO 'torneo_planillero'@'%';
 GRANT SELECT ON torneo_futbol5.jugador               TO 'torneo_planillero'@'%';
 GRANT SELECT ON torneo_futbol5.torneo                TO 'torneo_planillero'@'%';
@@ -72,7 +62,7 @@ GRANT SELECT ON torneo_futbol5.v_resultado_partido TO 'torneo_planillero'@'%';
 GRANT SELECT ON torneo_futbol5.v_sanciones         TO 'torneo_planillero'@'%';
 GRANT EXECUTE ON PROCEDURE torneo_futbol5.marcar_jugado TO 'torneo_planillero'@'%';
 
--- Autenticación: solo leer login
+-- Autenticación
 GRANT SELECT ON torneo_futbol5.login TO 'torneo_auth'@'%';
 
 FLUSH PRIVILEGES;

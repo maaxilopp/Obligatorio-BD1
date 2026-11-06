@@ -10,6 +10,13 @@ import "./Planillas.css";
 
 const DURACION = 60;
 const HORAS_CORRECCION = 48;
+const MIN_PLANILLA = 5;
+
+// Un equipo con suspendidos puede no llegar a 5: alcanza con todos los disponibles
+function minimoPlanilla(jugadores) {
+  return Math.min(MIN_PLANILLA, jugadores.filter((j) => !j.suspendido).length);
+}
+
 const DIAS_LARGOS = [
   "domingo",
   "lunes",
@@ -285,6 +292,7 @@ function TarjetaEquipo({
   const presentes = jugadores.filter((j) => enPlanilla.has(j.ci));
   const ausentes = jugadores.filter((j) => !enPlanilla.has(j.ci));
   const disponibles = ausentes.filter((j) => !j.suspendido);
+  const sePuedeQuitar = !jugado || presentes.length > minimoPlanilla(jugadores);
   const color = colorEquipo(equipo.id);
   const tipoAbierto =
     formulario?.idEquipo === equipo.id ? formulario.tipo : null;
@@ -355,7 +363,7 @@ function TarjetaEquipo({
                   </button>
                 ))}
 
-                {editable && !tieneEventos && (
+                {editable && !tieneEventos && sePuedeQuitar && (
                   <button
                     type="button"
                     className="planilla-quitar"
@@ -823,7 +831,12 @@ function Planillas({
 
   const faltaPlanilla = equipos.some(
     (equipo) =>
-      !datos?.planilla.some((jugador) => jugador.id_equipo === equipo.id),
+      (datos?.planilla || []).filter(
+        (jugador) => jugador.id_equipo === equipo.id,
+      ).length <
+      minimoPlanilla(
+        (datos?.plantel || []).filter((j) => j.id_equipo === equipo.id),
+      ),
   );
 
   return (
@@ -944,7 +957,7 @@ function Planillas({
               <strong>Partido disputado: cargá la planilla</strong>
               <small>
                 {faltaPlanilla
-                  ? "Para cerrarlo tienen que estar en planilla jugadores de los dos equipos."
+                  ? `Para cerrarlo cada equipo necesita al menos ${MIN_PLANILLA} jugadores en planilla, o todos los disponibles.`
                   : `Al cerrarlo quedan ${HORAS_CORRECCION} horas para corregir.`}
               </small>
             </>

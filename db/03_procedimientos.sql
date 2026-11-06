@@ -1,10 +1,4 @@
 -- PROCEDIMIENTOS DEL OBLIGATORIO
---   marcar_jugado     : el planillero cierra la planilla sin tener permiso
---                       de UPDATE sobre la tabla partido, marcandolo como jugado.
---   generar_fixture   : arma automáticamente todo el fixture de una edición
---                       y asigna cancha y turno libres.
---
-
 SET NAMES utf8mb4;
 USE torneo_futbol5;
 
@@ -26,19 +20,16 @@ BEGIN
     UPDATE partido SET estado = 'jugado' WHERE id_partido = p_id_partido;
 END //
 
-
---  Utilizamos round-robin.
+--  Utilizamos el algoritmo de round-robin que vimos en la materia sistemas operativospara generar el fixture.
 --
--- Con n equipos (si n es impar se agrega un "libre"), se fija el equipo de
+-- Con n equipos, se fija el equipo de
 -- la posición 0 y el resto rota una posición por fecha. En cada fecha se
 -- enfrentan la posición i con la posición n-1-i. Así se obtienen n-1 fechas
 -- donde todos se cruzan una única vez y nadie juega dos veces en la misma fecha.
 --
 -- Cada fecha se juega una semana después de la anterior. A cada partido se
--- le asigna el primer par (cancha, turno) libre de ese día, recorriendo los
+-- le asigna el primer par de cancha, turno libre de ese día, recorriendo los
 -- turnos en orden. Si no queda lugar, se aborta todo con un error.
---
--- Uso:  CALL generar_fixture(<id_torneo>, '<dia de la fecha 1>');
 CREATE PROCEDURE generar_fixture(IN p_id_torneo INT, IN p_primer_dia DATE)
 BEGIN
     DECLARE v_n        INT;

@@ -17,6 +17,8 @@ import {
   fechasDe,
   fechaTerminada,
   ordenarTorneos,
+  problemaSemestre,
+  totalFechas,
 } from "./torneo";
 import "./Torneos.css";
 
@@ -75,6 +77,8 @@ function validar(f, torneos, idActual, partidos) {
         "El año del torneo debe coincidir con el de la fecha de inicio.",
       );
     }
+    const semestre = problemaSemestre(f.semestre, f.fecha_inicio, f.fecha_fin);
+    if (semestre) errores.push(semestre);
     const dias = partidos
       .filter((p) => p.estado !== "cancelado")
       .map((p) => p.dia.slice(0, 10))
@@ -101,7 +105,7 @@ function sumarDias(iso, dias) {
 function tamanoFixture(cantidadEquipos) {
   if (cantidadEquipos < 2) return { fechas: 0, partidos: 0 };
   return {
-    fechas: cantidadEquipos % 2 === 0 ? cantidadEquipos - 1 : cantidadEquipos,
+    fechas: totalFechas(cantidadEquipos),
     partidos: (cantidadEquipos * (cantidadEquipos - 1)) / 2,
   };
 }

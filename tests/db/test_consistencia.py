@@ -139,6 +139,108 @@ def test_tampoco_se_mueve_una_sancion_hacia_una_fecha_con_planilla(cur):
           (id_sancion,), mensaje="ya figura en la planilla")
 
 
+def sancionar(cur, ci, inicio, cantidad=1):
+    cur.execute("INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, "
+                "cantidad_fechas, descripcion) VALUES (%s, 1, 'disciplinaria', %s, %s, 'x')", (ci, inicio, cantidad))
+    return cur.lastrowid
+
+
+def test_no_se_sanciona_una_fecha_que_el_equipo_ya_jugo(cur):
+    ci =ci_de(cur, "Ricardo", "Olivera")
+    falla(cur, "INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, "
+               "cantidad_fechas, descripcion) VALUES (%s, 1, 'disciplinaria', 3, 1, 'x')",
+          (ci,), mensaje="ya se jugó")
+    sancionar(cur, ci, 4)
+
+
+def test_se_sanciona_una_fecha_que_el_equipo_todavia_no_jugo(cur):
+    cur.execute("UPDATE partido SET dia = CURDATE() - INTERVAL 1 DAY, id_turno = 5 WHERE id_partido = 12")
+    cur.execute("INSERT INTO planilla_partido SELECT 12, ci_jugador, id_equipo FROM equipo_jugador_torneo "
+                "WHERE id_equipo IN (2, 4) AND ci_jugador NOT IN "
+                "(SELECT ci_jugador FROM sancion_jugador WHERE numero_fecha_inicio = 4)")
+    cur.execute("CALL marcar_jugado(12)")
+    sancionar(cur, ci_de(cur, "Santiago", "Pereira"), 4)
+
+
+def test_no_se_sanciona_una_fecha_inexistente(cur):
+    ci = ci_de(cur, "Santiago", "Pereira")
+    falla(cur, "INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, "
+               "cantidad_fechas, descripcion) VALUES (%s, 1, 'disciplinaria', 40, 1, 'x')",
+          (ci,), mensaje="no existe la fecha 40")
+
+
+def test_una_sancion_ya_cumplida_se_puede_editar_y_acortar(cur):
+    id_sancion = uno(cur, "SELECT id_sancion FROM sancion_jugador WHERE motivo = 'disciplinaria'")
+    cur.execute("UPDATE sancion_jugador SET descripcion = 'Corregida' WHERE id_sancion = %s", (id_sancion,))
+    cur.execute("UPDATE sancion_jugador SET cantidad_fechas = 1 WHERE id_sancion = %s", (id_sancion,))
+
+
+def test_alargar_una_sancion_solo_valida_las_fechas_que_agrega(cur):
+    id_sancion = uno(cur, "SELECT id_sancion FROM sancion_jugador WHERE motivo = 'disciplinaria'")
+    cur.execute("UPDATE sancion_jugador SET cantidad_fechas = 3 WHERE id_sancion = %s", (id_sancion,))
+    falla(cur, "UPDATE sancion_jugador SET numero_fecha_inicio = 1 WHERE id_sancion = %s",
+          (id_sancion,), mensaje="ya figura en la planilla")
+
+
+def test_el_numero_de_fecha_no_supera_las_fechas_de_la_edicion(cur):
+    t, (a, b, c, d) = nuevo_torneo(cur, equipos=4)
+    falla(cur, "INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
+               "id_turno, id_complejo, nombre_cancha) VALUES (%s, 4, %s, %s, '2031-04-10', 1, 1, 'Cancha 1')",
+          (t, a, b), mensaje="no existe la fecha 4")
+    programar(cur, t, 3, a, b, "2031-04-10")
+
+
+def test_con_equipos_impares_hay_una_fecha_por_equipo(cur):
+    t, (a, b, c) = nuevo_torneo(cur)
+    programar(cur, t, 3, a, b, "2031-04-10")
+
+
+def test_una_fecha_no_se_juega_antes_que_la_anterior(cur):
+    t, (a, b, c, d) = nuevo_torneo(cur, equipos=4)
+    programar(cur, t, 2, a, b, "2031-04-17")
+    falla(cur, "INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
+               "id_turno, id_complejo, nombre_cancha) VALUES (%s, 3, %s, %s, '2031-04-10', 1, 1, 'Cancha 1')",
+          (t, a, c), mensaje="van en orden")
+    falla(cur, "INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
+               "id_turno, id_complejo, nombre_cancha) VALUES (%s, 1, %s, %s, '2031-04-24', 1, 1, 'Cancha 1')",
+          (t, a, c), mensaje="van en orden")
+
+
+def test_mover_un_partido_tambien_respeta_el_orden(cur):
+    t, (a, b, c, d) = nuevo_torneo(cur, equipos=4)
+    p = programar(cur, t, 1, a, b, "2031-04-10")
+    programar(cur, t, 2, c, d, "2031-04-17")
+    falla(cur, "UPDATE partido SET dia = '2031-04-24' WHERE id_partido = %s", (p,), mensaje="van en orden")
+
+
+def test_un_partido_postergado_se_reprograma_despues_de_la_fecha_siguiente(cur):
+    t, (a, b, c, d) = nuevo_torneo(cur, equipos=4)
+    p = programar(cur, t, 1, a, b, "2031-04-10")
+    programar(cur, t, 2, c, d, "2031-04-17")
+    cur.execute("UPDATE partido SET estado = 'postergado' WHERE id_partido = %s", (p,))
+    cur.execute("UPDATE partido SET dia = '2031-04-24' WHERE id_partido = %s", (p,))
+    cur.execute("UPDATE partido SET estado = 'programado' WHERE id_partido = %s", (p,))
+    assert uno(cur, "SELECT reprogramado FROM partido WHERE id_partido = %s", (p,)) == 1
+    programar(cur, t, 3, a, c, "2031-04-20", turno=2)
+
+
+def test_un_partido_reprogramado_no_se_adelanta_a_una_fecha_anterior(cur):
+    t, (a, b, c, d) = nuevo_torneo(cur, equipos=4)
+    programar(cur, t, 1, c, d, "2031-04-10")
+    p = programar(cur, t, 2, a, b, "2031-04-17")
+    cur.execute("UPDATE partido SET estado = 'postergado' WHERE id_partido = %s", (p,))
+    cur.execute("UPDATE partido SET estado = 'programado' WHERE id_partido = %s", (p,))
+    falla(cur, "UPDATE partido SET dia = '2031-04-03' WHERE id_partido = %s", (p,), mensaje="van en orden")
+
+
+def test_reprogramado_no_se_carga_a_mano(cur):
+    t, (a, b, c) = nuevo_torneo(cur)
+    cur.execute("INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
+                "id_turno, id_complejo, nombre_cancha, reprogramado) "
+                "VALUES (%s, 1, %s, %s, '2031-04-10', 1, 1, 'Cancha 1', TRUE)", (t, a, b))
+    assert uno(cur, "SELECT reprogramado FROM partido WHERE id_partido = %s", (cur.lastrowid,)) == 0
+
+
 # ---------- partidos con planilla ----------
 
 def test_partido_con_planilla_no_cambia_de_rival_ni_de_dia(cur):
@@ -215,7 +317,7 @@ def test_se_finaliza_si_lo_pendiente_se_cancelo(cur):
 def test_las_fechas_del_torneo_incluyen_a_sus_partidos(cur):
     falla(cur, "UPDATE torneo SET fecha_inicio = CURDATE() WHERE id_torneo = 1", mensaje="fuera de esas fechas")
     # alargarlo no molesta
-    cur.execute("UPDATE torneo SET fecha_fin = fecha_fin + INTERVAL 1 DAY WHERE id_torneo = 1")
+    cur.execute("UPDATE torneo SET fecha_inicio = fecha_inicio - INTERVAL 1 DAY WHERE id_torneo = 1")
 
 
 def test_no_se_suma_un_equipo_con_el_fixture_generado(cur):

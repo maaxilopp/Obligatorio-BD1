@@ -90,16 +90,89 @@ def test_partido_programado_si_se_puede_eliminar(cur):
     assert uno(cur, "SELECT COUNT(*) FROM partido WHERE id_partido = 11") == 0
 
 
+def partido_disputado(cur):
+    t, (a, b) = nuevo_torneo(cur, equipos=2, jugadores=6, anio=2025)
+    p = programar(cur, t, 1, a, b, "2025-04-10")
+    cur.execute("UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,))
+    return p, a, b
+
+
+def cargar_planilla(cur, p, equipo, cantidad):
+    cur.execute("INSERT INTO planilla_partido (id_partido, ci_jugador, id_equipo) "
+                "SELECT %s, ci_jugador, id_equipo FROM equipo_jugador_torneo WHERE id_equipo = %s "
+                "AND ci_jugador NOT IN (SELECT ci_jugador FROM sancion_jugador) "
+                "ORDER BY ci_jugador LIMIT " + str(cantidad), (p, equipo))
+
+
 def test_no_se_marca_jugado_sin_planilla(cur):
-    # fecha 5 (Balance FC vs Derecho al Gol) "jugada" ayer pero sin planilla
-    cur.execute("""INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante,
-                   dia, id_turno, id_complejo, nombre_cancha)
-                   VALUES (1, 5, 2, 3, CURDATE() - INTERVAL 1 DAY, 4, 1, 'Cancha 1')""")
-    p = cur.lastrowid
-    falla(cur, "CALL marcar_jugado(%s)", (p,), mensaje="cargar la planilla de ambos equipos")
+    p, _, _ = partido_disputado(cur)
+    falla(cur, "CALL marcar_jugado(%s)", (p,), mensaje="al menos 5 jugadores en la planilla")
+
+
+def test_no_se_marca_jugado_con_menos_de_5_por_equipo(cur):
+    p, a, b = partido_disputado(cur)
+    cargar_planilla(cur, p, a, 5)
+    cargar_planilla(cur, p, b, 4)
+    falla(cur, "CALL marcar_jugado(%s)", (p,), mensaje="al menos 5 jugadores en la planilla")
+
+
+def test_con_5_por_equipo_se_marca_jugado(cur):
+    p, a, b = partido_disputado(cur)
+    cargar_planilla(cur, p, a, 5)
+    cargar_planilla(cur, p, b, 5)
+    cur.execute("CALL marcar_jugado(%s)", (p,))
+    assert uno(cur, "SELECT estado FROM partido WHERE id_partido = %s", (p,)) == "jugado"
+
+
+def test_una_correccion_no_baja_de_5_jugadores(cur):
+    cur.execute("UPDATE partido SET dia = CURDATE() - INTERVAL 1 DAY, id_turno = 5 WHERE id_partido = 11")
+    cargar_planilla(cur, 11, 1, 6)
+    cargar_planilla(cur, 11, 5, 5)
+    cur.execute("CALL marcar_jugado(11)")
+    cis =[fila[0] for fila in _planilla(cur, 11, 1)]
+    cur.execute("DELETE FROM planilla_partido WHERE id_partido = 11 AND ci_jugador = %s", (cis[0],))
+    falla(cur, "DELETE FROM planilla_partido WHERE id_partido = 11 AND ci_jugador = %s", (cis[1],),
+          mensaje="conservar al menos 5")
+
+
+def _planilla(cur, p, equipo):
+    cur.execute("SELECT ci_jugador FROM planilla_partido WHERE id_partido = %s AND id_equipo = %s "
+                "ORDER BY ci_jugador", (p, equipo))
+    return cur.fetchall()
 
 
 def _insert(t, fecha, local, visitante, dia, turno=1):
     return ("INSERT INTO partido (id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, "
             "id_turno, id_complejo, nombre_cancha) VALUES (%s, %s, %s, %s, %s, %s, 1, 'Cancha 1')",
             (t, fecha, local, visitante, dia, turno))
+
+
+def partido_con_un_suspendido(cur):
+    """Equipos de 5 jugadores: uno del local no puede jugar la fecha del partido."""
+    t, (a, b) = nuevo_torneo(cur, equipos=2, anio=2025)
+    p = programar(cur, t, 1, a, b, "2025-04-10")
+    cur.execute("UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,))
+    cur.execute("SELECT ci_jugador FROM equipo_jugador_torneo WHERE id_equipo = %s ORDER BY ci_jugador", (a,))
+    local = [fila[0] for fila in cur.fetchall()]
+    cur.execute("INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, "
+                "cantidad_fechas, descripcion) VALUES (%s, %s, 'disciplinaria', 1, 1, 'x')", (local[0], t))
+    cur.execute("SELECT ci_jugador FROM equipo_jugador_torneo WHERE id_equipo = %s", (b,))
+    visitante = [fila[0] for fila in cur.fetchall()]
+    for ci in visitante:
+        cur.execute("INSERT INTO planilla_partido VALUES (%s, %s, %s)", (p, ci, b))
+    return p, a, local[1:]
+
+
+def test_con_un_suspendido_alcanza_con_todos_los_disponibles(cur):
+    p, a, disponibles = partido_con_un_suspendido(cur)
+    for ci in disponibles:
+        cur.execute("INSERT INTO planilla_partido VALUES (%s, %s, %s)", (p, ci, a))
+    cur.execute("CALL marcar_jugado(%s)", (p,))
+    assert uno(cur, "SELECT estado FROM partido WHERE id_partido = %s", (p,)) == "jugado"
+
+
+def test_con_un_suspendido_igual_tienen_que_estar_todos_los_disponibles(cur):
+    p, a, disponibles = partido_con_un_suspendido(cur)
+    for ci in disponibles[:-1]:
+        cur.execute("INSERT INTO planilla_partido VALUES (%s, %s, %s)", (p, ci, a))
+    falla(cur, "CALL marcar_jugado(%s)", (p,), mensaje="todos los disponibles")

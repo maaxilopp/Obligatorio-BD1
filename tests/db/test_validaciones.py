@@ -39,6 +39,26 @@ def test_torneo_con_fechas_invertidas(cur):
                "VALUES ('X', 2032, 1, '2032-06-01', '2032-03-01')", errno=3819)
 
 
+@pytest.mark.parametrize("semestre, inicio, fin", [
+    (1, "2032-10-01", "2032-12-15"),
+    (1, "2032-03-01", "2032-08-01"),
+    (2, "2032-03-01", "2032-07-01"),
+    (2, "2032-08-01", "2033-01-15"),
+])
+def test_las_fechas_corresponden_al_semestre(cur, semestre, inicio, fin):
+    falla(cur, "INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin) "
+               "VALUES ('X', 2032, %s, %s, %s)", (semestre, inicio, fin), errno=3819)
+
+
+@pytest.mark.parametrize("semestre, inicio, fin", [
+    (1, "2032-03-01", "2032-07-31"),
+    (2, "2032-07-15", "2032-12-31"),
+])
+def test_ediciones_validas_por_semestre(cur, semestre, inicio, fin):
+    cur.execute("INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin) "
+                "VALUES ('X', 2032, %s, %s, %s)", (semestre, inicio, fin))
+
+
 def test_una_edicion_por_semestre(cur):
     falla(cur, "INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin) "
                "SELECT 'Duplicado', anio, semestre, fecha_inicio, fecha_fin FROM torneo WHERE id_torneo = 1",
