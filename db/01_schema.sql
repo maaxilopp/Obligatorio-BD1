@@ -1,7 +1,7 @@
 -- SCHEMA DEL OBLIGATORIO 
--- contiene la base de datos, las 14 tablas de la letra + auditoria_resultado con sus columnas con sus respectivos tipos de datos,
+-- contiene la base de datos, las 14 tablas de la letra y la tabla de auditoria con sus columnas con sus respectivos tipos de datos,
 -- las llaves primarias y foráneas, y las restricciones.
--- Lo único que carga con datos son los 5 turnos (de 18 a 23), porque son fijos.
+-- Lo único que carga con datos son los turnos porque son fijos.
 SET NAMES utf8mb4;    -- tildess
 
 DROP DATABASE IF EXISTS torneo_futbol5;
@@ -44,7 +44,7 @@ CREATE TABLE torneo (
     id_torneo    INT AUTO_INCREMENT PRIMARY KEY,
     nombre       VARCHAR(100) NOT NULL,
     anio         SMALLINT     NOT NULL,
-    semestre     TINYINT      NOT NULL, -- 1 o 2, por eficiencia se guarda como TINYINT. 
+    semestre     TINYINT      NOT NULL, -- 1 o 2, por eficiencia se guarda como tinyint
     fecha_inicio DATE         NOT NULL,
     fecha_fin    DATE         NOT NULL,
     estado       ENUM('inscripcion','en curso','finalizado') NOT NULL DEFAULT 'inscripcion',
@@ -86,7 +86,7 @@ CREATE TABLE equipo_jugador_torneo (
     CONSTRAINT chk_camiseta CHECK (numero_camiseta BETWEEN 1 AND 99)
 );
 
--- El capitán debe ser jugador del plantel, pero no se puede poner la restricción de foreign key directamente porque el capitán se asigna después de cargar el plantel.
+-- El capitán debe ser jugador del plantel, pero no se puede poner la restricción de clave foránea directamente porque el capitán se asigna después de cargar el plantel.
 ALTER TABLE equipo
     ADD CONSTRAINT fk_equipo_capitan FOREIGN KEY (id_equipo, ci_capitan)
         REFERENCES equipo_jugador_torneo(id_equipo, ci_jugador);
@@ -136,9 +136,6 @@ CREATE TABLE partido (
     estado              ENUM('programado','jugado','postergado','cancelado')
                         NOT NULL DEFAULT 'programado',
 
-    -- Columnas generadas para expresar reglas de negocio como UNIQUE
-    -- Elegimos VIRTUAL porque estas columnas son cálculos muy simples 
-    -- (el menor de dos números, un IF), así que no vale la pena ocupar espacio guardándolas.
     equipo_a     INT     AS (LEAST(id_equipo_local, id_equipo_visitante))    VIRTUAL,
     equipo_b     INT     AS (GREATEST(id_equipo_local, id_equipo_visitante)) VIRTUAL,
     vigente      TINYINT AS (IF(estado = 'cancelado', NULL, 1))                VIRTUAL,
@@ -222,25 +219,19 @@ CREATE TABLE sancion_jugador (
     CONSTRAINT chk_sancion_fechas CHECK (numero_fecha_inicio >= 1 AND cantidad_fechas >= 1)
 );
 
--- Auditoría de correcciones
--- Trazabilidad: cada vez que se toca la planilla, un gol o una tarjeta de un
--- partido que ya está marcado como jugado (corrección dentro de las 48 h),
--- un trigger deja registro acá. Nadie, salvo root, puede modificar esta tabla.
 CREATE TABLE auditoria_resultado (
     id_auditoria INT AUTO_INCREMENT PRIMARY KEY,
     id_partido   INT          NOT NULL,
     tabla        ENUM('planilla_partido','gol','tarjeta') NOT NULL,
     accion       ENUM('alta','modificacion','baja')       NOT NULL,
     detalle      VARCHAR(255) NOT NULL,
-    -- el backend setea el @usuario_app con el correo del usuario logueado;
-    -- si no hay, queda el usuario de sql
     usuario      VARCHAR(100) NOT NULL,
     fecha_hora   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_auditoria_partido FOREIGN KEY (id_partido) REFERENCES partido(id_partido),
     INDEX idx_auditoria_partido (id_partido, fecha_hora)
 );
 
--- Datos maestros: los 5 turnos fijos del torneo, de 18:00 a 23:00.
+-- los 5 turnos fijos del torneo, de 18:00 a 23:00.
 
 INSERT INTO turno (hora_inicio, hora_fin) VALUES
     ('18:00','19:00'), ('19:00','20:00'), ('20:00','21:00'),
