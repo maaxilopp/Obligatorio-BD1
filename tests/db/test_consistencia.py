@@ -4,6 +4,8 @@ tiene que seguir valiendo cuando después cambia otro dato relacionado.
 Partido 8 = Ingenieros FC vs Bisturí FC (fecha 3, jugado ayer), 11 = Ingenieros FC
 vs Vilardebo FC (fecha 4, a futuro), 13 = Derecho al Gol vs Dando clase (postergado).
 """
+import pytest
+
 from conftest import agregar_jugador, ci_de, falla, nuevo_torneo, programar, uno
 
 INSCRIPTO_SIN_TARJETAS = """
@@ -269,3 +271,66 @@ def test_toda_edicion_empieza_en_inscripcion(cur):
         falla(cur, "INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin, estado) "
                    "VALUES ('x', 2032, 1, '2032-03-01', '2032-07-01', %s)", (estado,),
               mensaje="etapa de inscripción")
+
+
+# ---------- doble amarilla y acumulación en el mismo partido ----------
+
+ROJA = "roja"
+ACUMULACION = "acumulacion de amarillas"
+
+
+def sanciones(cur, ci):
+    cur.execute("SELECT motivo, numero_fecha_inicio FROM sancion_jugador "
+                "WHERE ci_jugador = %s ORDER BY numero_fecha_inicio", (ci,))
+    return list(cur.fetchall())
+
+
+def partido_de(cur, id_tarjeta):
+    return uno(cur, "SELECT id_partido FROM tarjeta WHERE id_tarjeta = %s", (id_tarjeta,))
+
+
+def borrar(cur, id_tarjeta):
+    cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (id_tarjeta,))
+
+
+def doble_que_es_tercera(cur):
+    """Amarilla en la fecha 1 y dos en la fecha 2: la última completa las dos reglas."""
+    ci, tarjetas = amarillas_en_partidos(cur, 2)
+    return ci, tarjetas + [amarilla(cur, ci, 20, partido=partido_de(cur, tarjetas[1]))]
+
+
+def test_doble_amarilla_que_es_tercera_suma_dos_fechas_seguidas(cur):
+    ci, _ = doble_que_es_tercera(cur)
+    assert sanciones(cur, ci) == [(ROJA, 3), (ACUMULACION, 4)]
+
+
+def test_borrar_una_amarilla_de_otro_partido_deja_solo_la_doble(cur):
+    ci, tarjetas = doble_que_es_tercera(cur)
+    borrar(cur, tarjetas[0])
+    assert sanciones(cur, ci) == [(ROJA, 3)]
+
+
+@pytest.mark.parametrize("posicion", [1, 2])
+def test_borrar_cualquiera_de_las_dos_del_partido_quita_las_dos_sanciones(cur, posicion):
+    ci, tarjetas = doble_que_es_tercera(cur)
+    borrar(cur, tarjetas[posicion])
+    assert sanciones(cur, ci) == []
+
+
+def test_si_la_tercera_es_la_primera_del_partido_tambien_son_fechas_seguidas(cur):
+    ci, tarjetas = amarillas_en_partidos(cur, 3)
+    assert sanciones(cur, ci) == [(ACUMULACION, 4)]
+    segunda = amarilla(cur, ci, 20, partido=partido_de(cur, tarjetas[2]))
+    assert sanciones(cur, ci) == [(ROJA, 4), (ACUMULACION, 5)]
+
+    # sin la doble amarilla, la acumulación vuelve a la fecha siguiente
+    borrar(cur, segunda)
+    assert sanciones(cur, ci) == [(ACUMULACION, 4)]
+
+
+def test_recalcular_no_pierde_la_acumulacion_si_cae_en_la_doble_amarilla(cur):
+    ci, tarjetas = amarillas_en_partidos(cur, 4)
+    # la del minuto 5 pasa a ser la 3ra al borrar la de la fecha 3, y de ella cuelga la doble
+    amarilla(cur, ci, 5, partido=partido_de(cur, tarjetas[3]))
+    borrar(cur, tarjetas[2])
+    assert sanciones(cur, ci) == [(ROJA, 5), (ACUMULACION, 6)]

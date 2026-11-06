@@ -33,7 +33,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 - **Gestión de complejos y canchas:** administración de las instalaciones deportivas y sus características.
 - **Organización del fixture:** generación y administración de partidos, con controles para evitar enfrentamientos duplicados, equipos asignados a más de un partido en una misma fecha y superposición de partidos en una cancha.
 - **Registro de planillas:** inscripción de los jugadores participantes, goles y tarjetas de cada partido. Un expulsado no puede tener goles ni tarjetas después de su roja.
-- **Gestión de sanciones:** aplicación automática de suspensiones por tarjetas rojas o acumulación de amarillas, además de sanciones disciplinarias.
+- **Gestión de sanciones:** aplicación automática de suspensiones por tarjetas rojas, doble amarilla o acumulación de amarillas (si un partido genera doble amarilla y acumulación, se suman), además de sanciones disciplinarias.
 - **Control de resultados:** cálculo del marcador a partir de los goles registrados, validación del momento en que se puede marcar un partido como jugado y restricciones para corregir resultados.
 - **Control de acceso:** diferenciación de permisos entre administradores y planilleros, tanto en la aplicación como en la base de datos.
 
@@ -183,7 +183,7 @@ pytest -v
 
 Con la base de Docker, agregar también `DB_PORT=3307` y usar `DB_PASSWORD=root`.
 
-**Última ejecución:** 190 tests aprobados.
+**Última ejecución:** 200 tests aprobados.
 
 ## Organización
 

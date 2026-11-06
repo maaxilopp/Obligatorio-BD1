@@ -1,56 +1,132 @@
+/* Cartel de confirmación: misma tarjeta que los paneles de las pantallas */
+
 .confirmar {
   --tinta: #191720;
-  width: min(440px, calc(100vw - 40px));
+  --banda: #ffc93c;
+  --banda-texto: #191720;
+
+  width: min(460px, calc(100vw - 40px));
   padding: 0;
+  overflow: visible;
   border: 3px solid var(--tinta);
   border-radius: 16px;
-  box-shadow: 6px 6px 0 var(--tinta);
-  background: #ffffff;
+  box-shadow: 8px 8px 0 var(--tinta);
+  background: #fef6e4;
   color: var(--tinta);
   font-family: var(--fuente-texto);
 }
 
+.confirmar.peligro {
+  --banda: #d42c20;
+  --banda-texto: #ffffff;
+}
+
+.confirmar[open] {
+  animation: confirmar-entrada 0.16s steps(3) both;
+}
+
 .confirmar::backdrop {
-  background: #19172080;
+  background: #19172099;
+}
+
+@keyframes confirmar-entrada {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+
+.confirmar-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  background: var(--banda);
+  border-bottom: 3px solid var(--tinta);
+  border-radius: 12px 12px 0 0;
+  color: var(--banda-texto);
+}
+
+.confirmar-encabezado h2 {
+  margin: 0;
+  color: inherit;
+  font-family: var(--fuente-pixel);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* La tarjeta del árbitro: la contraria a la banda, para que se distinga */
+.confirmar-carta {
+  flex-shrink: 0;
+  width: 20px;
+  height: 28px;
+  background: #d42c20;
+  border: 2px solid var(--tinta);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--tinta);
+  transform: rotate(-8deg);
+}
+
+.confirmar.peligro .confirmar-carta {
+  background: #ffc93c;
 }
 
 .confirmar-contenido {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   padding: 20px;
 }
 
 .confirmar-contenido p {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.4;
 }
 
 .confirmar-acciones {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .confirmar-acciones button {
-  border: 2px solid var(--tinta);
-  border-radius: 8px;
-  padding: 8px 16px;
+  padding: 10px 20px;
   background: #ffffff;
   color: var(--tinta);
-  font-weight: 700;
-}
-
-.confirmar-acciones button:hover {
-  background: #fff2cc;
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--tinta);
+  font-family: var(--fuente-pixel);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .confirmar-acciones .confirmar-aceptar {
-  background: var(--tinta);
-  color: #ffffff;
+  background: var(--banda);
+  color: var(--banda-texto);
 }
 
-.confirmar-acciones .confirmar-aceptar:hover {
-  background: #36323f;
+.confirmar-acciones button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 var(--tinta);
+}
+
+.confirmar-acciones button:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+.confirmar-acciones button:focus-visible {
+  outline: 3px solid #5db8f2;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmar[open] {
+    animation: none;
+  }
 }

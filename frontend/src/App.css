@@ -78,7 +78,14 @@ button {
 }
 
 .error {
-  color: #c0392b;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #ffc2b8;
+  border: 2px solid #191720;
+  border-radius: 8px;
+  color: #191720;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 

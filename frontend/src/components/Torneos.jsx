@@ -1030,8 +1030,16 @@ function Torneos({ onVerPlantel }) {
                             </button>
                           </td>
                           <td className="cat-mono">
-                            Desde: {fechaCompleta(fila.fecha_inicio)} Hasta:{" "}
-                            {fechaCompleta(fila.fecha_fin)}
+                            <span className="torneo-rango">
+                              <span>
+                                <small>Desde</small>
+                                {fechaCompleta(fila.fecha_inicio)}
+                              </span>
+                              <span>
+                                <small>Hasta</small>
+                                {fechaCompleta(fila.fecha_fin)}
+                              </span>
+                            </span>
                           </td>
                           <td>
                             <span

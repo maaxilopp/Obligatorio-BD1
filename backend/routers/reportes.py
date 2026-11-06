@@ -93,6 +93,8 @@ def obtener_uso_canchas(id_torneo: int, usuario: dict = Depends(solo_admin)):
                c.nombre_cancha AS cancha,
                c.superficie,
                IF(c.techada, 'sí', 'no') AS techada,
+               COALESCE(SUM(p.estado = 'jugado'), 0) AS jugados,
+               COALESCE(SUM(p.estado = 'programado'), 0) AS programados,
                COUNT(p.id_partido) AS partidos
         FROM cancha c
         JOIN complejo co ON co.id_complejo = c.id_complejo
@@ -115,6 +117,8 @@ def obtener_uso_turnos(id_torneo: int, usuario: dict = Depends(solo_admin)):
                    ' a ',
                    TIME_FORMAT(t.hora_fin, '%H:%i')
                ) AS turno,
+               COALESCE(SUM(p.estado = 'jugado'), 0) AS jugados,
+               COALESCE(SUM(p.estado = 'programado'), 0) AS programados,
                COUNT(p.id_partido) AS partidos
         FROM turno t
         LEFT JOIN partido p
@@ -168,8 +172,8 @@ def obtener_jugadores_sin_planilla(id_torneo: int, usuario: dict = Depends(solo_
 def obtener_sanciones(id_torneo: int, usuario: dict = Depends(solo_admin)):
     return consultar(usuario, """
         SELECT e.nombre AS equipo,
-               COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%%tarjeta roja%%'), 0) AS roja,
-               COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%%doble amarilla%%'), 0) AS doble_amarilla,
+               COALESCE(SUM(s.motivo = 'roja' AND t.color = 'roja'), 0) AS roja,
+               COALESCE(SUM(s.motivo = 'roja' AND t.color = 'amarilla'), 0) AS doble_amarilla,
                COALESCE(
                    SUM(s.motivo = 'acumulacion de amarillas'), 0
                ) AS acumulacion_amarillas,
@@ -179,6 +183,8 @@ def obtener_sanciones(id_torneo: int, usuario: dict = Depends(solo_admin)):
                COUNT(s.id_sancion) AS total
         FROM equipo e
         LEFT JOIN v_sanciones s ON s.id_equipo = e.id_equipo
+        LEFT JOIN sancion_jugador sj ON sj.id_sancion = s.id_sancion
+        LEFT JOIN tarjeta t ON t.id_tarjeta = sj.id_tarjeta
         WHERE e.id_torneo = %s
         GROUP BY e.id_equipo, e.nombre
         ORDER BY total DESC, equipo

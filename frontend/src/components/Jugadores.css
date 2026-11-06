@@ -65,7 +65,11 @@
 
 .jugadores-error {
   margin: 0 0 16px;
-  color: var(--rojo);
+  padding: 10px 14px;
+  background: #ffc2b8;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  color: var(--tinta);
   font-size: 13px;
   font-weight: 700;
 }

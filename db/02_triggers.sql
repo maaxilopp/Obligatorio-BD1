@@ -43,6 +43,7 @@ BEGIN
     DECLARE v_posicion  INT DEFAULT 2;   -- la 3ra amarilla, contando desde 0
     DECLARE v_tarjeta   INT;
     DECLARE v_fecha     TINYINT;
+    DECLARE v_partido   INT;
 
     SELECT id_torneo INTO v_torneo FROM partido WHERE id_partido = p_id_partido;
 
@@ -62,13 +63,26 @@ BEGIN
     END IF;
 
     WHILE v_sobrantes < 0 AND v_posicion < v_amarillas DO
-        SELECT t.id_tarjeta, p.numero_fecha INTO v_tarjeta, v_fecha
+        SELECT t.id_tarjeta, t.id_partido, p.numero_fecha
+        INTO v_tarjeta, v_partido, v_fecha
         FROM tarjeta t JOIN partido p ON p.id_partido = t.id_partido
         WHERE t.ci_jugador = p_ci AND t.color = 'amarilla' AND p.id_torneo = v_torneo
         ORDER BY p.numero_fecha, t.minuto, t.id_tarjeta
         LIMIT v_posicion, 1;
 
-        IF NOT EXISTS (SELECT 1 FROM sancion_jugador WHERE id_tarjeta = v_tarjeta) THEN
+        -- Si de esa amarilla cuelga la doble amarilla, se usa la otra del partido
+        IF EXISTS (SELECT 1 FROM sancion_jugador
+                   WHERE id_tarjeta = v_tarjeta AND motivo = 'roja') THEN
+            SELECT MIN(t.id_tarjeta) INTO v_tarjeta
+            FROM tarjeta t
+            WHERE t.id_partido = v_partido
+              AND t.ci_jugador = p_ci
+              AND t.color = 'amarilla'
+              AND t.id_tarjeta <> v_tarjeta;
+        END IF;
+
+        IF v_tarjeta IS NOT NULL
+           AND NOT EXISTS (SELECT 1 FROM sancion_jugador WHERE id_tarjeta = v_tarjeta) THEN
             INSERT INTO sancion_jugador
                 (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas, id_tarjeta, descripcion)
             VALUES
@@ -79,6 +93,22 @@ BEGIN
 
         SET v_posicion = v_posicion + 3;
     END WHILE;
+
+    -- La acumulación empieza en la fecha siguiente, o una después si en ese
+    -- partido también hay doble amarilla: las dos sanciones se cumplen seguidas.
+    UPDATE sancion_jugador a
+    JOIN tarjeta t ON t.id_tarjeta = a.id_tarjeta
+    JOIN partido p ON p.id_partido = t.id_partido
+    LEFT JOIN (tarjeta t2
+               JOIN sancion_jugador d ON d.id_tarjeta = t2.id_tarjeta
+                                     AND d.motivo = 'roja')
+        ON t2.id_partido = t.id_partido
+       AND t2.ci_jugador = t.ci_jugador
+       AND t2.color = 'amarilla'
+    SET a.numero_fecha_inicio = p.numero_fecha + 1 + (d.id_sancion IS NOT NULL)
+    WHERE a.ci_jugador = p_ci
+      AND a.id_torneo = v_torneo
+      AND a.motivo = 'acumulacion de amarillas';
 END //
 
 -- Los planteles solo se modifican mientras el torneo está en inscripción
@@ -142,88 +172,79 @@ BEGIN
     END IF;
 END //
 
--- Un expulsado no vuelve a la cancha: después del minuto de su roja no puede
--- tener goles ni tarjetas, sin importar en qué orden se carguen.
+-- Un expulsado no vuelve a la cancha: después de su roja o de su segunda
+-- amarilla no puede tener goles ni tarjetas, sin importar en qué orden se
+-- carguen. La segunda amarilla es la de minuto más alto de las dos, aunque se
+-- haya cargado primero.
 CREATE PROCEDURE validar_expulsion(
     IN p_id_partido INT, IN p_ci VARCHAR(8), IN p_minuto TINYINT,
     IN p_color VARCHAR(10), IN p_id_tarjeta INT)
 BEGIN
     DECLARE v_amarillas INT DEFAULT 0;
+    DECLARE v_ultima_amarilla TINYINT;
+    DECLARE v_roja TINYINT;
+    DECLARE v_expulsion TINYINT;
 
-    -- Si ya tenía una roja antes de este minuto, no puede seguir jugando.
-    IF EXISTS (
-        SELECT 1
-        FROM tarjeta
-        WHERE id_partido = p_id_partido
-          AND ci_jugador = p_ci
-          AND color = 'roja'
-          AND minuto < p_minuto
-          AND id_tarjeta <> IFNULL(p_id_tarjeta, 0)
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El jugador fue expulsado antes de ese minuto';
-    END IF;
-
-    -- Contamos las amarillas anteriores o del mismo minuto.
-    SELECT COUNT(*) INTO v_amarillas
+    SELECT COUNT(*), MAX(minuto) INTO v_amarillas, v_ultima_amarilla
     FROM tarjeta
     WHERE id_partido = p_id_partido
       AND ci_jugador = p_ci
       AND color = 'amarilla'
-      AND minuto <= p_minuto
       AND id_tarjeta <> IFNULL(p_id_tarjeta, 0);
 
-    -- Ya tenía dos amarillas: está expulsado.
-    IF v_amarillas >= 2 THEN
+    SELECT MIN(minuto) INTO v_roja
+    FROM tarjeta
+    WHERE id_partido = p_id_partido
+      AND ci_jugador = p_ci
+      AND color = 'roja'
+      AND id_tarjeta <> IFNULL(p_id_tarjeta, 0);
+
+    IF v_roja < p_minuto THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El jugador fue expulsado antes de ese minuto';
+    END IF;
+
+    IF p_color = 'amarilla' AND v_amarillas >= 2 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El jugador ya tiene dos amarillas en este partido';
+    END IF;
+
+    IF v_amarillas >= 2 AND v_ultima_amarilla < p_minuto THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El jugador fue expulsado por doble amarilla';
     END IF;
 
-    -- Si esta es su segunda amarilla, no puede haber jugado
-    -- ni recibido tarjetas después de ese minuto.
-    IF p_color = 'amarilla' AND v_amarillas = 1
-       AND (
-           EXISTS (
-               SELECT 1
-               FROM gol
-               WHERE id_partido = p_id_partido
-                 AND ci_jugador = p_ci
-                 AND minuto > p_minuto
-           )
-           OR EXISTS (
-               SELECT 1
-               FROM tarjeta
-               WHERE id_partido = p_id_partido
-                 AND ci_jugador = p_ci
-                 AND minuto > p_minuto
-                 AND id_tarjeta <> IFNULL(p_id_tarjeta, 0)
-           )
-       ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El jugador recibió su segunda amarilla antes de otros goles o tarjetas';
+    -- Si esta tarjeta lo expulsa, no puede tener nada después de la expulsión.
+    IF p_color = 'roja' THEN
+        SET v_expulsion = p_minuto;
+    ELSEIF p_color = 'amarilla' AND v_amarillas = 1 THEN
+        SET v_expulsion = GREATEST(v_ultima_amarilla, p_minuto);
     END IF;
 
-    -- La misma validación para una roja directa.
-    IF p_color = 'roja'
+    IF v_expulsion IS NOT NULL
        AND (
            EXISTS (
                SELECT 1
                FROM gol
                WHERE id_partido = p_id_partido
                  AND ci_jugador = p_ci
-                 AND minuto > p_minuto
+                 AND minuto > v_expulsion
            )
            OR EXISTS (
                SELECT 1
                FROM tarjeta
                WHERE id_partido = p_id_partido
                  AND ci_jugador = p_ci
-                 AND minuto > p_minuto
+                 AND minuto > v_expulsion
                  AND id_tarjeta <> IFNULL(p_id_tarjeta, 0)
            )
        ) THEN
+        IF p_color = 'roja' THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'El jugador tiene goles o tarjetas después de ese minuto: la roja no puede ser anterior';
+        END IF;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El jugador tiene goles o tarjetas después de ese minuto: la roja no puede ser anterior';
+            SET MESSAGE_TEXT = 'El jugador recibió su segunda amarilla antes de otros goles o tarjetas';
     END IF;
 END //
 
@@ -518,8 +539,9 @@ FOR EACH ROW CALL validar_carga_planilla(OLD.id_partido) //
 
 
 -- SANCIONES AUTOMÁTICAS
---   - Tarjeta roja: 1 fecha de suspensión, en la fecha siguiente
+--   - Tarjeta roja o doble amarilla: 1 fecha de suspensión, en la fecha siguiente
 --   - Cada 3 amarillas acumuladas en la edición: 1 fecha, en la siguiente
+--   - Si un partido genera doble amarilla y acumulación, se suman: 2 fechas seguidas
 --   La sanción guarda la tarjeta que la originó (id_tarjeta); si esa
 --   tarjeta se borra, la sanción se borra con ella, delete en cascada.
 CREATE TRIGGER trg_tarjeta_ai AFTER INSERT ON tarjeta
@@ -529,19 +551,20 @@ BEGIN
     DECLARE v_fecha TINYINT;
     DECLARE v_amarillas INT;
     DECLARE v_amarillas_partido INT;
+    DECLARE v_otra_amarilla INT;
 
     SELECT id_torneo, numero_fecha
     INTO v_torneo, v_fecha
     FROM partido
     WHERE id_partido = NEW.id_partido;
 
-    -- Contamos las amarillas del jugador en este partido.
+    -- Todas las amarillas del partido, sin mirar el minuto: la segunda en
+    -- cargarse completa la doble amarilla aunque sea de un minuto anterior.
     SELECT COUNT(*) INTO v_amarillas_partido
     FROM tarjeta
     WHERE id_partido = NEW.id_partido
       AND ci_jugador = NEW.ci_jugador
-      AND color = 'amarilla'
-      AND minuto <= NEW.minuto;
+      AND color = 'amarilla';
 
     -- Roja directa o segunda amarilla: genera una fecha de suspensión.
     IF NEW.color = 'roja'
@@ -559,6 +582,22 @@ BEGIN
 
     END IF;
 
+    -- Si además hay acumulación en este partido, se cumple después de la doble
+    -- amarilla. id_tarjeta es UNIQUE: cada sanción cuelga de una amarilla distinta.
+    IF NEW.color = 'amarilla' AND v_amarillas_partido = 2 THEN
+        SELECT MIN(id_tarjeta) INTO v_otra_amarilla
+        FROM tarjeta
+        WHERE id_partido = NEW.id_partido
+          AND ci_jugador = NEW.ci_jugador
+          AND color = 'amarilla'
+          AND id_tarjeta <> NEW.id_tarjeta;
+
+        UPDATE sancion_jugador
+        SET numero_fecha_inicio = v_fecha + 2
+        WHERE id_tarjeta = v_otra_amarilla
+          AND motivo = 'acumulacion de amarillas';
+    END IF;
+
     -- Se mantiene la regla original de tres amarillas acumuladas.
     IF NEW.color = 'amarilla' THEN
 
@@ -569,8 +608,6 @@ BEGIN
           AND t.color = 'amarilla'
           AND p.id_torneo = v_torneo;
 
-        -- Si esta misma amarilla ya generó la sanción por doble amarilla, esa
-        -- sanción ya la cubre (id_tarjeta es UNIQUE): no se inserta otra.
         IF MOD(v_amarillas, 3) = 0
            AND NOT EXISTS (SELECT 1 FROM sancion_jugador
                            WHERE id_tarjeta = NEW.id_tarjeta) THEN
@@ -580,6 +617,18 @@ BEGIN
             VALUES
                 (NEW.ci_jugador, v_torneo, 'acumulacion de amarillas',
                  v_fecha + 1, 1, NEW.id_tarjeta,
+                 CONCAT('Sanción automática por acumular ',
+                        v_amarillas, ' amarillas'));
+        ELSEIF MOD(v_amarillas, 3) = 0
+           AND NOT EXISTS (SELECT 1 FROM sancion_jugador
+                           WHERE id_tarjeta = v_otra_amarilla) THEN
+            -- Esta amarilla ya tiene la doble amarilla: la acumulación se suma.
+            INSERT INTO sancion_jugador
+                (ci_jugador, id_torneo, motivo, numero_fecha_inicio,
+                 cantidad_fechas, id_tarjeta, descripcion)
+            VALUES
+                (NEW.ci_jugador, v_torneo, 'acumulacion de amarillas',
+                 v_fecha + 2, 1, v_otra_amarilla,
                  CONCAT('Sanción automática por acumular ',
                         v_amarillas, ' amarillas'));
         END IF;
@@ -669,24 +718,25 @@ END //
 
 
 -- JUGADORES
---   El cupo de docentes y funcionarios se controla al inscribir, pero un
---   jugador inscripto también puede cambiar de tipo después. Las ediciones
---   finalizadas no cuentan: un estudiante de ayer puede ser docente hoy.
+--   La fecha de nacimiento tiene que ser pasada, igual que en la API y la web.
 CREATE TRIGGER trg_jugador_bi BEFORE INSERT ON jugador
 FOR EACH ROW
 BEGIN
-    IF NEW.fecha_nacimiento > CURDATE() THEN
+    IF NEW.fecha_nacimiento >= CURDATE() THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+            SET MESSAGE_TEXT = 'La fecha de nacimiento tiene que ser una fecha pasada';
     END IF;
 END //
 
+--   El cupo de docentes y funcionarios se controla al inscribir, pero un
+--   jugador inscripto también puede cambiar de tipo después. Las ediciones
+--   finalizadas no cuentan: un estudiante de ayer puede ser docente hoy.
 CREATE TRIGGER trg_jugador_bu BEFORE UPDATE ON jugador
 FOR EACH ROW
 BEGIN
-    IF NEW.fecha_nacimiento > CURDATE() THEN
+    IF NEW.fecha_nacimiento >= CURDATE() THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'La fecha de nacimiento no puede ser futura';
+            SET MESSAGE_TEXT = 'La fecha de nacimiento tiene que ser una fecha pasada';
     END IF;
     IF NEW.tipo IN ('docente', 'funcionario')
        AND OLD.tipo NOT IN ('docente', 'funcionario')

@@ -74,7 +74,11 @@ def test_promedio_de_goles(r):
 
 def test_cancha_y_turno_mas_usados(r):
     assert r["canchas"][0][:2] == ("Complejo Deportivo UCU", "Cancha 1")
-    assert r["turnos"][0] == ("18:00 a 19:00", 8)
+    turno, jugados, programados, total = r["turnos"][0]
+    assert (turno, total) == ("18:00 a 19:00", 8)
+    assert int(jugados) + int(programados) == total
+    for fila in r["canchas"]:
+        assert int(fila[-3]) + int(fila[-2]) == fila[-1]
 
 
 def test_jugadores_por_facultad_y_tipo(r):

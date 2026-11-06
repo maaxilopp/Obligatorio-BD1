@@ -57,11 +57,11 @@ def test_torneo_finalizado_no_admite_partidos_nuevos(cur):
 
 def test_borrar_una_amarilla_recalcula_la_acumulacion(cur):
     # Mateo Rodríguez tiene 2 amarillas (una en el partido 8, de ayer).
-    # Se le carga una 3ra por error -> sanción. Se borra la del minuto 9:
-    # vuelve a tener 2 amarillas y la sanción tiene que desaparecer.
+    # Se le carga una 3ra por error, que además es doble amarilla -> 2 sanciones.
+    # Se borra la del minuto 9: vuelve a tener 2 amarillas y las dos desaparecen.
     ci = ci_de(cur, "Mateo", "Rodríguez")
     cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 50, 'amarilla')", (ci,))
-    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 1
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 2
     cur.execute("DELETE FROM tarjeta WHERE id_partido = 8 AND ci_jugador = %s AND minuto = 9", (ci,))
     assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 0
 
@@ -89,7 +89,7 @@ def test_torneo_no_arranca_con_un_solo_equipo(cur):
     t, _ = nuevo_torneo(cur, equipos=1, jugadores=5)
     falla(cur, "UPDATE torneo SET estado = 'en curso' WHERE id_torneo = %s", (t,), mensaje="al menos 2 equipos")
 
-def test_segunda_amarilla_que_es_tercera_acumulada_no_duplica_la_sancion(cur):
+def test_segunda_amarilla_que_es_tercera_acumulada_suma_las_dos_sanciones(cur):
     # Mateo Rodríguez ya tiene 2 amarillas (una en el partido 8). La nueva, en el
     # mismo partido, es su doble amarilla Y su 3ra acumulada: antes fallaba con
     # "Duplicate entry for key sancion_jugador.id_tarjeta".
@@ -98,6 +98,10 @@ def test_segunda_amarilla_que_es_tercera_acumulada_no_duplica_la_sancion(cur):
     id_tarjeta = cur.lastrowid
     cur.execute("SELECT motivo FROM sancion_jugador WHERE id_tarjeta = %s", (id_tarjeta,))
     assert cur.fetchall() == (("roja",),)
+    # la fecha 3 suspende las fechas 4 (doble amarilla) y 5 (acumulación)
+    cur.execute("SELECT motivo, numero_fecha_inicio FROM sancion_jugador "
+                "WHERE ci_jugador = %s ORDER BY numero_fecha_inicio", (ci,))
+    assert cur.fetchall() == (("roja", 4), ("acumulacion de amarillas", 5))
 
 
 def test_borrar_una_amarilla_de_una_doble_amarilla_quita_la_sancion(cur):
@@ -105,15 +109,18 @@ def test_borrar_una_amarilla_de_una_doble_amarilla_quita_la_sancion(cur):
     cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 10, 'amarilla')", (ci,))
     primera = cur.lastrowid
     cur.execute("INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES (8, %s, 20, 'amarilla')", (ci,))
-    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 1
+    # ya tenía una amarilla: la doble amarilla y la acumulación se suman
+    assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 2
     cur.execute("DELETE FROM tarjeta WHERE id_tarjeta = %s", (primera,))
     assert uno(cur, "SELECT COUNT(*) FROM sancion_jugador WHERE ci_jugador = %s", (ci,)) == 0
 
 
-def test_fecha_de_nacimiento_no_puede_ser_futura(cur):
+def test_fecha_de_nacimiento_tiene_que_ser_pasada(cur):
     falla(cur, "INSERT INTO jugador (ci, nombre, apellido, email, fecha_nacimiento, id_facultad, tipo) "
                "VALUES ('69999999', 'A', 'B', 'ab@correo.ucu.edu.uy', CURDATE() + INTERVAL 1 DAY, 1, 'grado')",
-          mensaje="no puede ser futura")
+          mensaje="fecha pasada")
     ci = ci_de(cur, "Lautaro", "Medina")
+    falla(cur, "UPDATE jugador SET fecha_nacimiento = CURDATE() WHERE ci = %s", (ci,),
+          mensaje="fecha pasada")
     falla(cur, "UPDATE jugador SET fecha_nacimiento = CURDATE() + INTERVAL 1 DAY WHERE ci = %s", (ci,),
-          mensaje="no puede ser futura")
+          mensaje="fecha pasada")

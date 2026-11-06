@@ -223,6 +223,9 @@
 
 .login-card .error {
   margin: calc(-12 * var(--uc)) 0 calc(18 * var(--uc));
+  padding: 0;
+  background: none;
+  border: none;
   color: var(--rojo);
   font-size: calc(17 * var(--uc));
   font-weight: 700;

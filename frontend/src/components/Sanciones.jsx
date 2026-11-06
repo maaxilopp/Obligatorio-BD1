@@ -94,8 +94,7 @@ function encabezadoCarta(sancion) {
 }
 
 function CartaSancion({ sancion, jugador }) {
-  const tipo =
-  esDobleAmarilla(sancion)
+  const tipo = esDobleAmarilla(sancion)
     ? "amarilla"
     : sancion.motivo === "roja"
       ? "roja"
@@ -109,15 +108,13 @@ function CartaSancion({ sancion, jugador }) {
     <article className="sancion-item">
       <div className={`carta-marco ${tipo}`}>
         {tipo === "amarilla" && (
-  <>
-    <span className="carta-fondo uno" />
-    {!esDobleAmarilla(sancion) && (
-      <>
-        <span className="carta-fondo dos" />
-      </>
-    )}
-  </>
-)}
+          <>
+            <span className="carta-fondo uno" />
+            {!esDobleAmarilla(sancion) && (
+              <span className="carta-fondo dos" />
+            )}
+          </>
+        )}
 
         <div className="carta">
           <small>{encabezadoCarta(sancion)}</small>
@@ -575,14 +572,19 @@ function Sanciones() {
                           {porTarjeta && (
                             <i
                               className={
-                                sancion.motivo === "roja" && !esDobleAmarilla(sancion)
+                                sancion.motivo === "roja" &&
+                                !esDobleAmarilla(sancion)
                                   ? "tarjetita roja"
                                   : "tarjetita amarilla"
-}
+                              }
                             />
                           )}
                           <span
-                            className={`cat-estado motivo-${sancion.motivo.replaceAll(" ", "-")}`}
+                            className={`cat-estado ${
+                              esDobleAmarilla(sancion)
+                                ? "motivo-acumulacion-de-amarillas"
+                                : `motivo-${sancion.motivo.replaceAll(" ", "-")}`
+                            }`}
                             title={
                               porTarjeta
                                 ? `${sancion.descripcion}. Se corrige desde la planilla.`

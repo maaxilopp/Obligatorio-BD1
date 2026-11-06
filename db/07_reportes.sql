@@ -49,7 +49,9 @@ GROUP BY numero_fecha WITH ROLLUP;
 --     y postergados no ocupan la cancha)
 SELECT co.nombre AS complejo, c.nombre_cancha AS cancha, c.superficie,
        IF(c.techada, 'sí', 'no') AS techada,
-       COUNT(p.id_partido) AS partidos
+       COALESCE(SUM(p.estado = 'jugado'), 0)     AS jugados,
+       COALESCE(SUM(p.estado = 'programado'), 0) AS programados,
+       COUNT(p.id_partido)                       AS partidos
 FROM cancha c
 JOIN complejo co ON co.id_complejo = c.id_complejo
 LEFT JOIN partido p ON p.id_complejo = c.id_complejo
@@ -61,7 +63,9 @@ ORDER BY partidos DESC, complejo, cancha;
 
 -- 5b. TURNOS MÁS UTILIZADOS
 SELECT CONCAT(TIME_FORMAT(t.hora_inicio, '%H:%i'), ' a ', TIME_FORMAT(t.hora_fin, '%H:%i')) AS turno,
-       COUNT(p.id_partido) AS partidos
+       COALESCE(SUM(p.estado = 'jugado'), 0)     AS jugados,
+       COALESCE(SUM(p.estado = 'programado'), 0) AS programados,
+       COUNT(p.id_partido)                       AS partidos
 FROM turno t
 LEFT JOIN partido p ON p.id_turno = t.id_turno
                    AND p.id_torneo = @torneo
@@ -97,13 +101,15 @@ ORDER BY equipo, camiseta;
 
 -- 8. CANTIDAD DE SANCIONES POR EQUIPO Y POR MOTIVO
 SELECT e.nombre AS equipo,
-       COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%tarjeta roja%'), 0)    AS roja,
-       COALESCE(SUM(s.motivo = 'roja' AND s.descripcion LIKE '%doble amarilla%'), 0)  AS doble_amarilla,
+       COALESCE(SUM(s.motivo = 'roja' AND t.color = 'roja'), 0)     AS roja,
+       COALESCE(SUM(s.motivo = 'roja' AND t.color = 'amarilla'), 0) AS doble_amarilla,
        COALESCE(SUM(s.motivo = 'acumulacion de amarillas'), 0) AS acumulacion_amarillas,
        COALESCE(SUM(s.motivo = 'disciplinaria'), 0)            AS disciplinaria,
        COUNT(s.id_sancion)                                     AS total
 FROM equipo e
 LEFT JOIN v_sanciones s ON s.id_equipo = e.id_equipo
+LEFT JOIN sancion_jugador sj ON sj.id_sancion = s.id_sancion
+LEFT JOIN tarjeta t ON t.id_tarjeta = sj.id_tarjeta
 WHERE e.id_torneo = @torneo
 GROUP BY e.id_equipo, e.nombre
 ORDER BY total DESC, equipo;

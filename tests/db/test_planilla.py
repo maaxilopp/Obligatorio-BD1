@@ -116,6 +116,46 @@ def test_la_roja_no_es_anterior_a_lo_ya_cargado(cur):
     cur.execute(TARJETA, (ci, 20, "roja"))
 
 
+def sanciones_doble_amarilla(cur, ci):
+    return uno(cur, "SELECT COUNT(*) FROM sancion_jugador "
+                    "WHERE ci_jugador = %s AND descripcion LIKE '%%doble amarilla%%'", (ci,))
+
+
+def test_doble_amarilla_sanciona_aunque_se_cargue_al_reves(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(TARJETA, (ci, 20, "amarilla"))
+    cur.execute(TARJETA, (ci, 10, "amarilla"))
+    assert sanciones_doble_amarilla(cur, ci) == 1
+
+
+def test_no_hay_tres_amarillas_en_un_partido(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(TARJETA, (ci, 30, "amarilla"))
+    cur.execute(TARJETA, (ci, 20, "amarilla"))
+    falla(cur, TARJETA, (ci, 10, "amarilla"), mensaje="ya tiene dos amarillas")
+    falla(cur, TARJETA, (ci, 40, "amarilla"), mensaje="ya tiene dos amarillas")
+
+
+def test_expulsado_por_doble_amarilla_no_convierte_despues(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(TARJETA, (ci, 10, "amarilla"))
+    cur.execute(TARJETA, (ci, 20, "amarilla"))
+    falla(cur, GOL, (ci, 21), mensaje="doble amarilla")
+    falla(cur, TARJETA, (ci, 25, "roja"), mensaje="doble amarilla")
+    # en el mismo minuto sí, igual que con la roja
+    cur.execute(GOL, (ci, 20))
+
+
+def test_la_segunda_amarilla_no_es_anterior_a_lo_ya_cargado(cur):
+    ci = uno(cur, SIN_EVENTOS)
+    cur.execute(TARJETA, (ci, 20, "amarilla"))
+    cur.execute(GOL, (ci, 30))
+    # la segunda amarilla sería la del 20, aunque la que se carga sea la del 10
+    falla(cur, TARJETA, (ci, 10, "amarilla"), mensaje="segunda amarilla")
+    falla(cur, TARJETA, (ci, 25, "amarilla"), mensaje="segunda amarilla")
+    cur.execute(TARJETA, (ci, 35, "amarilla"))
+
+
 def test_corregir_minutos_respeta_la_expulsion(cur):
     ci = uno(cur, SIN_EVENTOS)
     cur.execute(GOL, (ci, 10))

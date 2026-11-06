@@ -126,16 +126,33 @@ function problemaExpulsion(tipo, valores, minuto, goles, tarjetas) {
   const roja = propias.find((t) => t.color === "roja" && t.minuto < minuto);
   if (roja) return `El jugador fue expulsado en el minuto ${roja.minuto}.`;
 
-  if (tipo === "tarjeta" && valores.color === "roja") {
-    const posterior = [
-      ...goles.filter((g) => g.ci_jugador === valores.ci),
-      ...propias,
-    ].find((evento) => evento.minuto > minuto);
-    if (posterior) {
-      return `El jugador tiene un gol o una tarjeta en el minuto ${posterior.minuto}: la roja no puede ser anterior.`;
+  const amarillas = propias
+    .filter((t) => t.color === "amarilla")
+    .map((t) => t.minuto);
+  const esRoja = tipo === "tarjeta" && valores.color === "roja";
+  const esAmarilla = tipo === "tarjeta" && valores.color === "amarilla";
+
+  if (amarillas.length >= 2) {
+    if (esAmarilla) return "El jugador ya tiene dos amarillas en este partido.";
+    const segunda = Math.max(...amarillas);
+    if (segunda < minuto) {
+      return `El jugador fue expulsado por doble amarilla en el minuto ${segunda}.`;
     }
   }
-  return "";
+
+  const segundaAmarilla = esAmarilla && amarillas.length === 1;
+  if (!esRoja && !segundaAmarilla) return "";
+
+  const expulsion = esRoja ? minuto : Math.max(amarillas[0], minuto);
+  const posterior = [
+    ...goles.filter((g) => g.ci_jugador === valores.ci),
+    ...propias,
+  ].find((evento) => evento.minuto > expulsion);
+  if (!posterior) return "";
+
+  return esRoja
+    ? `El jugador tiene un gol o una tarjeta en el minuto ${posterior.minuto}: la roja no puede ser anterior.`
+    : `El jugador tiene un gol o una tarjeta en el minuto ${posterior.minuto}, después de su segunda amarilla.`;
 }
 
 function FormularioEvento({

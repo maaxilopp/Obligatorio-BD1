@@ -17,6 +17,7 @@ const ALTO_BARRA = 52;
 const DETALLES = {
   posiciones: {
     titulo: "Tabla de posiciones",
+    color: "#ffc93c",
     tablas: (d) => [
       {
         filas: d.posiciones,
@@ -37,6 +38,7 @@ const DETALLES = {
   },
   goleadores: {
     titulo: "Goleadores",
+    color: "#80d5a4",
     tablas: (d) => [
       {
         filas: d.goleadores,
@@ -51,6 +53,7 @@ const DETALLES = {
   },
   fairPlay: {
     titulo: "Fair play",
+    color: "#ffffff",
     nota: "Amarilla: 1 punto. Roja: 3 puntos. Gana el de menor puntaje.",
     tablas: (d) => [
       {
@@ -67,6 +70,7 @@ const DETALLES = {
   },
   promedio: {
     titulo: "Promedio de goles",
+    color: "#5db8f2",
     tablas: (d) => [
       {
         filas: d.promedio,
@@ -81,7 +85,7 @@ const DETALLES = {
   },
   canchasTurnos: {
     titulo: "Canchas y turnos",
-    nota: "Partidos jugados y programados.",
+    color: "#ffd9b5",
     tablas: (d) => [
       {
         filas: d.canchas,
@@ -90,21 +94,25 @@ const DETALLES = {
           ["cancha", "Cancha"],
           ["superficie", "Superficie"],
           ["techada", "Techada"],
-          ["partidos", "Partidos"],
+          ["jugados", "Jugados"],
+          ["programados", "Programados"],
+          ["partidos", "Total"],
         ],
       },
       {
         filas: d.turnos,
         columnas: [
           ["turno", "Turno"],
-          ["partidos", "Partidos"],
+          ["jugados", "Jugados"],
+          ["programados", "Programados"],
+          ["partidos", "Total"],
         ],
       },
     ],
   },
   jugadoresFacultad: {
     titulo: "Jugadores por facultad y tipo",
-    nota: "Todos los jugadores registrados, de cualquier edición.",
+    color: "#f59ac6",
     tablas: (d) => [
       {
         filas: d.jugadoresFacultad,
@@ -121,7 +129,7 @@ const DETALLES = {
   },
   sinPlanilla: {
     titulo: "Nunca jugaron",
-    nota: "Inscriptos en un plantel que nunca figuraron en una planilla.",
+    color: "#6ed6cf",
     tablas: (d) => [
       {
         filas: d.sinPlanilla,
@@ -137,6 +145,7 @@ const DETALLES = {
   },
   sanciones: {
     titulo: "Sanciones por equipo",
+    color: "#ffc2b8",
     tablas: (d) => [
       {
         filas: d.sanciones,
@@ -153,7 +162,7 @@ const DETALLES = {
   },
   estados: {
     titulo: "Estado de partidos",
-    nota: "No cuenta los partidos que todavía están programados.",
+    color: "#ffffff",
     tablas: (d) => [
       {
         filas: d.estados,
@@ -167,7 +176,7 @@ const DETALLES = {
   },
   remontadas: {
     titulo: "Remontadas",
-    nota: "Partidos que ganó un equipo que en algún momento iba perdiendo.",
+    color: "#ff801f",
     tablas: (d) => [
       {
         filas: d.remontadas,
@@ -182,6 +191,7 @@ const DETALLES = {
   },
   franjas: {
     titulo: "Goles por minuto",
+    color: "#89aaff",
     tablas: (d) => [
       {
         filas: d.franjas,
@@ -195,7 +205,7 @@ const DETALLES = {
   },
   rachas: {
     titulo: "Rachas",
-    nota: "Del partido más reciente al más viejo.",
+    color: "#c5a0f0",
     tablas: (d) => [
       {
         filas: d.rachas,
@@ -312,12 +322,16 @@ async function pedirReportes(idTorneo) {
   };
 }
 
-function Tarjeta({ detalle, numero, color, ancha, abrir, children }) {
+function sumar(filas, campo) {
+  return filas.reduce((total, fila) => total + Number(fila[campo]), 0);
+}
+
+function Tarjeta({ detalle, numero, ancha, abrir, children }) {
   return (
     <button
       type="button"
       className={ancha ? "reporte-tarjeta reporte-ancha" : "reporte-tarjeta"}
-      style={{ backgroundColor: color }}
+      style={{ backgroundColor: DETALLES[detalle].color }}
       onClick={() => abrir(detalle)}
       title="Ver el reporte completo"
     >
@@ -363,7 +377,7 @@ function celda(valor) {
 
 function DetalleReporte({ detalle, datos, cerrar }) {
   const dialogo = useRef(null);
-  const { titulo, nota, tablas } = DETALLES[detalle];
+  const { titulo, color, nota, tablas } = DETALLES[detalle];
 
   useEffect(() => {
     dialogo.current.showModal();
@@ -373,6 +387,7 @@ function DetalleReporte({ detalle, datos, cerrar }) {
     <dialog
       ref={dialogo}
       className="reporte-detalle"
+      style={{ "--color-detalle": color }}
       onClose={cerrar}
       onClick={(evento) => {
         if (evento.target === dialogo.current) cerrar();
@@ -532,7 +547,7 @@ function Tarjetas({ datos, abrir }) {
 
   return (
     <div className="reportes-grilla">
-      <Tarjeta detalle="posiciones" numero="1" color="#ffc93c" abrir={abrir}>
+      <Tarjeta detalle="posiciones" numero="1" abrir={abrir}>
         {hayPartidos ? (
           <span className="reporte-lider">
             {insignia(lider.equipo, "reporte")}
@@ -550,7 +565,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="goleadores" numero="2" color="#80d5a4" abrir={abrir}>
+      <Tarjeta detalle="goleadores" numero="2" abrir={abrir}>
         {maximosGoleadores.length > 0 ? (
           <>
             <span className="reporte-cifra">{maximosGoleadores[0].goles}</span>
@@ -566,7 +581,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="fairPlay" numero="3" color="#ffffff" abrir={abrir}>
+      <Tarjeta detalle="fairPlay" numero="3" abrir={abrir}>
         {mejorFairPlay ? (
           <>
             <span className="reporte-insignias">
@@ -586,7 +601,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="promedio" numero="4" color="#5db8f2" abrir={abrir}>
+      <Tarjeta detalle="promedio" numero="4" abrir={abrir}>
         {promedioEdicion ? (
           <>
             <span className="reporte-promedio">
@@ -617,7 +632,6 @@ function Tarjetas({ datos, abrir }) {
       <Tarjeta
         detalle="canchasTurnos"
         numero="5"
-        color="#ffd9b5"
         ancha
         abrir={abrir}
       >
@@ -638,13 +652,17 @@ function Tarjetas({ datos, abrir }) {
             }))}
           />
         </span>
-        <span className="reporte-texto-grande">Partidos jugados y programados</span>
+        <span className="reporte-texto-grande">
+          {enumerar([
+            plural(sumar(turnos, "jugados"), "partido jugado", "partidos jugados"),
+            plural(sumar(turnos, "programados"), "programado"),
+          ])}
+        </span>
       </Tarjeta>
 
       <Tarjeta
         detalle="jugadoresFacultad"
         numero="6"
-        color="#f59ac6"
         ancha
         abrir={abrir}
       >
@@ -674,7 +692,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="sinPlanilla" numero="7" color="#6ed6cf" abrir={abrir}>
+      <Tarjeta detalle="sinPlanilla" numero="7" abrir={abrir}>
         <span className="reporte-cifra">{sinPlanilla.length}</span>
         <span className="reporte-texto">
           {sinPlanilla.length > 0
@@ -686,7 +704,7 @@ function Tarjetas({ datos, abrir }) {
         </span>
       </Tarjeta>
 
-      <Tarjeta detalle="sanciones" numero="8" color="#ffc2b8" abrir={abrir}>
+      <Tarjeta detalle="sanciones" numero="8" abrir={abrir}>
         {masSancionado ? (
           <>
             <span className="reporte-sancionado">
@@ -702,7 +720,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="estados" numero="9" color="#ffffff" abrir={abrir}>
+      <Tarjeta detalle="estados" numero="9" abrir={abrir}>
         {estados.length > 0 ? (
           <>
             <span className="reporte-estados">
@@ -730,7 +748,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="remontadas" numero="10" color="#ff801f" abrir={abrir}>
+      <Tarjeta detalle="remontadas" numero="10" abrir={abrir}>
         <span className="reporte-cifra">{remontadas.length}</span>
         <span className="reporte-texto">
           {remontadas.length > 0
@@ -747,7 +765,6 @@ function Tarjetas({ datos, abrir }) {
       <Tarjeta
         detalle="franjas"
         numero="10"
-        color="#89aaff"
         ancha
         abrir={abrir}
       >
@@ -764,7 +781,7 @@ function Tarjetas({ datos, abrir }) {
         )}
       </Tarjeta>
 
-      <Tarjeta detalle="rachas" numero="10" color="#c5a0f0" ancha abrir={abrir}>
+      <Tarjeta detalle="rachas" numero="10" ancha abrir={abrir}>
         {peorRacha ? (
           <>
             <span className="reporte-racha">

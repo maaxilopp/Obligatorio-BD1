@@ -1,0 +1,22 @@
+.tooltip-retro {
+  position: fixed;
+  z-index: 1000;
+  max-width: 260px;
+  padding: 6px 10px;
+  background: #191720;
+  color: #fef6e4;
+  border: 2px solid #fef6e4;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #19172066;
+  font-family: var(--fuente-pixel);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+}
+
+.tooltip-retro.abajo {
+  transform: translateX(-50%);
+}

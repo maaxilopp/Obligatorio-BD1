@@ -467,3 +467,23 @@
 .content .torneo-paso > header {
   justify-content: flex-start;
 }
+
+/* Rango de fechas en la tabla de ediciones */
+
+.torneo-rango {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.torneo-rango > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.torneo-rango small {
+  font-family: var(--fuente-pixel);
+  font-size: 13px;
+  font-weight: 600;
+}
