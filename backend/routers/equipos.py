@@ -5,7 +5,7 @@ Lectura: administradores y planilleros. Escritura: solo administradores.
 
 Las reglas del plantel (5 a 10 jugadores, máximo 2 docentes/funcionarios,
 misma facultad que el equipo, un solo equipo por edición, solo modificable en
-inscripción) las garantiza la base; acá se devuelve el mensaje en español.
+inscripción) las garantiza la base; acá se devuelve el mensaje.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -137,7 +137,7 @@ def eliminar_equipo(id_equipo: int, usuario: dict = Depends(solo_admin)):
         raise HTTPException(status_code=404, detail="No existe ese equipo")
 
 
-# ---------- plantel ----------
+#plantel
 
 @router.get("/{id_equipo}/jugadores")
 def listar_plantel(id_equipo: int, usuario: dict = Depends(admin_o_planillero)):

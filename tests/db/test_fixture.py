@@ -9,7 +9,7 @@ def test_fixture_liga_a_una_rueda(cur, n_equipos):
     t, equipos = nuevo_torneo(cur, equipos=n_equipos)
     cur.execute("CALL generar_fixture(%s, '2031-03-05')", (t,))
 
-    # todos contra todos una vez: n(n-1)/2 partidos
+    # todos contra todos una vez
     assert uno(cur, "SELECT COUNT(*) FROM partido WHERE id_torneo = %s", (t,)) == n_equipos * (n_equipos - 1) // 2
 
     # n-1 fechas si n es par, n si es impar (cada equipo descansa una)

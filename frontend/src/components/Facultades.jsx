@@ -27,7 +27,6 @@ function Facultades() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
-  // null | { modo: 'nuevo' } | { modo: 'editar', id }
   const [edicion, setEdicion] = useState(null);
   const [nombre, setNombre] = useState("");
   const [intentoGuardar, setIntentoGuardar] = useState(false);

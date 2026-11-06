@@ -150,10 +150,8 @@ function Sanciones() {
   const [inscriptos, setInscriptos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  // "" | "tarjetas" | "disciplinarias"
   const [filtro, setFiltro] = useState("");
 
-  // null | { modo: 'nuevo' } | { modo: 'editar', id }
   const [edicion, setEdicion] = useState(null);
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
@@ -257,7 +255,7 @@ function Sanciones() {
               ORDEN_MOTIVO.indexOf(a.motivo) - ORDEN_MOTIVO.indexOf(b.motivo),
           );
 
-  // ---------- alta, edición y baja ----------
+  // alta, edición y baja 
 
   function abrirNueva() {
     setEdicion({ modo: "nuevo" });

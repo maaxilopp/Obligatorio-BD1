@@ -195,9 +195,4 @@ SELECT a.fecha_hora, a.usuario, a.id_partido, a.tabla, a.accion, a.detalle
 FROM auditoria_resultado a
 ORDER BY a.fecha_hora DESC;
 
--- Ejemplo de corrección auditada (descomentar para probar): el partido 8 se
--- jugó ayer, así que todavía está dentro de las 48 h. Un partido de la fecha 1
--- o 2 daría error.
--- SET @usuario_app = 'admin@ucu.edu.uy';
--- UPDATE gol SET minuto = 21 WHERE id_partido = 8 AND minuto = 20;
--- SELECT * FROM auditoria_resultado;
+

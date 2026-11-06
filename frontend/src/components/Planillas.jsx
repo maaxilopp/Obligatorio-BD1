@@ -25,14 +25,13 @@ function finDelPartido(partido, turno) {
   return new Date(`${partido.dia.slice(0, 10)}T${turno.hora_fin}:00`).getTime();
 }
 
-// 1762297200000 -> "martes 03/11 a las 20:00"
+
 function momentoLargo(milisegundos) {
   const fecha = new Date(milisegundos);
   const dos = (numero) => String(numero).padStart(2, "0");
   return `${DIAS_LARGOS[fecha.getDay()]} ${dos(fecha.getDate())}/${dos(fecha.getMonth() + 1)} a las ${dos(fecha.getHours())}:${dos(fecha.getMinutes())}`;
 }
 
-// Misma ventana que valida la base en validar_carga_planilla
 function etapaPlanilla(partido, fin, ahora, estadoTorneo) {
   if (partido.estado === "cancelado" || partido.estado === "postergado") {
     return "bloqueada";

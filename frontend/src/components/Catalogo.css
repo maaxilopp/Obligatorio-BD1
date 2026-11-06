@@ -66,7 +66,7 @@
   font-weight: 700;
 }
 
-/* Botón de texto dentro de la tabla (por ejemplo "Iniciar torneo") */
+/* Botón de texto dentro de la tabla */
 .cat-boton-texto {
   height: 36px;
   padding: 0 12px;
@@ -394,12 +394,12 @@
   outline-offset: 1px;
 }
 
-/* La regla global de ".content header" no aplica a estas tarjetas */
+
 .content .jugadores-pagina header {
   margin-bottom: 0;
 }
 
-/* Pixelify Sans une "fi" en un solo signo que se lee como una A */
+
 .jugadores-pagina {
   font-variant-ligatures: none;
 }

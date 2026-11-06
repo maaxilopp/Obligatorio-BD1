@@ -231,7 +231,6 @@ function plural(cantidad, singular, varios = `${singular}s`) {
   return `${cantidad} ${cantidad === 1 ? singular : varios}`;
 }
 
-// ["A", "B", "C"] => "A, B y 1 más"
 function enumerar(items, maximo = items.length) {
   const visibles = items.slice(0, maximo);
   const resto = items.length - visibles.length;
@@ -467,15 +466,15 @@ function Tarjetas({ datos, abrir }) {
     );
   }
 
-  // 1. El orden de la API ya resuelve los desempates
+  // El orden de la API ya resuelve los desempates
   const lider = posiciones[0];
   const hayPartidos = posiciones.some((equipo) => equipo.pj > 0);
   const igualados = posiciones.filter((e) => e.pts === lider?.pts).length - 1;
 
-  // 2. Puede haber más de un máximo goleador
+  // Puede haber más de un máximo goleador
   const maximosGoleadores = goleadores.filter((g) => g.posicion === 1);
 
-  // 3. Los empatados pueden tener distintas tarjetas (1 roja = 3 amarillas)
+  // Los empatados pueden tener distintas tarjetas 
   const mejoresFairPlay = fairPlay.filter((f) => f.posicion === 1);
   const mejorFairPlay = mejoresFairPlay[0];
   const mismasTarjetas = mejoresFairPlay.every(
@@ -484,16 +483,15 @@ function Tarjetas({ datos, abrir }) {
       f.rojas === mejorFairPlay.rojas,
   );
 
-  // 4. La última fila es el total de la edición (WITH ROLLUP)
+  // La última fila es el total de la edición 
   const promedioPorFecha = promedio.slice(0, -1);
   const promedioEdicion = promedio.at(-1);
 
-  // 5. Los turnos vienen ordenados por uso; el gráfico va por hora
   const turnosPorHora = [...turnos].sort((a, b) =>
     a.turno.localeCompare(b.turno),
   );
 
-  // 6. El reporte viene ordenado por nombre; el gráfico va por id de facultad
+  // El reporte viene ordenado por nombre; el gráfico va por id de facultad
   const idFacultad = Object.fromEntries(
     facultades.map((f) => [f.nombre, f.id_facultad]),
   );
@@ -502,7 +500,7 @@ function Tarjetas({ datos, abrir }) {
     .filter((f) => f !== totalJugadores)
     .sort((a, b) => idFacultad[a.facultad] - idFacultad[b.facultad]);
 
-  // 8. Viene ordenado por total de sanciones
+  //  Viene ordenado por total de sanciones
   const masSancionado = sanciones[0]?.total > 0 ? sanciones[0] : null;
   const detalleSanciones =
     masSancionado &&
@@ -519,7 +517,7 @@ function Tarjetas({ datos, abrir }) {
         ),
     );
 
-  // 9. Si no hay partidos de un estado, la API no devuelve esa fila
+  // Si no hay partidos de un estado, la API no devuelve esa fila
   const porcentaje = (estado) =>
     Number(estados.find((e) => e.estado === estado)?.porcentaje ?? 0);
   const jugados = porcentaje("jugado");

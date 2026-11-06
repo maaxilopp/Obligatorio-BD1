@@ -5,9 +5,6 @@
   --verde-oscuro: #229a59;
   --rojo: #c9291e;
   --amarillo: #ffc93c;
-
-  /* 1 unidad = 1px de la referencia (2000 x 1406), así todo escala parejo.
-     --u es para la cancha y --uc para la credencial, que no baja de un tamaño legible. */
   --u: min(0.05vw, 0.1vh);
   --uc: max(0.6px, min(0.085vh, 0.06vw, 1px));
 

@@ -1,6 +1,5 @@
 // Piezas compartidas por los catálogos (Facultades, Torneos, Complejos,
-// Equipos y Sanciones). Usan las mismas clases que el catálogo de Jugadores
-// (Jugadores.css) para que todos se vean igual.
+// Equipos y Sanciones). 
 
 import "./Jugadores.css";
 import "./Catalogo.css";

@@ -20,7 +20,6 @@ Departamento = Literal[
     "Lavalleja", "Maldonado", "Montevideo", "Paysandú", "Río Negro", "Rivera", "Rocha",
     "Salto", "San José", "Soriano", "Tacuarembó", "Treinta y Tres"]
 
-# En la base se guarda sin tilde (ENUM 'sintetico'); el front puede mostrar "sintético".
 Superficie = Literal["sintetico", "parquet"]
 
 
@@ -56,7 +55,7 @@ class CanchaNueva(CanchaDatos):
         return _texto_no_vacio(valor)
 
 
-# ---------- turnos ----------
+#turnos
 
 @router.get("/turnos")
 def listar_turnos(usuario: dict = Depends(admin_o_planillero)):
@@ -69,7 +68,7 @@ def listar_turnos(usuario: dict = Depends(admin_o_planillero)):
     """)
 
 
-# ---------- complejos ----------
+#complejos 
 
 @router.get("/complejos")
 def listar_complejos(departamento: Departamento | None = None,
@@ -122,7 +121,7 @@ def eliminar_complejo(id_complejo: int, usuario: dict = Depends(solo_admin)):
         raise HTTPException(status_code=404, detail="No existe ese complejo")
 
 
-# ---------- canchas ----------
+#canchas
 
 def _con_booleano(filas: list[dict]) -> list[dict]:
     for fila in filas:

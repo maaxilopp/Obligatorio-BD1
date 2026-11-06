@@ -9,7 +9,6 @@ instalado y PyMySQL (pip install -r requirements-dev.txt).
 También toma la configuración de variables de entorno:
 DB_HOST, DB_PORT, DB_USER, DB_PASSWORD.
 
-ATENCIÓN: borra la base torneo_futbol5 si ya existe.
 """
 
 import argparse

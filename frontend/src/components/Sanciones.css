@@ -121,7 +121,7 @@
   transform: rotate(-6deg) translateX(-6px);
 }
 
-/* La disciplinaria es una hoja de cuaderno */
+
 .carta-marco.disciplinaria .carta {
   border-radius: 6px 44px 6px 6px;
   background-color: #e3d9fb;

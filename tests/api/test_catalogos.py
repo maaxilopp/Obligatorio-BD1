@@ -2,7 +2,6 @@
 turnos, equipos y torneos.
 
 Se ejecutan contra la base de pruebas real que prepara tests/conftest.py.
-No usar contra una base con datos importantes: conftest.py recrea torneo_futbol5.
 """
 
 from fastapi.testclient import TestClient

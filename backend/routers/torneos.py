@@ -1,5 +1,4 @@
 """
-Ediciones del torneo: ABM, avance de estado y generación del fixture.
 
 El listado `GET /torneos` ya lo tiene routers/reportes.py. Las reglas
 (el estado solo avanza, para iniciar hacen falta equipos completos, etc.)
@@ -83,7 +82,7 @@ def modificar_torneo(id_torneo: int, torneo: TorneoDatos, usuario: dict = Depend
 
 @router.patch("/{id_torneo}/estado")
 def cambiar_estado(id_torneo: int, cambio: CambioEstado, usuario: dict = Depends(solo_admin)):
-    """inscripcion -> en curso -> finalizado. Cualquier otro cambio lo rechaza el trigger."""
+    """inscripcion, en curso, finalizado. Cualquier otro cambio lo rechaza el trigger."""
     ejecutar(usuario, "UPDATE torneo SET estado = %s WHERE id_torneo = %s", (cambio.estado, id_torneo))
     return obtener_torneo(id_torneo, usuario)
 

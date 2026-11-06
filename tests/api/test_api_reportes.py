@@ -1,4 +1,3 @@
-"""Los endpoints de reportes: todos responden y coinciden con 07_reportes.sql."""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -52,7 +51,6 @@ def test_los_dos_roles_ven_la_lista_de_torneos():
         assert r.status_code == 200 and len(r.json()) >= 1
 
 def test_sanciones_cuenta_rojas_y_dobles_amarillas(admin):
-    # antes contaba motivos que no existen en el ENUM y 'roja' daba siempre 0
     filas = api.get("/torneos/1/sanciones", headers=admin).json()
     assert sum(int(f["roja"]) for f in filas) == 2
     assert sum(int(f["doble_amarilla"]) for f in filas) == 0
