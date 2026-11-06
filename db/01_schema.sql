@@ -51,7 +51,11 @@ CREATE TABLE torneo (
     UNIQUE KEY uq_torneo_edicion (anio, semestre),          -- una edición por semestre
     CONSTRAINT chk_torneo_semestre CHECK (semestre IN (1, 2)),
     CONSTRAINT chk_torneo_fechas   CHECK (fecha_fin >= fecha_inicio),
-    CONSTRAINT chk_torneo_anio     CHECK (YEAR(fecha_inicio) = anio)
+    CONSTRAINT chk_torneo_anio     CHECK (YEAR(fecha_inicio) = anio),
+    CONSTRAINT chk_torneo_semestre_fechas CHECK (
+        semestre = IF(MONTH(fecha_inicio) <= 6, 1, 2)
+        AND YEAR(fecha_fin) = anio
+        AND (semestre = 2 OR MONTH(fecha_fin) <= 7))
 );
 
 CREATE TABLE equipo (
@@ -135,8 +139,9 @@ CREATE TABLE partido (
     nombre_cancha       VARCHAR(50) NOT NULL,
     estado              ENUM('programado','jugado','postergado','cancelado')
                         NOT NULL DEFAULT 'programado',
+    reprogramado        BOOLEAN     NOT NULL DEFAULT FALSE,
 
-    equipo_a     INT     AS (LEAST(id_equipo_local, id_equipo_visitante))    VIRTUAL,
+    equipo_a    INT     AS (LEAST(id_equipo_local, id_equipo_visitante))    VIRTUAL,
     equipo_b     INT     AS (GREATEST(id_equipo_local, id_equipo_visitante)) VIRTUAL,
     vigente      TINYINT AS (IF(estado = 'cancelado', NULL, 1))                VIRTUAL,
     ocupa_cancha TINYINT AS (IF(estado IN ('cancelado','postergado'), NULL, 1)) VIRTUAL,

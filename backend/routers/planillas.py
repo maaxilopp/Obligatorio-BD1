@@ -96,7 +96,7 @@ def eliminar_tarjeta(id_partido: int, id_tarjeta: int, usuario: dict = Depends(a
 @router.get("")
 def listar_partidos(id_torneo: int, numero_fecha: int | None = None,
                     usuario: dict = Depends(admin_o_planillero)):
-    sql = """SELECT id_partido, numero_fecha, dia, id_turno, id_complejo, nombre_cancha, estado,
+    sql = """SELECT id_partido, numero_fecha, dia, id_turno, id_complejo, nombre_cancha, estado, reprogramado,
                     id_equipo_local, equipo_local, goles_local, goles_visitante,
                     id_equipo_visitante, equipo_visitante
              FROM v_resultado_partido WHERE id_torneo = %s"""

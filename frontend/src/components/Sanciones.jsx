@@ -14,8 +14,10 @@ import SelectorEdicion from "./SelectorEdicion";
 import {
   diaCorto,
   fechaPendiente,
+  fechaTerminada,
   formatearCi,
   ordenarTorneos,
+  totalFechas,
 } from "./torneo";
 import "./Sanciones.css";
 
@@ -42,14 +44,53 @@ function enteroEntre(valor, minimo, maximo) {
   return Number.isInteger(numero) && numero >= minimo && numero <= maximo;
 }
 
-function validar(f) {
+function cambiaInicio(f, original) {
+  return (
+    !original ||
+    original.ci_jugador !== f.ci_jugador ||
+    original.numero_fecha_inicio !== Number(f.numero_fecha_inicio)
+  );
+}
+
+function fechasNuevas(f, original) {
+  const inicio = Number(f.numero_fecha_inicio);
+  const cantidad = Number(f.cantidad_fechas);
+  const todas = Array.from({ length: cantidad }, (_, i) => inicio + i);
+
+  return cambiaInicio(f, original)
+    ? todas
+    : todas.slice(original.cantidad_fechas);
+}
+
+function validar(f, { maxFecha, partidos, jugador, original }) {
   const errores = [];
   if (!f.ci_jugador) errores.push("Elegí un jugador.");
-  if (!enteroEntre(f.numero_fecha_inicio, 1, MAX_FECHA)) {
-    errores.push(`La fecha de inicio tiene que estar entre 1 y ${MAX_FECHA}.`);
+  if (
+    cambiaInicio(f, original) &&
+    !enteroEntre(f.numero_fecha_inicio, 1, maxFecha)
+  ) {
+    errores.push(`La fecha de inicio tiene que estar entre 1 y ${maxFecha}.`);
   }
   if (!enteroEntre(f.cantidad_fechas, 1, MAX_FECHA)) {
     errores.push(`La cantidad de fechas tiene que estar entre 1 y ${MAX_FECHA}.`);
+  } else if (
+    jugador &&
+    fechasNuevas(f, original).some(
+      (fecha) =>
+        fechaTerminada(partidos, fecha) ||
+        partidos.some(
+          (p) =>
+            p.numero_fecha === fecha &&
+            p.estado === "jugado" &&
+            [p.id_equipo_local, p.id_equipo_visitante].includes(
+              jugador.id_equipo,
+            ),
+        ),
+    )
+  ) {
+    errores.push(
+      "Una de esas fechas ya se jugó: la sanción solo puede cubrir fechas que el jugador todavía tenga por jugar.",
+    );
   }
   if (!f.descripcion.trim()) errores.push("Escribí el motivo de la sanción.");
   if (f.descripcion.trim().length > 255) {
@@ -148,6 +189,7 @@ function Sanciones() {
   const [partidos, setPartidos] = useState([]);
   // Jugadores inscriptos en la edición, con su equipo y facultad
   const [inscriptos, setInscriptos] = useState([]);
+  const [cantidadEquipos, setCantidadEquipos] = useState(0);
   const [cargando, setCargando] = useState(true);
 
   const [filtro, setFiltro] = useState("");
@@ -181,6 +223,7 @@ function Sanciones() {
         setSanciones(listaSanciones);
         setPartidos(listaPartidos);
         setInscriptos(planteles.flat());
+        setCantidadEquipos(equipos.length);
       })
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false));
@@ -293,8 +336,14 @@ function Sanciones() {
   }
 
   const esNueva = edicion?.modo === "nuevo";
-  const errores = validar(formulario);
   const original = sanciones.find((s) => s.id_sancion === edicion?.id);
+  const maxFecha = totalFechas(cantidadEquipos) || MAX_FECHA;
+  const errores = validar(formulario, {
+    maxFecha,
+    partidos,
+    jugador: jugadorPorCi.get(formulario.ci_jugador),
+    original,
+  });
   const sinCambios =
     Boolean(original) &&
     formulario.ci_jugador === original.ci_jugador &&
@@ -407,7 +456,7 @@ function Sanciones() {
               name="numero_fecha_inicio"
               type="number"
               min={1}
-              max={MAX_FECHA}
+              max={maxFecha}
               value={formulario.numero_fecha_inicio}
               onChange={cambiarCampo}
             />

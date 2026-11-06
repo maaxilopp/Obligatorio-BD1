@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./SelectorEdicion.css";
 import { apiRequest } from "../services/api";
+import { problemaSemestre } from "./torneo";
 
 const ESTADOS = {
   inscripcion: "Inscripción",
@@ -74,6 +75,17 @@ function SelectorEdicion({
 
   async function crearEdicion(evento) {
     evento.preventDefault();
+
+    const semestre = problemaSemestre(
+      nueva.semestre,
+      nueva.fecha_inicio,
+      nueva.fecha_fin,
+    );
+    if (semestre) {
+      setError(semestre);
+      return;
+    }
+
     setGuardando(true);
     setError("");
 

@@ -59,6 +59,7 @@ CHECKS = {
     "chk_torneo_semestre": "El semestre debe ser 1 o 2",
     "chk_torneo_fechas": "La fecha de fin no puede ser anterior a la de inicio",
     "chk_torneo_anio": "El año del torneo debe coincidir con el de su fecha de inicio",
+    "chk_torneo_semestre_fechas": "Las fechas no corresponden al semestre: el 1º empieza de enero a junio y termina hasta julio; el 2º empieza de julio a diciembre y termina ese año",
     "chk_camiseta": "El número de camiseta debe estar entre 1 y 99",
     "chk_turno_rango": "Los turnos van de 18:00 a 23:00",
     "chk_turno_una_hora": "Los turnos duran una hora y empiezan en punto",

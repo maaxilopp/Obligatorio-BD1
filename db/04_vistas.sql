@@ -1,7 +1,4 @@
 -- VISTAS DEL OBLIGATORIO
--- Centralizan los cálculos que usan varios reportes y el backend
--- (resultado de cada partido, tabla de posiciones, etc.), así la lógica
--- vive en un solo lugar. El backend hace SELECT sobre estas vistas filtrando
 
 SET NAMES utf8mb4;
 USE torneo_futbol5;
@@ -34,6 +31,7 @@ SELECT p.id_partido,
        p.id_complejo,
        p.nombre_cancha,
        p.estado,
+       p.reprogramado,
        p.id_equipo_local,
        el.nombre AS equipo_local,
        p.id_equipo_visitante,
@@ -55,8 +53,8 @@ SELECT id_partido, id_torneo, numero_fecha, dia, id_turno,
        id_equipo_visitante, goles_visitante, goles_local
 FROM v_resultado_partido WHERE estado = 'jugado';
 
--- REPORTE 1: tabla de posiciones. Incluye equipos que todavía no jugaron.
--- Orden: puntos, diferencia de goles, goles a favor.
+-- REPORTE 1: tabla de posiciones, incluye equipos que todavía no jugaron.
+-- se ordenan por puntos, diferencia de goles, goles a favor.
 CREATE OR REPLACE VIEW v_tabla_posiciones AS
 SELECT e.id_torneo,
        e.id_equipo,
@@ -77,7 +75,7 @@ JOIN facultad f ON f.id_facultad = e.id_facultad
 LEFT JOIN v_partido_equipo pe ON pe.id_equipo = e.id_equipo
 GROUP BY e.id_torneo, e.id_equipo, e.nombre, f.nombre;
 
--- REPORTE 2: goleadores sin contar autogoles. Igual que la tabla de
+-- REPORTE 2: goleadores, no cuenta goles encontra. Igual que la tabla de
 -- posiciones, solo cuenta partidos ya marcados como jugados.
 CREATE OR REPLACE VIEW v_goleadores AS
 SELECT gd.id_torneo,
