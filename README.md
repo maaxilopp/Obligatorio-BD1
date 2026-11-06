@@ -73,7 +73,7 @@ El objetivo es centralizar la información del torneo y asegurar la integridad d
 | `backend/`  | API en FastAPI: conexión por rol, login, traducción de errores y un archivo por grupo de endpoints en `routers/`       |
 | `frontend/` | Aplicación en React + Vite: login, menú por rol, catálogos, partidos, planillas y reportes                             |
 | `tests/`    | Tests automáticos (pytest) contra MySQL real: `db/` reglas de la base (triggers, permisos) y `api/` endpoints del backend |
-| `docs/`     | Diagrama y planilla diseñada con figma del front                                                                                           |
+| `docs/`     | Diagrama de modelado, planilla diseñada con figma del front,  Informe con la bitácora incluida                                                                                     |
 
 ## Cómo correrlo
 
